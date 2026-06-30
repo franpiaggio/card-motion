@@ -1,0 +1,73 @@
+{
+  "name": "card-motion",
+  "version": "0.1.0",
+  "description": "Balatro-style playing-card animations for React — shuffle, deal, play, 3D tilt and a WebGL background. Powered by GSAP.",
+  "keywords": [
+    "react",
+    "cards",
+    "playing-cards",
+    "card-game",
+    "animation",
+    "gsap",
+    "deck",
+    "shuffle",
+    "webgl",
+    "balatro"
+  ],
+  "license": "MIT",
+  "author": "Francisco Piaggio",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/franciscopiaggio/card-motion.git",
+    "directory": "packages/card-motion"
+  },
+  "homepage": "https://github.com/franciscopiaggio/card-motion#readme",
+  "bugs": "https://github.com/franciscopiaggio/card-motion/issues",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "styles.css",
+    "README.md"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./styles.css": "./styles.css",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm run build"
+  },
+  "peerDependencies": {
+    "gsap": ">=3.12",
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@gsap/react": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "gsap": "^3.12.5",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

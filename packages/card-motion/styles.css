@@ -1,0 +1,147 @@
+/* card-motion — import once: `import 'card-motion/styles.css'`
+   All sizes scale from the per-card `--cm-w` variable. */
+
+.cm-card {
+  position: relative;
+  display: inline-block;
+  width: 96px;
+  height: 134px;
+  --cm-w: 96px;
+  perspective: 900px; /* depth for the inner 3D tilt */
+  will-change: transform;
+  cursor: pointer;
+}
+
+.cm-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--cm-w) * 0.104);
+  transform-style: preserve-3d;
+}
+
+.cm-card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--cm-w) * 0.104);
+  background: linear-gradient(150deg, #fdfdf8, #ececdf);
+  box-shadow:
+    0 calc(var(--cm-w) * 0.083) calc(var(--cm-w) * 0.167) rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  user-select: none;
+}
+
+.cm-card-face.cm-red {
+  color: #d1304a;
+}
+.cm-card-face.cm-black {
+  color: #1d1d27;
+}
+
+.cm-pip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--cm-w) * 0.583);
+  line-height: 1;
+  opacity: 0.92;
+}
+
+.cm-corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: 800;
+  font-size: calc(var(--cm-w) * 0.177);
+  line-height: 1;
+}
+.cm-corner i {
+  font-style: normal;
+  font-size: calc(var(--cm-w) * 0.156);
+}
+.cm-tl {
+  top: calc(var(--cm-w) * 0.073);
+  left: calc(var(--cm-w) * 0.083);
+}
+.cm-br {
+  bottom: calc(var(--cm-w) * 0.073);
+  right: calc(var(--cm-w) * 0.083);
+  transform: rotate(180deg);
+}
+
+/* Holographic foil: radial highlight that follows the pointer + iridescent
+   conic gradient, blended over the card. Driven by --cm-mx / --cm-my / --cm-foil. */
+.cm-card-foil {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--cm-w) * 0.104);
+  pointer-events: none;
+  opacity: var(--cm-foil, 0);
+  transition: opacity 0.3s ease;
+  background:
+    radial-gradient(circle at var(--cm-mx, 50%) var(--cm-my, 50%), rgba(255, 255, 255, 0.75), transparent 42%),
+    conic-gradient(from 0deg at var(--cm-mx, 50%) var(--cm-my, 50%), #ff00cc, #3399ff, #00ffcc, #ffee00, #ff00cc);
+  mix-blend-mode: color-dodge;
+  background-blend-mode: overlay;
+}
+
+/* Background shader canvas */
+.cm-bg-shader {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+}
+
+/* Table + stage */
+.cm-table {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+}
+.cm-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Built-in controls */
+.cm-controls {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+.cm-controls button {
+  font: 700 15px/1 system-ui, sans-serif;
+  letter-spacing: 0.3px;
+  color: #fff;
+  padding: 13px 22px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(180deg, #ff5a6e, #d11f3a);
+  box-shadow: 0 5px 0 #8c0f23, 0 9px 16px rgba(0, 0, 0, 0.5);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+.cm-controls button:hover {
+  transform: translateY(-1px);
+}
+.cm-controls button:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #8c0f23, 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+.cm-controls button.cm-ghost {
+  background: linear-gradient(180deg, #4a5168, #2c3142);
+  box-shadow: 0 5px 0 #171a24, 0 9px 16px rgba(0, 0, 0, 0.5);
+}
