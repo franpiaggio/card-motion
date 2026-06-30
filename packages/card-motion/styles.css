@@ -73,20 +73,64 @@
   transform: rotate(180deg);
 }
 
-/* Holographic foil: radial highlight that follows the pointer + iridescent
-   conic gradient, blended over the card. Driven by --cm-mx / --cm-my / --cm-foil. */
+/* Holographic foil for "special" cards: always on, subtle, and gently
+   shimmering. Uses `screen` (a soft brighten) instead of `color-dodge`
+   (which blows the colors out). Only rendered when the card has `foil`. */
 .cm-card-foil {
   position: absolute;
   inset: 0;
   border-radius: calc(var(--cm-w) * 0.104);
   pointer-events: none;
-  opacity: var(--cm-foil, 0);
-  transition: opacity 0.3s ease;
+  opacity: 0.55;
   background:
-    radial-gradient(circle at var(--cm-mx, 50%) var(--cm-my, 50%), rgba(255, 255, 255, 0.75), transparent 42%),
-    conic-gradient(from 0deg at var(--cm-mx, 50%) var(--cm-my, 50%), #ff00cc, #3399ff, #00ffcc, #ffee00, #ff00cc);
-  mix-blend-mode: color-dodge;
-  background-blend-mode: overlay;
+    linear-gradient(
+      115deg,
+      rgba(255, 0, 204, 0) 10%,
+      rgba(255, 0, 204, 0.55) 28%,
+      rgba(51, 153, 255, 0.55) 44%,
+      rgba(0, 255, 204, 0.55) 60%,
+      rgba(255, 238, 0, 0.55) 76%,
+      rgba(255, 0, 204, 0) 92%
+    );
+  background-size: 250% 250%;
+  mix-blend-mode: screen;
+  animation: cm-foil-shimmer 6s linear infinite;
+}
+
+/* A soft white sheen sweeping across, so the foil reads as reflective. */
+.cm-card-foil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.5) 50%, transparent 65%);
+  background-size: 250% 250%;
+  mix-blend-mode: screen;
+  animation: cm-foil-shimmer 6s linear infinite;
+}
+
+@keyframes cm-foil-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 250% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-card-foil,
+  .cm-card-foil::after {
+    animation: none;
+  }
+}
+
+/* Selected (lifted) hand card: a clear gold ring so the state is unmistakable. */
+.cm-card.cm-selected .cm-card-face {
+  box-shadow:
+    0 calc(var(--cm-w) * 0.12) calc(var(--cm-w) * 0.22) rgba(0, 0, 0, 0.55),
+    0 0 0 3px #ffd84d,
+    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 /* Background shader canvas */
@@ -125,6 +169,7 @@
 .cm-controls button {
   font: 700 15px/1 system-ui, sans-serif;
   letter-spacing: 0.3px;
+  white-space: nowrap;
   color: #fff;
   padding: 13px 22px;
   border: none;
@@ -140,6 +185,10 @@
 .cm-controls button:active {
   transform: translateY(4px);
   box-shadow: 0 1px 0 #8c0f23, 0 3px 8px rgba(0, 0, 0, 0.5);
+}
+.cm-controls button.cm-warn {
+  background: linear-gradient(180deg, #ffb44a, #e8870f);
+  box-shadow: 0 5px 0 #9c5500, 0 9px 16px rgba(0, 0, 0, 0.5);
 }
 .cm-controls button.cm-ghost {
   background: linear-gradient(180deg, #4a5168, #2c3142);

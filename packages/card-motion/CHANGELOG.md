@@ -7,10 +7,13 @@ All notable changes to `card-motion` are documented here. This project adheres t
 
 ### Added
 
-- `<CardTable>` — ready-made table with shuffle / deal / play / reset and an optional controls bar; imperative handle via `ref`.
-- `useCardTable` — headless engine that owns deck/hand/table state and the GSAP timelines.
-- `<Card>` — playing card with corner indices, center pip, holographic foil and pointer-driven 3D tilt.
-- `useCardTilt` — reusable 3D tilt + foil for any element.
+- `<CardTable>` — ready-made table with **shuffle / deal / play / play-all / clear / reset** and a **contextual** controls bar (buttons render only when their action can run); imperative handle via `ref`.
+- **Click-to-select** — click a hand card to select it (it lifts with a gold ring), click again to deselect. `playSelected()` plays only the selected cards; `play()` plays the whole hand.
+- **Special foil cards** — one random hand card carries an always-on, subtle holographic foil (re-picked each deal). Configurable via `specialCount` / `foilCardIds`.
+- `useCardTable` — headless engine that owns deck/hand/table state and the GSAP timelines, and exposes reactive `selected`, `hand`, and `counts`.
+- `<Card>` — playing card with corner indices, center pip, optional always-on holographic foil, and pointer-driven 3D tilt.
+- `useCardTilt` — reusable 3D tilt for any element.
 - `<BackgroundShader>` — fullscreen WebGL swirl background.
+- **Responsive layout** — `Zones` carries the stage size; the hand fan and table row never overflow, and `<CardTable>` shrinks cards on narrow screens.
 - Utilities: `buildDeck`, `shuffleInPlace`, `getZones`, `deckTarget`, `handTarget`, `tableTarget`, plus `SUITS` / `RANKS`.
-- Full TypeScript types, ESM + CJS builds, and `card-motion/styles.css`.
+- Full TypeScript types, ESM + CJS builds, `'use client'` directive, and `card-motion/styles.css`.

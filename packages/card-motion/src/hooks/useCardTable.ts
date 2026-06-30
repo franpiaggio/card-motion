@@ -6,6 +6,11 @@ import { buildDeck, shuffleInPlace } from '../lib/deck';
 import { getZones as defaultGetZones, deckTarget, handTarget, tableTarget } from '../lib/layout';
 import type { CardData, LayoutFn, Zones } from '../types';
 
+/** How far (px) a card rises when selected. */
+const LIFT = 30;
+/** Scale of a selected card. */
+const SELECT_SCALE = 1.06;
+
 export interface UseCardTableOptions {
   /** The cards to manage. Defaults to a fresh 52-card deck. */
   deck?: CardData[];
@@ -30,8 +35,23 @@ export interface CardTableApi {
   deal: (count?: number) => void;
   /** Move the whole hand into a row on the table. */
   play: () => void;
+  /** Move only the currently selected hand cards onto the table. */
+  playSelected: () => void;
+  /** Send the table cards back to the deck (clears the table). */
+  clearTable: () => void;
   /** Send every card back to the deck. */
   reset: () => void;
+  /**
+   * Toggle a hand card's selection: the first click **selects** it (lifts it),
+   * the next click **deselects** it (lowers it). No-op for non-hand cards.
+   */
+  toggleCard: (id: number) => void;
+  /** Ids of the currently selected (lifted) hand cards. */
+  selected: ReadonlySet<number>;
+  /** Reactive ids currently in the hand (in order). */
+  hand: ReadonlyArray<number>;
+  /** Reactive count of cards in each zone — handy to gate UI. */
+  counts: { deck: number; hand: number; table: number };
 }
 
 type Orders = Record<'deck' | 'hand' | 'table', number[]>;
@@ -56,6 +76,23 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   if (ordersRef.current === null) {
     ordersRef.current = { deck: cards.map((c) => c.id), hand: [], table: [] };
   }
+  const selectedRef = useRef(new Set<number>());
+  const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
+  const syncSelected = () => setSelected(new Set(selectedRef.current));
+
+  const [counts, setCounts] = useState(() => ({ deck: cards.length, hand: 0, table: 0 }));
+  const [hand, setHand] = useState<ReadonlyArray<number>>([]);
+  const syncCounts = () => {
+    const o = ordersRef.current!;
+    setCounts({ deck: o.deck.length, hand: o.hand.length, table: o.table.length });
+    setHand([...o.hand]);
+  };
+  const clearSelection = () => {
+    if (selectedRef.current.size) {
+      selectedRef.current.clear();
+      syncSelected();
+    }
+  };
 
   const registerCard = useCallback((id: number, node: HTMLElement | null) => {
     if (node) nodesRef.current.set(id, node);
@@ -68,11 +105,19 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   const placeInstant = useCallback(() => {
     const z = zonesRef.current;
     const orders = ordersRef.current!;
-    const set = (id: number, t: ReturnType<LayoutFn>, zi: number) =>
-      gsap.set(node(id), { xPercent: -50, yPercent: -50, x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, zIndex: zi });
-    orders.deck.forEach((id, i) => set(id, deckT(i, orders.deck.length, z), i));
-    orders.hand.forEach((id, i) => set(id, handT(i, orders.hand.length, z), 100 + i));
-    orders.table.forEach((id, i) => set(id, tableT(i, orders.table.length, z), 200 + i));
+    orders.deck.forEach((id, i) => {
+      const t = deckT(i, orders.deck.length, z);
+      gsap.set(node(id), { xPercent: -50, yPercent: -50, x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, zIndex: i });
+    });
+    orders.hand.forEach((id, i) => {
+      const t = handT(i, orders.hand.length, z);
+      const sel = selectedRef.current.has(id);
+      gsap.set(node(id), { xPercent: -50, yPercent: -50, x: t.x, y: t.y - (sel ? LIFT : 0), rotation: t.rotation, scale: sel ? SELECT_SCALE : t.scale, zIndex: sel ? 150 : 100 + i });
+    });
+    orders.table.forEach((id, i) => {
+      const t = tableT(i, orders.table.length, z);
+      gsap.set(node(id), { xPercent: -50, yPercent: -50, x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, zIndex: 200 + i });
+    });
   }, [deckT, handT, tableT]);
 
   useGSAP(
@@ -103,12 +148,28 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     if (tl.getChildren().length === 0) busyRef.current = false;
   };
 
+  // Re-tween the hand fan + table row to their current targets.
+  const relayout = (tl: gsap.core.Timeline, z: Zones) => {
+    const orders = ordersRef.current!;
+    orders.hand.forEach((id, i) => {
+      const t = handT(i, orders.hand.length, z);
+      const sel = selectedRef.current.has(id);
+      tl.to(node(id), { x: t.x, y: t.y - (sel ? LIFT : 0), rotation: t.rotation, scale: sel ? SELECT_SCALE : t.scale, zIndex: sel ? 150 : 100 + i, duration: 0.35, ease: 'power2.out' }, 0);
+    });
+    orders.table.forEach((id, i) => {
+      const t = tableT(i, orders.table.length, z);
+      tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, zIndex: 200 + i, duration: 0.45, ease: 'power3.inOut' }, 0);
+    });
+  };
+
   const shuffle = useCallback(
     () =>
       run((tl, z) => {
+        clearSelection();
         const orders = ordersRef.current!;
         const all = [...orders.deck, ...orders.hand, ...orders.table];
         ordersRef.current = { deck: all, hand: [], table: [] };
+        syncCounts();
 
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
@@ -131,11 +192,13 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   const deal = useCallback(
     (count: number = handSize) =>
       run((tl, z) => {
+        clearSelection();
         const orders = ordersRef.current!;
         const need = Math.min(count - orders.hand.length, orders.deck.length);
         if (need <= 0) return;
         const taken = orders.deck.splice(orders.deck.length - need, need).reverse();
         orders.hand.push(...taken);
+        syncCounts();
         const hand = orders.hand;
         const n = hand.length;
         const firstNew = n - need;
@@ -164,10 +227,12 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   const play = useCallback(
     () =>
       run((tl, z) => {
+        clearSelection();
         const orders = ordersRef.current!;
         if (!orders.hand.length) return;
         const moving = orders.hand.splice(0);
         orders.table.push(...moving);
+        syncCounts();
         const table = orders.table;
         const n = table.length;
         table.forEach((id, i) => {
@@ -178,12 +243,30 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     [tableT],
   );
 
-  const reset = useCallback(
+  const clearTable = useCallback(
     () =>
       run((tl, z) => {
         const orders = ordersRef.current!;
+        if (!orders.table.length) return;
+        const moving = orders.table.splice(0);
+        orders.deck.push(...moving);
+        syncCounts();
+        orders.deck.forEach((id, i) => {
+          const t = deckT(i, orders.deck.length, z);
+          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.4, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.006);
+        });
+      }),
+    [deckT],
+  );
+
+  const reset = useCallback(
+    () =>
+      run((tl, z) => {
+        clearSelection();
+        const orders = ordersRef.current!;
         const all = [...orders.deck, ...orders.hand, ...orders.table];
         ordersRef.current = { deck: all, hand: [], table: [] };
+        syncCounts();
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
           tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.4, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.008);
@@ -192,5 +275,45 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     [deckT],
   );
 
-  return { cards, stageRef, registerCard, shuffle, deal, play, reset };
+  const playSelected = useCallback(
+    () =>
+      run((tl, z) => {
+        const orders = ordersRef.current!;
+        const chosen = orders.hand.filter((id) => selectedRef.current.has(id));
+        if (!chosen.length) return;
+        orders.hand = orders.hand.filter((id) => !selectedRef.current.has(id));
+        orders.table.push(...chosen);
+        selectedRef.current.clear();
+        syncSelected();
+        syncCounts();
+        relayout(tl, z);
+      }),
+    [handT, tableT],
+  );
+
+  const toggleCard = useCallback(
+    (id: number) => {
+      if (busyRef.current) return;
+      const orders = ordersRef.current!;
+      if (!orders.hand.includes(id)) return; // only hand cards are selectable
+      const z = zonesRef.current;
+      const i = orders.hand.indexOf(id);
+      const t = handT(i, orders.hand.length, z);
+
+      if (selectedRef.current.has(id)) {
+        // deselect → lower back into the fan
+        selectedRef.current.delete(id);
+        syncSelected();
+        gsap.to(node(id), { y: t.y, scale: t.scale, zIndex: 100 + i, duration: 0.2, ease: 'power2.out' });
+      } else {
+        // select → lift
+        selectedRef.current.add(id);
+        syncSelected();
+        gsap.to(node(id), { y: t.y - LIFT, scale: SELECT_SCALE, zIndex: 150, duration: 0.2, ease: 'power2.out' });
+      }
+    },
+    [handT],
+  );
+
+  return { cards, stageRef, registerCard, shuffle, deal, play, playSelected, clearTable, reset, toggleCard, selected, hand, counts };
 }

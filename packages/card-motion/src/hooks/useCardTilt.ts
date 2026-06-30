@@ -55,9 +55,6 @@ export function useCardTilt({ maxTilt = 16, duration = 0.4 }: UseCardTiltOptions
       const py = (e.clientY - r.top) / r.height - 0.5;
       tiltY.current(px * maxTilt);
       tiltX.current(-py * maxTilt);
-      el.style.setProperty('--cm-mx', `${(px + 0.5) * 100}%`);
-      el.style.setProperty('--cm-my', `${(py + 0.5) * 100}%`);
-      el.style.setProperty('--cm-foil', '1');
     },
     [maxTilt],
   );
@@ -65,7 +62,6 @@ export function useCardTilt({ maxTilt = 16, duration = 0.4 }: UseCardTiltOptions
   const onPointerLeave = useCallback(() => {
     tiltX.current?.(0);
     tiltY.current?.(0);
-    containerRef.current?.style.setProperty('--cm-foil', '0');
   }, []);
 
   return { containerRef, contentRef, onPointerMove, onPointerLeave };

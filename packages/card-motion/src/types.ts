@@ -34,11 +34,15 @@ export interface CardTarget {
   scale: number;
 }
 
-/** Anchor points for each zone, derived from the stage size. */
+/** Anchor points for each zone, plus the stage size (for responsive layouts). */
 export interface Zones {
   deck: Point;
   hand: Point;
   table: Point;
+  /** Stage width in px. */
+  width: number;
+  /** Stage height in px. */
+  height: number;
 }
 
 /**

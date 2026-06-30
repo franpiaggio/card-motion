@@ -1,6 +1,6 @@
 'use client';
 
-import { forwardRef, type CSSProperties } from 'react';
+import { forwardRef, type CSSProperties, type MouseEvent } from 'react';
 import { useCardTilt } from '../hooks/useCardTilt';
 import type { CardColor, Suit } from '../types';
 
@@ -18,18 +18,22 @@ export interface CardProps {
   tilt?: boolean;
   /** Maximum tilt in degrees. Default `16`. */
   maxTilt?: number;
-  /** Render the holographic foil overlay. Default `true`. */
+  /**
+   * Show the always-on holographic foil overlay. Reserved for "special" cards;
+   * it is subtle and not triggered by hover. Default `false`.
+   */
   foil?: boolean;
   className?: string;
   style?: CSSProperties;
+  onClick?: (e: MouseEvent<HTMLDivElement>) => void;
 }
 
 /**
  * A single playing card: cream face, corner indices, big center pip, an
- * optional holographic foil, and a pointer-driven 3D tilt.
+ * optional always-on holographic foil, and a pointer-driven 3D tilt.
  */
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
-  { rank, suit, color, width = 96, tilt = true, maxTilt = 16, foil = true, className, style },
+  { rank, suit, color, width = 96, tilt = true, maxTilt = 16, foil = false, className, style, onClick },
   ref,
 ) {
   const { containerRef, contentRef, onPointerMove, onPointerLeave } = useCardTilt({ maxTilt });
@@ -45,10 +49,11 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
   return (
     <div
       ref={setOuter}
-      className={`cm-card${className ? ` ${className}` : ''}`}
+      className={`cm-card${foil ? ' cm-foil' : ''}${className ? ` ${className}` : ''}`}
       style={{ width, height, '--cm-w': `${width}px`, ...style } as CSSProperties}
       onPointerMove={tilt ? onPointerMove : undefined}
       onPointerLeave={tilt ? onPointerLeave : undefined}
+      onClick={onClick}
     >
       <div ref={contentRef} className="cm-card-inner">
         <div className={`cm-card-face cm-${resolvedColor}`}>

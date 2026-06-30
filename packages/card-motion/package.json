@@ -18,11 +18,11 @@
   "author": "Francisco Piaggio",
   "repository": {
     "type": "git",
-    "url": "https://github.com/franciscopiaggio/card-motion.git",
+    "url": "https://github.com/franpiaggio/card-motion.git",
     "directory": "packages/card-motion"
   },
-  "homepage": "https://github.com/franciscopiaggio/card-motion#readme",
-  "bugs": "https://github.com/franciscopiaggio/card-motion/issues",
+  "homepage": "https://github.com/franpiaggio/card-motion#readme",
+  "bugs": "https://github.com/franpiaggio/card-motion/issues",
   "type": "module",
   "sideEffects": [
     "**/*.css"
