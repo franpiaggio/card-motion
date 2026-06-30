@@ -70,7 +70,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const nodesRef = useRef(new Map<number, HTMLElement>());
-  const zonesRef = useRef<Zones>(getZones(0, 0));
+  const sizeRef = useRef({ w: 0, h: 0 });
   const busyRef = useRef(false);
   const ordersRef = useRef<Orders | null>(null);
   if (ordersRef.current === null) {
@@ -79,19 +79,19 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   const selectedRef = useRef(new Set<number>());
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
   const syncSelected = () => setSelected(new Set(selectedRef.current));
-
-  const [counts, setCounts] = useState(() => ({ deck: cards.length, hand: 0, table: 0 }));
-  const [hand, setHand] = useState<ReadonlyArray<number>>([]);
-  const syncCounts = () => {
-    const o = ordersRef.current!;
-    setCounts({ deck: o.deck.length, hand: o.hand.length, table: o.table.length });
-    setHand([...o.hand]);
-  };
   const clearSelection = () => {
     if (selectedRef.current.size) {
       selectedRef.current.clear();
       syncSelected();
     }
+  };
+
+  const [counts, setCounts] = useState(() => ({ deck: cards.length, hand: 0, table: 0 }));
+  const [hand, setHand] = useState<ReadonlyArray<number>>([]);
+  const syncSnapshot = () => {
+    const o = ordersRef.current!;
+    setCounts({ deck: o.deck.length, hand: o.hand.length, table: o.table.length });
+    setHand([...o.hand]);
   };
 
   const registerCard = useCallback((id: number, node: HTMLElement | null) => {
@@ -101,9 +101,19 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
 
   const node = (id: number) => nodesRef.current.get(id) ?? null;
 
+  // Zone anchors for the *current* state. While idle (nothing dealt) the deck
+  // is centered; once cards are in play it sits on the side.
+  const computeZones = (): Zones => {
+    const { w, h } = sizeRef.current;
+    const base = getZones(w, h);
+    const o = ordersRef.current!;
+    const active = o.hand.length > 0 || o.table.length > 0;
+    return active ? base : { ...base, deck: { x: w * 0.5, y: h * 0.48 } };
+  };
+
   // Place every card in its zone with no animation (mount / resize).
   const placeInstant = useCallback(() => {
-    const z = zonesRef.current;
+    const z = computeZones();
     const orders = ordersRef.current!;
     orders.deck.forEach((id, i) => {
       const t = deckT(i, orders.deck.length, z);
@@ -125,7 +135,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
       const el = stageRef.current;
       if (!el) return;
       const measure = () => {
-        zonesRef.current = getZones(el.clientWidth, el.clientHeight);
+        sizeRef.current = { w: el.clientWidth, h: el.clientHeight };
       };
       measure();
       placeInstant();
@@ -140,12 +150,21 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   );
 
   // Build a timeline behind an anti-overlap guard.
-  const run = (build: (tl: gsap.core.Timeline, z: Zones) => void) => {
+  const run = (build: (tl: gsap.core.Timeline) => void) => {
     if (busyRef.current) return;
     busyRef.current = true;
     const tl = gsap.timeline({ onComplete: () => (busyRef.current = false) });
-    build(tl, zonesRef.current);
+    build(tl);
     if (tl.getChildren().length === 0) busyRef.current = false;
+  };
+
+  // Re-tween the deck stack to its current anchor (centered ↔ side).
+  const layoutDeck = (tl: gsap.core.Timeline, z: Zones, duration = 0.4) => {
+    const orders = ordersRef.current!;
+    orders.deck.forEach((id, i) => {
+      const t = deckT(i, orders.deck.length, z);
+      tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, duration, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, 0);
+    });
   };
 
   // Re-tween the hand fan + table row to their current targets.
@@ -164,12 +183,13 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
 
   const shuffle = useCallback(
     () =>
-      run((tl, z) => {
+      run((tl) => {
         clearSelection();
         const orders = ordersRef.current!;
         const all = [...orders.deck, ...orders.hand, ...orders.table];
         ordersRef.current = { deck: all, hand: [], table: [] };
-        syncCounts();
+        syncSnapshot();
+        const z = computeZones(); // idle → deck centered
 
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
@@ -191,18 +211,23 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
 
   const deal = useCallback(
     (count: number = handSize) =>
-      run((tl, z) => {
+      run((tl) => {
         clearSelection();
         const orders = ordersRef.current!;
         const need = Math.min(count - orders.hand.length, orders.deck.length);
         if (need <= 0) return;
         const taken = orders.deck.splice(orders.deck.length - need, need).reverse();
         orders.hand.push(...taken);
-        syncCounts();
+        syncSnapshot();
+        const z = computeZones(); // active → deck slides to the side
         const hand = orders.hand;
         const n = hand.length;
         const firstNew = n - need;
 
+        // remaining deck slides to its side position
+        layoutDeck(tl, z, 0.45);
+
+        // dealt / refanned hand
         hand.forEach((id, i) => {
           const t = handT(i, n, z);
           const isNew = i >= firstNew;
@@ -221,18 +246,19 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
           );
         });
       }),
-    [handSize, handT],
+    [handSize, handT, deckT],
   );
 
   const play = useCallback(
     () =>
-      run((tl, z) => {
+      run((tl) => {
         clearSelection();
         const orders = ordersRef.current!;
         if (!orders.hand.length) return;
         const moving = orders.hand.splice(0);
         orders.table.push(...moving);
-        syncCounts();
+        syncSnapshot();
+        const z = computeZones();
         const table = orders.table;
         const n = table.length;
         table.forEach((id, i) => {
@@ -243,30 +269,46 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     [tableT],
   );
 
+  const playSelected = useCallback(
+    () =>
+      run((tl) => {
+        const orders = ordersRef.current!;
+        const chosen = orders.hand.filter((id) => selectedRef.current.has(id));
+        if (!chosen.length) return;
+        orders.hand = orders.hand.filter((id) => !selectedRef.current.has(id));
+        orders.table.push(...chosen);
+        selectedRef.current.clear();
+        syncSelected();
+        syncSnapshot();
+        relayout(tl, computeZones());
+      }),
+    [handT, tableT],
+  );
+
   const clearTable = useCallback(
     () =>
-      run((tl, z) => {
+      run((tl) => {
         const orders = ordersRef.current!;
         if (!orders.table.length) return;
         const moving = orders.table.splice(0);
         orders.deck.push(...moving);
-        syncCounts();
-        orders.deck.forEach((id, i) => {
-          const t = deckT(i, orders.deck.length, z);
-          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.4, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.006);
-        });
+        syncSnapshot();
+        const z = computeZones(); // recenters the deck if the hand is now empty too
+        layoutDeck(tl, z, 0.4);
+        relayout(tl, z);
       }),
-    [deckT],
+    [deckT, handT, tableT],
   );
 
   const reset = useCallback(
     () =>
-      run((tl, z) => {
+      run((tl) => {
         clearSelection();
         const orders = ordersRef.current!;
         const all = [...orders.deck, ...orders.hand, ...orders.table];
         ordersRef.current = { deck: all, hand: [], table: [] };
-        syncCounts();
+        syncSnapshot();
+        const z = computeZones(); // idle → deck centered
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
           tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.4, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.008);
@@ -275,38 +317,20 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     [deckT],
   );
 
-  const playSelected = useCallback(
-    () =>
-      run((tl, z) => {
-        const orders = ordersRef.current!;
-        const chosen = orders.hand.filter((id) => selectedRef.current.has(id));
-        if (!chosen.length) return;
-        orders.hand = orders.hand.filter((id) => !selectedRef.current.has(id));
-        orders.table.push(...chosen);
-        selectedRef.current.clear();
-        syncSelected();
-        syncCounts();
-        relayout(tl, z);
-      }),
-    [handT, tableT],
-  );
-
   const toggleCard = useCallback(
     (id: number) => {
       if (busyRef.current) return;
       const orders = ordersRef.current!;
       if (!orders.hand.includes(id)) return; // only hand cards are selectable
-      const z = zonesRef.current;
+      const z = computeZones();
       const i = orders.hand.indexOf(id);
       const t = handT(i, orders.hand.length, z);
 
       if (selectedRef.current.has(id)) {
-        // deselect → lower back into the fan
         selectedRef.current.delete(id);
         syncSelected();
         gsap.to(node(id), { y: t.y, scale: t.scale, zIndex: 100 + i, duration: 0.2, ease: 'power2.out' });
       } else {
-        // select → lift
         selectedRef.current.add(id);
         syncSelected();
         gsap.to(node(id), { y: t.y - LIFT, scale: SELECT_SCALE, zIndex: 150, duration: 0.2, ease: 'power2.out' });

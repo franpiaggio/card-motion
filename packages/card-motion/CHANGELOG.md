@@ -15,5 +15,6 @@ All notable changes to `card-motion` are documented here. This project adheres t
 - `useCardTilt` — reusable 3D tilt for any element.
 - `<BackgroundShader>` — fullscreen WebGL swirl background.
 - **Responsive layout** — `Zones` carries the stage size; the hand fan and table row never overflow, and `<CardTable>` shrinks cards on narrow screens.
+- **Stateful deck position** — the deck starts centered and slides to the side once cards are dealt; the table row is centered in the play area to the deck's right, so played cards never overlap the deck.
 - Utilities: `buildDeck`, `shuffleInPlace`, `getZones`, `deckTarget`, `handTarget`, `tableTarget`, plus `SUITS` / `RANKS`.
 - Full TypeScript types, ESM + CJS builds, `'use client'` directive, and `card-motion/styles.css`.
