@@ -26,7 +26,7 @@ Shuffle, deal, select and play with juicy GSAP timelines, a pointer-driven 3D ti
 - 🃏 **`<Card>`** — cream face, corner indices, big pip, an always-on holographic **foil** for special cards, and a pointer-following **3D tilt**.
 - 🧠 **Headless `useCardTable`** — owns deck/hand/table state, the GSAP timelines, selection, and reactive `counts`/`hand`; you render the cards and controls.
 - 📱 **Responsive** — the fan and the cards shrink to fit narrow screens; nothing overflows.
-- 🌀 **`<BackgroundShader>`** — a fullscreen WebGL swirl, GPU-rendered.
+- 🌀 **`<BackgroundShader>`** — optional fullscreen WebGL swirl with configurable colors, GPU-rendered.
 - 🧩 **Composable** — swap the layout functions to design your own fan, grid or spread.
 - 🔡 **TypeScript-first**, tree-shakeable ESM + CJS, `'use client'` ready.
 
@@ -205,9 +205,20 @@ return (
 
 ### `<BackgroundShader>`
 
+Entirely **optional** — it's a standalone component, not part of `<CardTable>`. Render it only if you want the animated backdrop. Colors are configurable; the default is the signature red/blue swirl.
+
 ```tsx
 <BackgroundShader speed={1.4} maxDpr={2} />
+
+{/* custom palette (any omitted color keeps its default) */}
+<BackgroundShader colors={{ deep: '#06121a', warm: '#1fbf8b', cool: '#7a5cff' }} />
 ```
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `speed` | `number` | `1` | Animation speed multiplier. |
+| `maxDpr` | `number` | `1.5` | Max device-pixel-ratio for the canvas. |
+| `colors` | `{ deep?, warm?, cool? }` | red/blue | Swirl colors as hex strings. |
 
 ### Utilities
 

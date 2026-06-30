@@ -13,7 +13,7 @@ All notable changes to `card-motion` are documented here. This project adheres t
 - `useCardTable` — headless engine that owns deck/hand/table state and the GSAP timelines, and exposes reactive `selected`, `hand`, and `counts`.
 - `<Card>` — playing card with corner indices, center pip, optional always-on holographic foil, and pointer-driven 3D tilt.
 - `useCardTilt` — reusable 3D tilt for any element.
-- `<BackgroundShader>` — fullscreen WebGL swirl background.
+- `<BackgroundShader>` — optional fullscreen WebGL swirl background with configurable `colors` (`deep` / `warm` / `cool`).
 - **Responsive layout** — `Zones` carries the stage size; the hand fan and table row never overflow, and `<CardTable>` shrinks cards on narrow screens.
 - **Stateful deck position** — the deck starts centered and slides to the side once cards are dealt; the table row is centered in the play area to the deck's right, so played cards never overlap the deck.
 - Utilities: `buildDeck`, `shuffleInPlace`, `getZones`, `deckTarget`, `handTarget`, `tableTarget`, plus `SUITS` / `RANKS`.

@@ -2,7 +2,7 @@ export { Card } from './components/Card';
 export type { CardProps } from './components/Card';
 
 export { BackgroundShader } from './components/BackgroundShader';
-export type { BackgroundShaderProps } from './components/BackgroundShader';
+export type { BackgroundShaderProps, BackgroundShaderColors } from './components/BackgroundShader';
 
 export { CardTable } from './components/CardTable';
 export type { CardTableProps, CardTableHandle } from './components/CardTable';
