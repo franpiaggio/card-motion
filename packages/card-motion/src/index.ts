@@ -1,4 +1,4 @@
-export { Card } from './components/Card';
+export { Card, cardLabel } from './components/Card';
 export type { CardProps } from './components/Card';
 
 export { BackgroundShader } from './components/BackgroundShader';

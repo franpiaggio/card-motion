@@ -135,6 +135,27 @@
     inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
+/* Keyboard focus ring (stacks with the gold selected ring). */
+.cm-card:focus-visible {
+  outline: 3px solid #5b8bff;
+  outline-offset: 3px;
+  border-radius: calc(var(--cm-w) * 0.12);
+}
+
+/* Visually-hidden live region for screen-reader status. */
+.cm-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Background shader canvas */
 .cm-bg-shader {
   position: fixed;

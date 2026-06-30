@@ -1,6 +1,15 @@
 'use client';
 
-import { forwardRef, useEffect, useImperativeHandle, useState, type CSSProperties } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+} from 'react';
 import { Card } from './Card';
 import { useCardTable, type UseCardTableOptions } from '../hooks/useCardTable';
 import { shuffleInPlace } from '../lib/deck';
@@ -20,9 +29,9 @@ export interface CardTableProps extends UseCardTableOptions {
   cardWidth?: number;
   /** Enable the pointer 3D tilt on cards. Default `true`. */
   tilt?: boolean;
-  /** Click a hand card to select it, click again to play it. Default `true`. */
+  /** Click (or Enter/Space) a hand card to select / deselect it. Default `true`. */
   selectable?: boolean;
-  /** How many random cards get the always-on holographic foil. Default `1`. */
+  /** How many random hand cards get the always-on holographic foil. Default `1`. */
   specialCount?: number;
   /** Explicit ids for the foil ("special") cards. Overrides `specialCount`. */
   foilCardIds?: number[];
@@ -30,6 +39,8 @@ export interface CardTableProps extends UseCardTableOptions {
   controls?: boolean;
   /** Labels for the built-in controls (for i18n). */
   labels?: Partial<Record<'shuffle' | 'deal' | 'play' | 'playAll' | 'clear' | 'reset', string>>;
+  /** Accessible name for the table region. Default `"Card table"`. */
+  ariaLabel?: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -38,16 +49,30 @@ const DEFAULT_LABELS = { shuffle: 'Shuffle', deal: 'Deal', play: 'Play', playAll
 
 /**
  * A ready-to-use Balatro-style card table: a full deck with shuffle / deal /
- * play / clear / reset animations, click-to-select-then-play, and an optional
- * controls bar. Drive it imperatively via a ref or use the built-in buttons.
+ * play / clear / reset animations, click- or keyboard-driven selection, and an
+ * optional controls bar. Drive it imperatively via a ref or the built-in buttons.
+ *
+ * Keyboard: Tab to a hand card, Arrow keys / Home / End to move between them,
+ * Enter or Space to select / deselect.
  */
 export const CardTable = forwardRef<CardTableHandle, CardTableProps>(function CardTable(
-  { cardWidth = 96, tilt = true, selectable = true, specialCount = 1, foilCardIds, controls = true, labels, className, style, ...tableOptions },
+  { cardWidth = 96, tilt = true, selectable = true, specialCount = 1, foilCardIds, controls = true, labels, ariaLabel = 'Card table', className, style, ...tableOptions },
   ref,
 ) {
-  const { cards, stageRef, registerCard, shuffle, deal, play, playSelected, clearTable, reset, toggleCard, selected, hand, counts } =
+  const { cards, stageRef, registerCard, shuffle, deal, play, playSelected, clearTable, reset, toggleCard, selected, hand, table, counts } =
     useCardTable(tableOptions);
   const handSize = tableOptions.handSize ?? 8;
+
+  // Keep our own map of card DOM nodes so we can move focus between hand cards.
+  const localNodes = useRef(new Map<number, HTMLElement>());
+  const setCardNode = useCallback(
+    (id: number) => (node: HTMLElement | null) => {
+      registerCard(id, node);
+      if (node) localNodes.current.set(id, node);
+      else localNodes.current.delete(id);
+    },
+    [registerCard],
+  );
 
   // Shrink the cards on narrow screens so a full hand never overflows.
   const [stageWidth, setStageWidth] = useState(0);
@@ -69,8 +94,7 @@ export const CardTable = forwardRef<CardTableHandle, CardTableProps>(function Ca
   );
 
   // "Special" foil cards: a random pick from the current hand (re-picked on
-  // each deal), so the shine is always visible. Pass `foilCardIds` to instead
-  // mark specific cards as permanently special, wherever they are.
+  // each deal). Pass `foilCardIds` to mark specific cards permanently instead.
   const [specialIds, setSpecialIds] = useState<ReadonlySet<number>>(() => new Set(foilCardIds ?? []));
   useEffect(() => {
     if (foilCardIds) {
@@ -85,29 +109,68 @@ export const CardTable = forwardRef<CardTableHandle, CardTableProps>(function Ca
     setSpecialIds(new Set(ids));
   }, [foilCardIds, specialCount, hand]);
 
+  // Roving tabindex across the hand.
+  const [focusId, setFocusId] = useState<number | null>(null);
+  useEffect(() => {
+    setFocusId((cur) => (cur != null && hand.includes(cur) ? cur : hand.length ? hand[0] : null));
+  }, [hand]);
+
+  const onHandKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>, id: number) => {
+      const keys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
+      if (!keys.includes(e.key)) return;
+      const idx = hand.indexOf(id);
+      if (idx < 0) return;
+      e.preventDefault();
+      const next =
+        e.key === 'ArrowRight' ? Math.min(hand.length - 1, idx + 1)
+        : e.key === 'ArrowLeft' ? Math.max(0, idx - 1)
+        : e.key === 'Home' ? 0
+        : hand.length - 1;
+      const nextId = hand[next];
+      setFocusId(nextId);
+      localNodes.current.get(nextId)?.focus();
+    },
+    [hand],
+  );
+
   const l = { ...DEFAULT_LABELS, ...labels };
+  const status =
+    `${counts.hand} ${counts.hand === 1 ? 'card' : 'cards'} in hand` +
+    (selected.size ? `, ${selected.size} selected` : '') +
+    `, ${counts.table} on the table`;
 
   return (
-    <div className={`cm-table${className ? ` ${className}` : ''}`} style={style}>
+    <div className={`cm-table${className ? ` ${className}` : ''}`} style={style} role="group" aria-label={ariaLabel}>
+      <div className="cm-sr-only" aria-live="polite">{status}</div>
       <div className="cm-stage" ref={stageRef}>
-        {cards.map((c) => (
-          <Card
-            key={c.id}
-            ref={(node) => registerCard(c.id, node)}
-            rank={c.rank}
-            suit={c.suit}
-            color={c.color}
-            width={effectiveWidth}
-            tilt={tilt}
-            foil={specialIds.has(c.id)}
-            className={selected.has(c.id) ? 'cm-selected' : undefined}
-            onClick={selectable ? () => toggleCard(c.id) : undefined}
-            style={{ position: 'absolute', top: 0, left: 0 }}
-          />
-        ))}
+        {cards.map((c) => {
+          const inHand = hand.includes(c.id);
+          const inTable = table.includes(c.id);
+          const isInteractive = selectable && inHand;
+          return (
+            <Card
+              key={c.id}
+              ref={setCardNode(c.id)}
+              rank={c.rank}
+              suit={c.suit}
+              color={c.color}
+              width={effectiveWidth}
+              tilt={tilt}
+              foil={specialIds.has(c.id)}
+              selected={selected.has(c.id)}
+              interactive={isInteractive}
+              tabIndex={inHand ? (c.id === focusId ? 0 : -1) : undefined}
+              hiddenFromAt={!inHand && !inTable}
+              onClick={isInteractive ? () => toggleCard(c.id) : undefined}
+              onKeyDown={isInteractive ? (e) => onHandKeyDown(e, c.id) : undefined}
+              style={{ position: 'absolute', top: 0, left: 0 }}
+            />
+          );
+        })}
       </div>
       {controls && (
-        <div className="cm-controls">
+        <div className="cm-controls" role="toolbar" aria-label="Table controls">
           {cards.length > 0 && (
             <button type="button" onClick={shuffle}>{l.shuffle}</button>
           )}

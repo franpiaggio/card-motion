@@ -50,6 +50,8 @@ export interface CardTableApi {
   selected: ReadonlySet<number>;
   /** Reactive ids currently in the hand (in order). */
   hand: ReadonlyArray<number>;
+  /** Reactive ids currently on the table (in order). */
+  table: ReadonlyArray<number>;
   /** Reactive count of cards in each zone — handy to gate UI. */
   counts: { deck: number; hand: number; table: number };
 }
@@ -72,6 +74,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   const nodesRef = useRef(new Map<number, HTMLElement>());
   const sizeRef = useRef({ w: 0, h: 0 });
   const busyRef = useRef(false);
+  const reduceRef = useRef(false);
   const ordersRef = useRef<Orders | null>(null);
   if (ordersRef.current === null) {
     ordersRef.current = { deck: cards.map((c) => c.id), hand: [], table: [] };
@@ -88,10 +91,12 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
 
   const [counts, setCounts] = useState(() => ({ deck: cards.length, hand: 0, table: 0 }));
   const [hand, setHand] = useState<ReadonlyArray<number>>([]);
+  const [tableIds, setTableIds] = useState<ReadonlyArray<number>>([]);
   const syncSnapshot = () => {
     const o = ordersRef.current!;
     setCounts({ deck: o.deck.length, hand: o.hand.length, table: o.table.length });
     setHand([...o.hand]);
+    setTableIds([...o.table]);
   };
 
   const registerCard = useCallback((id: number, node: HTMLElement | null) => {
@@ -138,6 +143,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
         sizeRef.current = { w: el.clientWidth, h: el.clientHeight };
       };
       measure();
+      reduceRef.current = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       placeInstant();
       const onResize = () => {
         measure();
@@ -156,6 +162,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     const tl = gsap.timeline({ onComplete: () => (busyRef.current = false) });
     build(tl);
     if (tl.getChildren().length === 0) busyRef.current = false;
+    else if (reduceRef.current) tl.progress(1); // honor prefers-reduced-motion: snap to the end
   };
 
   // Re-tween the deck stack to its current anchor (centered ↔ side).
@@ -326,18 +333,19 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
       const i = orders.hand.indexOf(id);
       const t = handT(i, orders.hand.length, z);
 
+      const dur = reduceRef.current ? 0 : 0.2;
       if (selectedRef.current.has(id)) {
         selectedRef.current.delete(id);
         syncSelected();
-        gsap.to(node(id), { y: t.y, scale: t.scale, zIndex: 100 + i, duration: 0.2, ease: 'power2.out' });
+        gsap.to(node(id), { y: t.y, scale: t.scale, zIndex: 100 + i, duration: dur, ease: 'power2.out' });
       } else {
         selectedRef.current.add(id);
         syncSelected();
-        gsap.to(node(id), { y: t.y - LIFT, scale: SELECT_SCALE, zIndex: 150, duration: 0.2, ease: 'power2.out' });
+        gsap.to(node(id), { y: t.y - LIFT, scale: SELECT_SCALE, zIndex: 150, duration: dur, ease: 'power2.out' });
       }
     },
     [handT],
   );
 
-  return { cards, stageRef, registerCard, shuffle, deal, play, playSelected, clearTable, reset, toggleCard, selected, hand, counts };
+  return { cards, stageRef, registerCard, shuffle, deal, play, playSelected, clearTable, reset, toggleCard, selected, hand, table: tableIds, counts };
 }

@@ -26,6 +26,7 @@ Shuffle, deal, select and play with juicy GSAP timelines, a pointer-driven 3D ti
 - 🃏 **`<Card>`** — cream face, corner indices, big pip, an always-on holographic **foil** for special cards, and a pointer-following **3D tilt**.
 - 🧠 **Headless `useCardTable`** — owns deck/hand/table state, the GSAP timelines, selection, and reactive `counts`/`hand`; you render the cards and controls.
 - 📱 **Responsive** — the fan and the cards shrink to fit narrow screens; nothing overflows.
+- ♿ **Accessible** — keyboard-operable cards, ARIA roles/labels, a focus ring, a live-region status, and `prefers-reduced-motion` support.
 - 🌀 **`<BackgroundShader>`** — optional fullscreen WebGL swirl with configurable colors, GPU-rendered.
 - 🧩 **Composable** — swap the layout functions to design your own fan, grid or spread.
 - 🔡 **TypeScript-first**, tree-shakeable ESM + CJS, `'use client'` ready.
@@ -258,6 +259,18 @@ All classes are prefixed `cm-` and every size scales from the `--cm-w` (card wid
 ```
 
 Key classes: `cm-card` (`cm-foil`, `cm-selected`), `cm-card-inner`, `cm-card-face` (`cm-red` / `cm-black`), `cm-pip`, `cm-corner`, `cm-card-foil`, `cm-bg-shader`, `cm-table`, `cm-stage`, `cm-controls` (`cm-warn`, `cm-ghost`). The foil shimmer respects `prefers-reduced-motion`.
+
+## Accessibility
+
+`<CardTable>` is keyboard- and screen-reader-friendly out of the box:
+
+- **Keyboard** — Tab to a hand card, **Arrow keys / Home / End** to move between them (roving tabindex), **Enter / Space** to select or deselect. The control bar is plain `<button>`s.
+- **Roles & names** — the table is a labelled `group`; hand cards are toggle `button`s with `aria-pressed` and names like *"Ace of spades"* (`cardLabel(rank, suit)` is exported); played cards are `role="img"`; the deck stack is hidden from assistive tech to avoid noise.
+- **Live region** — a polite status announces hand/selection/table counts as they change.
+- **Focus ring** — a visible `:focus-visible` outline (stacks with the gold selected ring).
+- **Reduced motion** — when the user prefers reduced motion, transitions snap to their end instead of animating (the foil shimmer also stops).
+
+Building your own table with `useCardTable`? Wire `interactive`, `selected`, `tabIndex` and `onKeyDown` on `<Card>` yourself — see the props above.
 
 ## SSR / Next.js
 
