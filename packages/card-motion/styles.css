@@ -26,8 +26,8 @@
   border-radius: calc(var(--cm-w) * 0.104);
   background: linear-gradient(150deg, #fdfdf8, #ececdf);
   box-shadow:
-    0 calc(var(--cm-w) * 0.083) calc(var(--cm-w) * 0.167) rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    0 calc(var(--cm-w) * 0.045) calc(var(--cm-w) * 0.1) rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   user-select: none;
 }
@@ -128,9 +128,9 @@
 /* Selected (lifted) hand card: a clear gold ring so the state is unmistakable. */
 .cm-card.cm-selected .cm-card-face {
   box-shadow:
-    0 calc(var(--cm-w) * 0.12) calc(var(--cm-w) * 0.22) rgba(0, 0, 0, 0.55),
+    0 calc(var(--cm-w) * 0.07) calc(var(--cm-w) * 0.15) rgba(0, 0, 0, 0.35),
     0 0 0 3px #ffd84d,
-    inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
 }
 
 /* Background shader canvas */
