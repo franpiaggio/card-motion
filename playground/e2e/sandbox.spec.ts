@@ -12,15 +12,15 @@ test('Sandbox: zone restriction, effect on play, and deck search', async ({ page
 
   // Rule: a boost may only enter Zone 1 — selecting it disables Zone 2.
   await boostInHand.click(); // a tap selects
-  await expect(page.getByRole('button', { name: 'Bajar a Zona 2' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Bajar a Zona 1' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Play to Zone 2' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Play to Zone 1' })).toBeEnabled();
 
   // Playing it into Zone 1 fires its effect (+3 to the score).
-  await page.getByRole('button', { name: 'Bajar a Zona 1' }).click();
+  await page.getByRole('button', { name: 'Play to Zone 1' }).click();
   await expect(page.locator('.sb-scorebox .game-score')).toHaveText('3');
 
   // Open the deck, browse it, and pull a card into play.
-  await page.getByRole('button', { name: 'Buscar en la baraja' }).click();
+  await page.getByRole('button', { name: 'Search the deck' }).click();
   await expect(page.locator('.cm-reveal-overlay')).toBeVisible();
   await page.locator('.cm-reveal-card').first().click();
   await expect(page.locator('.cm-reveal-overlay')).toHaveCount(0); // modal closed after picking
@@ -30,6 +30,9 @@ test('Sandbox: zone restriction, effect on play, and deck search', async ({ page
 test('Sandbox: a forbidden drag is rejected and snaps back', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Sandbox' }).click();
+  // The demo is embedded in the (scrolling) landing; align its stage to the top
+  // of the viewport so the lower drop zones are reachable by raw pointer moves.
+  await page.locator('.lp-stage').evaluate((el) => el.scrollIntoView({ block: 'start' }));
 
   const boost = page.locator('.sb-slot:not(.in-deck)', { has: page.locator('.k-boost') }).first();
   await expect(boost).toBeVisible();
@@ -43,7 +46,7 @@ test('Sandbox: a forbidden drag is rejected and snaps back', async ({ page }) =>
   await page.mouse.up();
 
   // The drop was rejected (logged) and nothing scored — the card snapped home.
-  await expect(page.locator('.sb-loglist-mini')).toContainText('rechazado');
+  await expect(page.locator('.sb-loglist-mini')).toContainText('rejected');
   await expect(page.locator('.sb-scorebox .game-score')).toHaveText('0');
 });
 
@@ -51,6 +54,7 @@ test('Sandbox: a forbidden drag is rejected and snaps back', async ({ page }) =>
 test('Sandbox: dragging a hand card reorders the hand', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Sandbox' }).click();
+  await page.locator('.lp-stage').evaluate((el) => el.scrollIntoView({ block: 'start' }));
 
   const hand = page.locator('.sb-slot:not(.in-deck)');
   await expect(hand).toHaveCount(5);

@@ -18,7 +18,7 @@ interface EffectCard {
 }
 
 const GLYPH: Record<Kind, string> = { boost: '★', draw: '↺', plain: '◦', search: '⌕' };
-const EFFECT: Record<Kind, string> = { boost: '+3 pts', draw: 'robá 1', plain: 'sin efecto', search: 'abrí la baraja' };
+const EFFECT: Record<Kind, string> = { boost: '+3 pts', draw: 'draw 1', plain: 'no effect', search: 'search deck' };
 const HAND_IDS = [0, 1, 2, 3, 4];
 
 function buildCards(): EffectCard[] {
@@ -97,10 +97,10 @@ export default function Sandbox() {
 
   // Per-game side-effect: runs once a card has been played into a zone.
   const runEffect = async (card: EffectCard) => {
-    if (card.kind === 'boost') { setScore((s) => s + 3); pushLog('boost → +3 puntos'); }
-    else if (card.kind === 'draw') { await draw('deck', 'hand', 1); pushLog('draw → +1 carta a la mano'); }
-    else if (card.kind === 'search') { pushLog('search → abrí la baraja'); setReveal(true); }
-    else pushLog('plain → sin efecto');
+    if (card.kind === 'boost') { setScore((s) => s + 3); pushLog('boost → +3 points'); }
+    else if (card.kind === 'draw') { await draw('deck', 'hand', 1); pushLog('draw → +1 card to hand'); }
+    else if (card.kind === 'search') { pushLog('search → opened the deck'); setReveal(true); }
+    else pushLog('plain → no effect');
   };
 
   const playTo = async (id: number, zone: PileId) => {
@@ -124,7 +124,7 @@ export default function Sandbox() {
       act(async () => {
         if (target == null) {
           await move(id, pileOf(id) ?? 'hand'); // rejected → back to where it was
-          pushLog('✕ rechazado — zona no admite esa carta');
+          pushLog('✕ rejected — zone does not accept that card');
           return;
         }
         if (target === 'hand') await move(id, 'hand', { index: handIndexAt(point.x) }); // drop position → reorder
@@ -148,7 +148,7 @@ export default function Sandbox() {
     sel != null &&
     (acceptsZone(byId.get(sel)!, zone)
       ? act(async () => { const id = sel; await playTo(id, zone); setSel(null); })
-      : pushLog('✕ rechazado — zona no admite esa carta'));
+      : pushLog('✕ rejected — zone does not accept that card'));
 
   // Rotate / orient MUTATE the payload, then ask the engine to relayout the pile
   // — the layout re-reads `orient` and the card animates to its new rotation.
@@ -165,19 +165,19 @@ export default function Sandbox() {
     <div className="sb">
       <div className="sb-hud">
         <div className="sb-scorebox">
-          <span className="game-label">Puntaje (efecto boost)</span>
+          <span className="game-label">Score (boost effect)</span>
           <strong className="game-score">{score}</strong>
         </div>
         <div className="sb-logbox">
           <div className="sb-logbox-head">
-            <span className="game-label">Registro</span>
+            <span className="game-label">Log</span>
             <button type="button" className="sb-loglink" onClick={() => setLogOpen(true)} disabled={log.length === 0}>
-              Ver todo{log.length ? ` (${log.length})` : ''}
+              View all{log.length ? ` (${log.length})` : ''}
             </button>
           </div>
           <div className="sb-loglist-mini">
             {log.length === 0 ? (
-              <span className="sb-log-empty">Bajá una carta a una zona para disparar su efecto…</span>
+              <span className="sb-log-empty">Drop a card into a zone to fire its effect…</span>
             ) : (
               log.slice(0, 3).map((l, i) => (
                 <div key={i} style={{ opacity: 1 - i * 0.28 }}>{l}</div>
@@ -190,18 +190,18 @@ export default function Sandbox() {
       <div className="sb-bar">
         <span className="sb-hint">
           {sel == null
-            ? 'Seleccioná o arrastrá una carta, o abrí la baraja'
+            ? 'Select or drag a card, or open the deck'
             : byId.get(sel)?.kind === 'boost'
-              ? 'Regla: un boost solo entra en Zona 1'
-              : 'Efecto para la carta seleccionada — o arrastrala a una zona'}
+              ? 'Rule: a boost only enters Zone 1'
+              : 'Effect for the selected card — or drag it to a zone'}
         </span>
         <div className="sb-actions">
-          <button type="button" disabled={sel == null || !acceptsZone(byId.get(sel)!, 'zoneA')} onClick={() => toZone('zoneA')}>Bajar a Zona 1</button>
-          <button type="button" disabled={sel == null || !acceptsZone(byId.get(sel)!, 'zoneB')} onClick={() => toZone('zoneB')}>Bajar a Zona 2</button>
-          <button type="button" disabled={sel == null} onClick={rotate}>Rotar 90°</button>
+          <button type="button" disabled={sel == null || !acceptsZone(byId.get(sel)!, 'zoneA')} onClick={() => toZone('zoneA')}>Play to Zone 1</button>
+          <button type="button" disabled={sel == null || !acceptsZone(byId.get(sel)!, 'zoneB')} onClick={() => toZone('zoneB')}>Play to Zone 2</button>
+          <button type="button" disabled={sel == null} onClick={rotate}>Rotate 90°</button>
           <button type="button" disabled={sel == null} onClick={() => setOrient('h')}>Horizontal</button>
           <button type="button" disabled={sel == null} onClick={() => setOrient('v')}>Vertical</button>
-          <button type="button" className="sb-search" onClick={() => setReveal(true)}>Buscar en la baraja</button>
+          <button type="button" className="sb-search" onClick={() => setReveal(true)}>Search the deck</button>
         </div>
       </div>
 
@@ -222,14 +222,14 @@ export default function Sandbox() {
             );
           })}
         </div>
-        <span className="sb-tag" style={{ left: '12%', top: 'calc(42% + 64px)' }}>Baraja · {piles.deck.length}</span>
-        <span className="sb-tag" style={{ left: '62%', top: 'calc(30% + 62px)' }}>Zona 1</span>
-        <span className="sb-tag" style={{ left: '62%', top: 'calc(56% + 62px)' }}>Zona 2</span>
+        <span className="sb-tag" style={{ left: '12%', top: 'calc(42% + 64px)' }}>Deck · {piles.deck.length}</span>
+        <span className="sb-tag" style={{ left: '62%', top: 'calc(30% + 62px)' }}>Zone 1</span>
+        <span className="sb-tag" style={{ left: '62%', top: 'calc(56% + 62px)' }}>Zone 2</span>
       </div>
 
       {reveal && (
         <DeckReveal
-          title="Baraja desplegada — elegí una carta"
+          title="Deck — pick a card"
           cards={piles.deck.map((id) => byId.get(id)!)}
           renderFace={(card) => <CardFace card={card} />}
           onPick={pickFromDeck}
@@ -241,12 +241,12 @@ export default function Sandbox() {
         <div className="sb-modal" role="dialog" aria-modal="true" onClick={() => setLogOpen(false)}>
           <div className="sb-modal-panel sb-modal-log" onClick={(e) => e.stopPropagation()}>
             <div className="sb-modal-head">
-              <span>Registro de acciones</span>
-              <button type="button" className="sb-modal-close" onClick={() => setLogOpen(false)} aria-label="Cerrar">✕</button>
+              <span>Action log</span>
+              <button type="button" className="sb-modal-close" onClick={() => setLogOpen(false)} aria-label="Close">✕</button>
             </div>
             <div className="sb-loglist">
               {log.length === 0 ? (
-                <div className="sb-reveal-empty">Sin acciones todavía.</div>
+                <div className="sb-reveal-empty">No actions yet.</div>
               ) : (
                 log.map((l, i) => <div key={i} className="sb-logrow">{l}</div>)
               )}

@@ -1,0 +1,343 @@
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { BackgroundShader, Card, CardTable, useCardTable } from 'card-motion';
+
+// A tiny, dependency-free highlighter for the short JSX snippets below. Tokenizes
+// into React spans (no dangerouslySetInnerHTML) — strings, keywords, component
+// tags, and attribute names each get a color.
+function Code({ src }: { src: string }) {
+  const re =
+    /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(import|from|export|default|const|let|var|return|await|async|new|function)\b|(<\/?)([A-Za-z][\w]*)|([a-zA-Z_]\w*)(?=\s*[:=][^=])|([a-zA-Z_]\w*)(?=\()|(\b\d+\b)|([{}()[\]<>/=.:,]+)/g;
+  const nodes: ReactNode[] = [];
+  let last = 0;
+  let k = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(src)) !== null) {
+    if (m.index > last) nodes.push(src.slice(last, m.index));
+    const [full, str, kw, tagOpen, tagName, attr, fn, num, punc] = m;
+    if (str) nodes.push(<span key={k++} className="tok-str">{str}</span>);
+    else if (kw) nodes.push(<span key={k++} className="tok-key">{kw}</span>);
+    else if (tagOpen !== undefined) {
+      nodes.push(<span key={k++} className="tok-punc">{tagOpen}</span>);
+      if (tagName) nodes.push(<span key={k++} className="tok-tag">{tagName}</span>);
+    } else if (attr) nodes.push(<span key={k++} className="tok-attr">{attr}</span>);
+    else if (fn) nodes.push(<span key={k++} className="tok-fn">{fn}</span>);
+    else if (num) nodes.push(<span key={k++} className="tok-num">{num}</span>);
+    else if (punc) nodes.push(<span key={k++} className="tok-punc">{punc}</span>);
+    else nodes.push(full);
+    last = m.index + full.length;
+  }
+  if (last < src.length) nodes.push(src.slice(last));
+  return <code>{nodes}</code>;
+}
+import DragDropDemo from './DragDropDemo';
+import GameDemo from './GameDemo';
+import Sandbox from './Sandbox';
+
+type Demo = 'table' | 'dnd' | 'game' | 'sandbox';
+
+const INSTALL = 'pnpm add card-motion gsap';
+
+const SPEC = [
+  'GSAP timelines',
+  'React 18 & 19',
+  'TypeScript-first',
+  'Keyboard + ARIA',
+  'prefers-reduced-motion',
+  'ESM + CJS',
+  'MIT',
+];
+
+function CopyInstall() {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="lp-install"
+      onClick={() => {
+        void navigator.clipboard?.writeText(INSTALL);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1400);
+      }}
+      aria-label={`Copy install command: ${INSTALL}`}
+    >
+      <span className="lp-install-prompt">$</span>
+      <code>{INSTALL}</code>
+      <span className="lp-install-copy">{copied ? 'copied' : 'copy'}</span>
+    </button>
+  );
+}
+
+const WAYS = [
+  {
+    tag: 'batteries-included',
+    accent: 'coral',
+    name: '<CardTable />',
+    blurb: 'Drop in one component and get shuffle, deal, select, play, and contextual controls. Sized, responsive, accessible.',
+    code: `import { CardTable } from 'card-motion'
+import 'card-motion/styles.css'
+
+export default () => (
+  <CardTable handSize={8} />
+)`,
+  },
+  {
+    tag: 'headless',
+    accent: 'blue',
+    name: 'useCardTable()',
+    blurb: 'Render your own cards and rules. The hook owns deck/hand/table state, the GSAP timelines, and selection.',
+    code: `const {
+  cards, deal, playSelected,
+  toggleCard, registerCard,
+} = useCardTable({
+  handSize: 7,
+})`,
+  },
+  {
+    tag: 'drag & drop',
+    accent: 'marigold',
+    name: 'DragDropProvider',
+    blurb: 'Primitives for solitaire-style boards. It owns the pointer mechanics and snap-back; you own the rules.',
+    code: `<DragDropProvider onDrop={move}>
+  <DropZone id="foundation" accepts={rule}>
+    <DraggableCard id={c.id} zone="tableau">
+      <Card {...c} />
+    </DraggableCard>
+  </DropZone>
+</DragDropProvider>`,
+  },
+] as const;
+
+// A self-playing card table for the hero: it loops shuffle → deal → select two
+// → play them → reset, forever, with no controls and no user input. Built on the
+// headless `useCardTable` (which exposes `hand`, so we can pick cards to select).
+function HeroTable() {
+  const { cards, stageRef, registerCard, shuffle, deal, playSelected, reset, toggleCard, hand, table, selected } =
+    useCardTable({ handSize: 6 });
+  const handRef = useRef<ReadonlyArray<number>>([]);
+  handRef.current = hand;
+
+  // Shrink the cards on narrow screens so the fan never overflows the felt.
+  const [stageWidth, setStageWidth] = useState(0);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => setStageWidth(el.clientWidth);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    update();
+    return () => ro.disconnect();
+  }, [stageRef]);
+  const width = stageWidth > 0 ? Math.min(96, Math.max(52, stageWidth / 6.2)) : 92;
+
+  useEffect(() => {
+    let alive = true;
+    const timers: number[] = [];
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => {
+        timers.push(window.setTimeout(resolve, ms));
+      });
+
+    // Reduced motion: skip the loop, just settle a static hand.
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      deal();
+      return () => {
+        alive = false;
+        timers.forEach(clearTimeout);
+      };
+    }
+
+    (async () => {
+      // Small delay so the felt is mounted before the first shuffle.
+      await wait(500);
+      while (alive) {
+        shuffle();
+        await wait(1700);
+        if (!alive) break;
+
+        deal();
+        await wait(1500);
+        if (!alive) break;
+
+        // Auto-select two cards from the dealt hand.
+        const h = handRef.current;
+        const picks = [h[1], h[3]].filter((id): id is number => id != null);
+        for (const id of picks) {
+          toggleCard(id);
+          await wait(420);
+          if (!alive) break;
+        }
+        await wait(900);
+        if (!alive) break;
+
+        playSelected();
+        await wait(1400); // play, then let the two cards sit on the table
+        if (!alive) break;
+
+        reset();
+        await wait(1500); // everything glides home before the next shuffle
+      }
+    })();
+
+    return () => {
+      alive = false;
+      timers.forEach(clearTimeout);
+    };
+  }, [shuffle, deal, playSelected, reset, toggleCard]);
+
+  return (
+    <div className="cm-table" aria-hidden="true">
+      <div className="cm-stage" ref={stageRef}>
+        {cards.map((c) => (
+          <Card
+            key={c.id}
+            ref={(node) => registerCard(c.id, node)}
+            rank={c.rank}
+            suit={c.suit}
+            color={c.color}
+            width={width}
+            tilt={false}
+            selected={selected.has(c.id)}
+            hiddenFromAt={!hand.includes(c.id) && !table.includes(c.id)}
+            style={{ position: 'absolute', top: 0, left: 0 }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Landing() {
+  const [demo, setDemo] = useState<Demo>('game');
+
+  return (
+    <div className="lp">
+      {/* ── Hero ─────────────────────────────────────────────── */}
+      <header className="lp-hero">
+        <div className="lp-hero-copy">
+          <p className="lp-kicker">React · GSAP · TypeScript</p>
+          <h1 className="lp-title">
+            Playing&#8209;card motion,
+            <br />
+            <span className="lp-title-mark">already built.</span>
+          </h1>
+          <p className="lp-lede">
+            A ready-made card table and the headless engine behind it. Shuffle, deal, select and play with
+            GSAP timelines, a pointer-driven tilt, and a WebGL swirl. Two imports, no motion code of your own.
+          </p>
+
+          <CopyInstall />
+
+          <div className="lp-cta">
+            <a className="lp-btn lp-btn-primary" href="#live">
+              See it move
+            </a>
+            <a className="lp-btn" href="https://www.npmjs.com/package/card-motion" target="_blank" rel="noreferrer">
+              npm
+            </a>
+            <a
+              className="lp-btn"
+              href="https://github.com/franpiaggio/card-motion"
+              target="_blank"
+              rel="noreferrer"
+            >
+              GitHub
+            </a>
+          </div>
+        </div>
+
+        <div className="lp-hero-stage">
+          <div className="lp-felt">
+            <HeroTable />
+          </div>
+          <p className="lp-felt-note">Live. Real GSAP, on loop.</p>
+        </div>
+      </header>
+
+      {/* ── Spec strip ───────────────────────────────────────── */}
+      <ul className="lp-spec" aria-label="At a glance">
+        {SPEC.map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ul>
+
+      {/* ── Three ways in ────────────────────────────────────── */}
+      <section className="lp-ways" aria-labelledby="ways-h">
+        <h2 id="ways-h" className="lp-section-h">
+          Three ways in
+        </h2>
+        <div className="lp-ways-grid">
+          {WAYS.map((w) => (
+            <article key={w.name} className={`lp-way lp-accent-${w.accent}`}>
+              <span className="lp-way-tag">{w.tag}</span>
+              <h3 className="lp-way-name">{w.name}</h3>
+              <p className="lp-way-blurb">{w.blurb}</p>
+              <pre className="lp-code">
+                <Code src={w.code} />
+              </pre>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Live playground ──────────────────────────────────── */}
+      <section className="lp-live" id="live" aria-labelledby="live-h">
+        <div className="lp-live-head">
+          <div>
+            <h2 id="live-h" className="lp-section-h">
+              Try all four
+            </h2>
+            <p className="lp-live-sub">
+              Four ways to use the library, each running live in this page.
+            </p>
+          </div>
+          <a className="lp-open" href={`#/demo/${demo}`}>
+            Open full screen&nbsp;↗
+          </a>
+        </div>
+        <div className="lp-stage">
+          <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+          <nav className="demo-nav" aria-label="Live demos">
+            <button type="button" className={demo === 'table' ? 'on' : ''} onClick={() => setDemo('table')}>
+              Card table
+            </button>
+            <button type="button" className={demo === 'dnd' ? 'on' : ''} onClick={() => setDemo('dnd')}>
+              Drag &amp; drop
+            </button>
+            <button type="button" className={demo === 'game' ? 'on' : ''} onClick={() => setDemo('game')}>
+              Demo
+            </button>
+            <button type="button" className={demo === 'sandbox' ? 'on' : ''} onClick={() => setDemo('sandbox')}>
+              Sandbox
+            </button>
+          </nav>
+          {demo === 'table' && <CardTable handSize={8} cardWidth={96} />}
+          {demo === 'dnd' && <DragDropDemo />}
+          {demo === 'game' && <GameDemo />}
+          {demo === 'sandbox' && <Sandbox />}
+        </div>
+      </section>
+
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="lp-foot">
+        <div className="lp-foot-main">
+          <span className="lp-foot-mark">card&#8209;motion</span>
+          <CopyInstall />
+        </div>
+        <div className="lp-foot-links">
+          <a href="https://www.npmjs.com/package/card-motion" target="_blank" rel="noreferrer">
+            npm
+          </a>
+          <a href="https://github.com/franpiaggio/card-motion" target="_blank" rel="noreferrer">
+            GitHub
+          </a>
+          <a href="https://github.com/franpiaggio/card-motion/blob/main/LICENSE" target="_blank" rel="noreferrer">
+            MIT
+          </a>
+        </div>
+        <p className="lp-foot-fine">
+          Juicy card animations for React, powered by GSAP. MIT &copy; Francisco Piaggio.
+        </p>
+      </footer>
+    </div>
+  );
+}

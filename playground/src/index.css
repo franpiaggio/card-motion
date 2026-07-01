@@ -100,6 +100,28 @@ body {
   background: var(--paper);
 }
 
+/* Back-to-landing link on the standalone demos page. */
+.demo-back {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 20;
+  font: 500 12px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--paper-dim);
+  background: color-mix(in oklch, var(--ink-900) 78%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 15px;
+  backdrop-filter: blur(6px);
+  transition: color 0.15s var(--ease-out);
+}
+.demo-back:hover {
+  color: var(--paper);
+}
+
 /* Drag & drop demo */
 .dnd {
   position: relative;

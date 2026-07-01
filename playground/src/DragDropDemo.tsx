@@ -72,18 +72,18 @@ export default function DragDropDemo() {
     <div className="dnd" ref={rootRef}>
       <header className="dnd-head">
         <h1>Drag &amp; drop zones</h1>
-        <p>Arrastrá las cartas de la mano a cualquier zona (y de vuelta). Vos manejás el estado; la librería pone la mecánica y la animación.</p>
+        <p>Drag the hand cards into any zone (and back). You manage the state; the library provides the mechanics and the animation.</p>
         <button type="button" onClick={reDeal}>
-          Repartir de nuevo
+          Deal again
         </button>
       </header>
 
       <DragDropProvider onDrop={handleDrop}>
         <div className="dnd-zones">
           {PLAY_ZONES.map((z, i) => (
-            <DropZone key={z} id={z} label={`Zona ${i + 1}`} className="dnd-zone">
+            <DropZone key={z} id={z} label={`Zone ${i + 1}`} className="dnd-zone">
               {zones[z].map((c) => renderCard(c, z))}
-              {zones[z].length === 0 && <span className="dnd-empty">Soltá cartas acá</span>}
+              {zones[z].length === 0 && <span className="dnd-empty">Drop cards here</span>}
             </DropZone>
           ))}
         </div>

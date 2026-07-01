@@ -188,7 +188,7 @@ export default function GameDemo() {
     <div className="game">
       <header className="game-hud">
         <div className="game-scorebox">
-          <span className="game-label">Puntaje</span>
+          <span className="game-label">Score</span>
           <div className="game-scoreline">
             <strong key={shown} className="game-score">{shown}</strong>
             <span className="game-target">/ {TARGET}</span>
@@ -196,14 +196,14 @@ export default function GameDemo() {
           <div className="game-bar"><div className="game-bar-fill" style={{ width: `${pct}%` }} /></div>
         </div>
         <div className="game-counters">
-          <div className="game-chip game-hands"><span>{handsLeft}</span>manos</div>
-          <div className="game-chip game-discards"><span>{discardsLeft}</span>descartes</div>
+          <div className="game-chip game-hands"><span>{handsLeft}</span>hands</div>
+          <div className="game-chip game-discards"><span>{discardsLeft}</span>discards</div>
         </div>
       </header>
 
       <div className="game-readout">
-        {phase === 'won' && <div className="game-banner win">¡Ganaste! 🎉</div>}
-        {phase === 'lost' && <div className="game-banner lose">Sin manos — {shown} / {TARGET}</div>}
+        {phase === 'won' && <div className="game-banner win">You win! 🎉</div>}
+        {phase === 'lost' && <div className="game-banner lose">Out of hands — {shown} / {TARGET}</div>}
         {tally && (
           <div className="game-tally">
             <b>{tally.name}</b>
@@ -216,9 +216,9 @@ export default function GameDemo() {
           <div className="game-preview"><b>{preview.type}</b><span className="game-math">{preview.total} pts</span></div>
         )}
         {!tally && phase === 'playing' && !preview && (
-          <div className="game-preview muted">Elegí hasta {MAX_SELECT} cartas y jugá tu mano</div>
+          <div className="game-preview muted">Pick up to {MAX_SELECT} cards and play your hand</div>
         )}
-        {!tally && phase === 'start' && <div className="game-preview muted">Alcanzá {TARGET} puntos en {HANDS} manos</div>}
+        {!tally && phase === 'start' && <div className="game-preview muted">Reach {TARGET} points in {HANDS} hands</div>}
         {phase === 'busy' && !tally && <div className="game-preview muted">…</div>}
       </div>
 
@@ -251,26 +251,26 @@ export default function GameDemo() {
             })}
           </div>
         </div>
-        <span className="game-piletag game-decktag">Mazo</span>
-        <span className="game-piletag game-discardtag">Descarte {piles.discard.length ? `· ${piles.discard.length}` : ''}</span>
+        <span className="game-piletag game-decktag">Deck</span>
+        <span className="game-piletag game-discardtag">Discard {piles.discard.length ? `· ${piles.discard.length}` : ''}</span>
       </div>
 
       <div className="game-controls">
         {phase === 'start' && (
-          <button type="button" className="game-play" onClick={startRound}>Barajar y repartir</button>
+          <button type="button" className="game-play" onClick={startRound}>Shuffle &amp; deal</button>
         )}
         {phase === 'playing' && (
           <>
             <button type="button" className="game-play" disabled={selected.size === 0} onClick={playHand}>
-              Jugar mano{selected.size ? ` (${selected.size})` : ''}
+              Play hand{selected.size ? ` (${selected.size})` : ''}
             </button>
             <button type="button" className="game-discard" disabled={selected.size === 0 || discardsLeft === 0} onClick={discardHand}>
-              Descartar
+              Discard
             </button>
           </>
         )}
         {(phase === 'won' || phase === 'lost') && (
-          <button type="button" className="game-play" onClick={startRound}>Jugar de nuevo</button>
+          <button type="button" className="game-play" onClick={startRound}>Play again</button>
         )}
       </div>
     </div>

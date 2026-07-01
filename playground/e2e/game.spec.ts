@@ -6,10 +6,10 @@ test('Demo: deals a hand and scores a played hand', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: 'Demo' }).click();
-  await page.getByRole('button', { name: 'Barajar y repartir' }).click();
+  await page.getByRole('button', { name: 'Shuffle & deal' }).click();
 
   // The deal finished once the play control appears (phase → 'playing').
-  const play = page.getByRole('button', { name: /^Jugar mano/ });
+  const play = page.getByRole('button', { name: /^Play hand/ });
   await expect(play).toBeVisible({ timeout: 15_000 });
 
   // A full hand of 8 interactive cards landed.
@@ -31,9 +31,9 @@ test('Demo: deals a hand and scores a played hand', async ({ page }) => {
 test('Demo: cards outside your hand cannot be selected', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Demo' }).click();
-  await page.getByRole('button', { name: 'Barajar y repartir' }).click();
+  await page.getByRole('button', { name: 'Shuffle & deal' }).click();
 
-  const play = page.getByRole('button', { name: /^Jugar mano/ });
+  const play = page.getByRole('button', { name: /^Play hand/ });
   await expect(play).toBeVisible({ timeout: 15_000 });
   await expect(play).toBeDisabled(); // nothing selected yet
 

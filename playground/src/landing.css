@@ -1,0 +1,470 @@
+/* ── card-motion landing ───────────────────────────────────────────────────
+   A printed card-game flyer: warm paper ground, flat riso inks (coral / blue /
+   marigold), hard-edged sticker buttons with an offset shadow. Extends the
+   library's own "Riso Arcade" identity (see playground/index.css) into a
+   scrolling marketing surface. The hero and the live section are real, running
+   instances of card-motion, so the page demonstrates itself. */
+
+.lp {
+  --lp-paper: oklch(0.955 0.013 85);
+  --lp-paper-2: oklch(0.925 0.017 82);
+  --lp-ink: oklch(0.19 0.014 55);
+  --lp-ink-soft: oklch(0.42 0.021 58);
+  --lp-line: oklch(0.19 0.014 55 / 0.16);
+  --lp-coral: oklch(0.61 0.2 32);
+  --lp-blue: oklch(0.55 0.16 250);
+  --lp-marigold: oklch(0.72 0.15 74);
+  --lp-felt: oklch(0.16 0.014 55);
+
+  --lp-display: 'Bricolage Grotesque', 'Space Grotesk', system-ui, sans-serif;
+  --lp-body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --lp-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+  --lp-pad: clamp(20px, 5vw, 72px);
+  --lp-max: 1180px;
+
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  color: var(--lp-ink);
+  font-family: var(--lp-body);
+  background-color: var(--lp-paper);
+  /* Halftone dot grid + a faint printed grain, layered on the paper. */
+  background-image:
+    radial-gradient(oklch(0.19 0.014 55 / 0.05) 1px, transparent 1.4px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 22px 22px, 180px 180px;
+}
+
+/* This surface scrolls (the demo playground was fixed / overflow-hidden). */
+html:has(.lp),
+body:has(.lp),
+#root:has(.lp) {
+  height: auto;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+body:has(.lp) {
+  background: var(--lp-paper);
+  color: var(--lp-ink);
+}
+
+.lp a {
+  color: inherit;
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────── */
+.lp-hero {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: clamp(48px, 8vw, 104px) var(--lp-pad) clamp(40px, 6vw, 72px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: clamp(28px, 5vw, 68px);
+  align-items: start;
+}
+/* Drop the table so its top lines up with the title (past the kicker),
+   keeping it visually anchored to the headline rather than the whole column. */
+.lp-hero-stage {
+  margin-top: clamp(6px, 4vw, 52px);
+}
+
+.lp-kicker {
+  font-family: var(--lp-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lp-coral);
+  margin-bottom: 20px;
+}
+
+.lp-title {
+  font-family: var(--lp-display);
+  font-weight: 800;
+  font-size: clamp(42px, 6.8vw, 82px);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+  margin-bottom: 22px;
+}
+.lp-title-mark {
+  color: var(--lp-coral);
+}
+
+.lp-lede {
+  max-width: 46ch;
+  font-size: clamp(16px, 1.4vw, 18.5px);
+  line-height: 1.5;
+  color: var(--lp-ink-soft);
+  margin-bottom: 26px;
+}
+
+/* Copyable install command — a printed receipt line. */
+.lp-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--lp-mono);
+  font-size: 14px;
+  color: var(--lp-ink);
+  background: var(--lp-paper);
+  border: 1.5px solid var(--lp-ink);
+  border-radius: 8px;
+  padding: 11px 12px 11px 14px;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--lp-ink);
+  transition: transform 0.12s var(--ease-out), box-shadow 0.12s var(--ease-out);
+}
+.lp-install:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--lp-ink);
+}
+.lp-install:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--lp-ink);
+}
+.lp-install-prompt {
+  color: var(--lp-coral);
+  font-weight: 700;
+}
+.lp-install code {
+  font-family: inherit;
+}
+.lp-install-copy {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lp-paper);
+  background: var(--lp-ink);
+  border-radius: 5px;
+  padding: 4px 8px;
+  min-width: 52px;
+  text-align: center;
+}
+
+.lp-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+.lp-btn {
+  font-family: var(--lp-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+  color: var(--lp-ink);
+  background: var(--lp-paper);
+  border: 1.5px solid var(--lp-ink);
+  border-radius: 8px;
+  padding: 11px 20px;
+  box-shadow: 3px 3px 0 var(--lp-ink);
+  transition: transform 0.12s var(--ease-out), box-shadow 0.12s var(--ease-out);
+}
+.lp-btn:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--lp-ink);
+}
+.lp-btn:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--lp-ink);
+}
+.lp-btn-primary {
+  color: var(--lp-paper);
+  background: var(--lp-coral);
+  border-color: var(--lp-ink);
+}
+
+/* Hero card table — a dark felt inset with a live <CardTable>. */
+.lp-hero-stage {
+  position: relative;
+}
+.lp-felt {
+  position: relative;
+  height: clamp(360px, 42vw, 480px);
+  border-radius: 16px;
+  border: 1.5px solid var(--lp-ink);
+  background:
+    radial-gradient(130% 100% at 50% 8%, oklch(0.25 0.021 55) 0%, var(--lp-felt) 64%);
+  box-shadow: 8px 8px 0 var(--lp-ink);
+  overflow: hidden;
+}
+.lp-felt .cm-table,
+.lp-felt .cm-stage {
+  position: absolute;
+  inset: 0;
+}
+/* The hero table is decorative and self-playing — no hover, no pointer cursor. */
+.lp-felt .cm-table {
+  pointer-events: none;
+  cursor: default;
+}
+.lp-felt-note {
+  font-family: var(--lp-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lp-ink-soft);
+  text-align: right;
+  margin-top: 12px;
+}
+
+/* ── Spec strip ───────────────────────────────────────────────────────── */
+.lp-spec {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: 0 var(--lp-pad);
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  border-top: 1.5px solid var(--lp-ink);
+  padding-top: 22px;
+}
+.lp-spec li {
+  font-family: var(--lp-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--lp-ink);
+  border: 1.5px solid var(--lp-line);
+  border-radius: 999px;
+  padding: 6px 13px;
+}
+
+/* ── Sections ─────────────────────────────────────────────────────────── */
+.lp-section-h {
+  font-family: var(--lp-display);
+  font-weight: 700;
+  font-size: clamp(26px, 3.4vw, 40px);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+}
+
+.lp-ways {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: clamp(56px, 8vw, 104px) var(--lp-pad) clamp(28px, 4vw, 48px);
+}
+.lp-ways .lp-section-h {
+  margin-bottom: 32px;
+}
+.lp-ways-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+.lp-way {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--lp-paper-2);
+  border: 1.5px solid var(--lp-ink);
+  border-radius: 12px;
+  padding: 22px 22px 0;
+  overflow: hidden;
+  box-shadow: 5px 5px 0 var(--lp-ink);
+}
+.lp-way-tag {
+  display: inline-block;
+  font-family: var(--lp-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lp-paper);
+  padding: 4px 9px;
+  border-radius: 5px;
+  margin-bottom: 16px;
+}
+.lp-accent-coral .lp-way-tag {
+  background: var(--lp-coral);
+}
+.lp-accent-blue .lp-way-tag {
+  background: var(--lp-blue);
+}
+.lp-accent-marigold .lp-way-tag {
+  background: oklch(0.55 0.12 68);
+}
+.lp-way-name {
+  font-family: var(--lp-mono);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+.lp-way-blurb {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--lp-ink-soft);
+  margin-bottom: 18px;
+  min-height: 4.4em; /* keep the code panels aligned across the three cards */
+}
+.lp-code {
+  flex: 1 1 auto; /* grow to fill the card so all three panels end up equal height */
+  font-family: var(--lp-mono);
+  font-size: 11.5px;
+  line-height: 1.62;
+  color: oklch(0.88 0.012 85);
+  background: var(--lp-felt);
+  padding: 16px 15px;
+  margin: 18px -22px 0;
+  overflow-x: auto;
+  border-top: 1.5px solid var(--lp-ink);
+}
+.lp-code code {
+  white-space: pre;
+}
+/* Syntax colors, tuned for the dark felt panel. */
+.lp-code .tok-str {
+  color: oklch(0.8 0.13 145);
+}
+.lp-code .tok-key {
+  color: oklch(0.74 0.13 300);
+}
+.lp-code .tok-tag {
+  color: oklch(0.72 0.16 34);
+}
+.lp-code .tok-attr {
+  color: oklch(0.74 0.11 236);
+}
+.lp-code .tok-fn {
+  color: oklch(0.82 0.13 82);
+}
+.lp-code .tok-num {
+  color: oklch(0.78 0.12 52);
+}
+.lp-code .tok-punc {
+  color: oklch(0.62 0.014 85);
+}
+
+/* ── Live playground ──────────────────────────────────────────────────── */
+.lp-live {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 72px) var(--lp-pad) clamp(56px, 8vw, 96px);
+}
+.lp-live-head {
+  margin-bottom: 26px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px 24px;
+  flex-wrap: wrap;
+}
+.lp-live-sub {
+  margin-top: 12px;
+  max-width: 56ch;
+  font-size: 15.5px;
+  line-height: 1.5;
+  color: var(--lp-ink-soft);
+}
+/* Link to the same demos on their own full-screen page. */
+.lp a.lp-open {
+  flex-shrink: 0;
+  font-family: var(--lp-display);
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--lp-paper);
+  background: var(--lp-ink);
+  border: 1.5px solid var(--lp-ink);
+  border-radius: 8px;
+  padding: 10px 16px;
+  box-shadow: 3px 3px 0 var(--lp-coral);
+  transition: transform 0.12s var(--ease-out), box-shadow 0.12s var(--ease-out);
+}
+.lp-open:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--lp-coral);
+}
+.lp-open:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 var(--lp-coral);
+}
+.lp-stage {
+  position: relative;
+  height: clamp(640px, 82vh, 780px);
+  border-radius: 16px;
+  border: 1.5px solid var(--lp-ink);
+  box-shadow: 8px 8px 0 var(--lp-ink);
+  overflow: hidden;
+  background: var(--lp-felt);
+}
+/* The embedded demos fill the framed stage. */
+.lp-stage > .cm-table,
+.lp-stage > .cm-stage,
+.lp-stage > .game,
+.lp-stage > .sb,
+.lp-stage > .dnd {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* The demo switcher is already position:absolute; it anchors to .lp-stage. */
+.lp-stage .demo-nav {
+  top: 14px;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.lp-foot {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: clamp(36px, 5vw, 56px) var(--lp-pad) clamp(48px, 6vw, 72px);
+  border-top: 1.5px solid var(--lp-ink);
+  display: grid;
+  gap: 20px;
+}
+.lp-foot-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px 26px;
+}
+.lp-foot-mark {
+  font-family: var(--lp-display);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+}
+.lp-foot-links {
+  display: flex;
+  gap: 20px;
+  font-family: var(--lp-mono);
+  font-size: 13.5px;
+}
+.lp-foot-links a {
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--lp-coral);
+  padding-bottom: 1px;
+}
+.lp-foot-links a:hover {
+  color: var(--lp-coral);
+}
+.lp-foot-fine {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--lp-ink-soft);
+  max-width: 62ch;
+}
+.lp-foot-fine em {
+  font-style: italic;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .lp-hero {
+    grid-template-columns: 1fr;
+  }
+  .lp-hero-stage {
+    order: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-install,
+  .lp-btn {
+    transition: none;
+  }
+}
