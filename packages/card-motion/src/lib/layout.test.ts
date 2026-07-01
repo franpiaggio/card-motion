@@ -1,0 +1,75 @@
+import { describe, expect, it } from 'vitest';
+import { stackLayout, fanLayout, rowLayout } from './layout';
+import type { PileLayoutContext } from '../types';
+
+const ctx = (over: Partial<PileLayoutContext> = {}): PileLayoutContext => ({
+  anchor: { x: 500, y: 300 },
+  width: 900,
+  height: 600,
+  ...over,
+});
+
+describe('stackLayout', () => {
+  it('sits the first card exactly on the anchor', () => {
+    const t = stackLayout(0, 10, ctx());
+    expect(t.x).toBe(500);
+    expect(t.y).toBe(300);
+  });
+
+  it('offsets each subsequent card for volume, keeping it a tight stack', () => {
+    const a = stackLayout(0, 10, ctx());
+    const b = stackLayout(9, 10, ctx());
+    // Small, monotonic drift — never a big spread.
+    expect(b.x).toBeGreaterThan(a.x);
+    expect(Math.abs(b.x - a.x)).toBeLessThan(5);
+  });
+});
+
+describe('fanLayout', () => {
+  it('centers a single card on the anchor with no tilt', () => {
+    const t = fanLayout(0, 1, ctx());
+    expect(t.x).toBe(500);
+    expect(t.rotation).toBe(0);
+  });
+
+  it('is symmetric: the outer cards mirror around the anchor', () => {
+    const first = fanLayout(0, 5, ctx());
+    const last = fanLayout(4, 5, ctx());
+    expect(first.x + last.x).toBeCloseTo(2 * 500); // mirrored around anchor.x
+    expect(first.rotation).toBeCloseTo(-last.rotation); // opposite tilt
+  });
+
+  it('puts the middle card of an odd fan straight on the anchor', () => {
+    const mid = fanLayout(2, 5, ctx());
+    expect(mid.x).toBeCloseTo(500);
+    expect(mid.rotation).toBeCloseTo(0);
+  });
+
+  it('tightens spacing as the fan grows so it never runs away', () => {
+    const spacingFew = fanLayout(1, 2, ctx()).x - fanLayout(0, 2, ctx()).x;
+    const spacingMany = fanLayout(1, 20, ctx()).x - fanLayout(0, 20, ctx()).x;
+    expect(spacingMany).toBeLessThanOrEqual(spacingFew);
+    expect(spacingMany).toBeGreaterThan(0);
+  });
+});
+
+describe('rowLayout', () => {
+  it('centers a single card on the anchor', () => {
+    const t = rowLayout(0, 1, ctx());
+    expect(t.x).toBe(500);
+  });
+
+  it('centers the whole row on the anchor (mean x == anchor.x)', () => {
+    const count = 5;
+    const xs = Array.from({ length: count }, (_, i) => rowLayout(i, count, ctx()).x);
+    const mean = xs.reduce((s, x) => s + x, 0) / count;
+    expect(mean).toBeCloseTo(500);
+  });
+
+  it('clamps spacing so a big row never overflows the stage', () => {
+    const count = 30;
+    const xs = Array.from({ length: count }, (_, i) => rowLayout(i, count, ctx({ width: 400 })).x);
+    const spread = Math.max(...xs) - Math.min(...xs);
+    expect(spread).toBeLessThanOrEqual(400); // stays within the stage width
+  });
+});

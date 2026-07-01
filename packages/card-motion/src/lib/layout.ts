@@ -1,4 +1,4 @@
-import type { LayoutFn, Zones } from '../types';
+import type { LayoutFn, PileLayoutFn, Zones } from '../types';
 
 /** Default card width / height in px (the visual reference size). */
 export const CARD_W = 96;
@@ -55,6 +55,42 @@ export const tableTarget: LayoutFn = (index, count, zones) => {
   return {
     x: center - rowWidth / 2 + index * spacingX,
     y: zones.table.y,
+    rotation: 0,
+    scale: 0.92,
+  };
+};
+
+// ── Generic pile layouts (for `useCardPiles`) ───────────────────────────────
+// Each is a `PileLayoutFn` anchored at the pile's own point, so the same layout
+// works for any pile you declare.
+
+/** A tight stack with a slight offset for volume (deck / discard pile). */
+export const stackLayout: PileLayoutFn = (index, _count, { anchor }) => ({
+  x: anchor.x + index * 0.35,
+  y: anchor.y - index * 0.35,
+  rotation: 0,
+  scale: 1,
+});
+
+/** An arc fan centered on the anchor — the center card highest, edges tilted. */
+export const fanLayout: PileLayoutFn = (index, count, { anchor, width }) => {
+  const off = index - (count - 1) / 2;
+  const spacingX = count > 1 ? Math.min(112, (width * 0.92) / count) : 0;
+  return {
+    x: anchor.x + off * spacingX,
+    y: anchor.y + off * off * 4,
+    rotation: off * 5,
+    scale: 1,
+  };
+};
+
+/** A straight row centered on the anchor, clamped so it never overflows. */
+export const rowLayout: PileLayoutFn = (index, count, { anchor, width }) => {
+  const spacingX = count > 1 ? Math.min(108, (width * 0.6) / count) : 0;
+  const rowWidth = spacingX * (count - 1);
+  return {
+    x: anchor.x - rowWidth / 2 + index * spacingX,
+    y: anchor.y,
     rotation: 0,
     scale: 0.92,
   };

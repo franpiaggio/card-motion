@@ -50,3 +50,34 @@ export interface Zones {
  * currently holds `count` cards. Swap these to customize the look of a layout.
  */
 export type LayoutFn = (index: number, count: number, zones: Zones) => CardTarget;
+
+/** Stage size in px, passed to a pile's `anchor`. */
+export interface Stage {
+  width: number;
+  height: number;
+}
+
+/** Context a {@link PileLayoutFn} receives: the pile's anchor plus the stage size. */
+export interface PileLayoutContext {
+  /** The pile's resolved anchor point (px). */
+  anchor: Point;
+  /** Stage width in px. */
+  width: number;
+  /** Stage height in px. */
+  height: number;
+}
+
+/**
+ * Computes the target transform for the card at `index` within a pile that
+ * currently holds `count` cards — a generalized {@link LayoutFn} for arbitrary
+ * piles (see `useCardPiles`).
+ */
+export type PileLayoutFn = (index: number, count: number, ctx: PileLayoutContext) => CardTarget;
+
+/** Declares one pile: where it sits on the stage and how its cards arrange. */
+export interface PileConfig {
+  /** Where the pile anchors, from the current stage size. */
+  anchor: (stage: Stage) => Point;
+  /** How cards stack/fan/spread within the pile. */
+  layout: PileLayoutFn;
+}

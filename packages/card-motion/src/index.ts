@@ -17,10 +17,31 @@ export type { DraggableCardProps } from './components/DraggableCard';
 export { useCardTable } from './hooks/useCardTable';
 export type { UseCardTableOptions, CardTableApi } from './hooks/useCardTable';
 
+export { useCardPiles } from './hooks/useCardPiles';
+export type {
+  UseCardPilesOptions,
+  CardPilesApi,
+  MoveOptions,
+  GatherOptions,
+} from './hooks/useCardPiles';
+
 export { useCardTilt } from './hooks/useCardTilt';
 export type { UseCardTiltOptions } from './hooks/useCardTilt';
 
 export { buildDeck, shuffleInPlace, SUITS, RANKS } from './lib/deck';
-export { getZones, deckTarget, handTarget, tableTarget, CARD_W, CARD_H } from './lib/layout';
+export { getZones, deckTarget, handTarget, tableTarget, stackLayout, fanLayout, rowLayout, CARD_W, CARD_H } from './lib/layout';
 
-export type { Suit, CardColor, CardData, Zone, Point, CardTarget, Zones, LayoutFn } from './types';
+export type {
+  Suit,
+  CardColor,
+  CardData,
+  Zone,
+  Point,
+  CardTarget,
+  Zones,
+  LayoutFn,
+  Stage,
+  PileLayoutContext,
+  PileLayoutFn,
+  PileConfig,
+} from './types';
