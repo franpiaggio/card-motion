@@ -22,3 +22,141 @@ body {
   width: 100vw;
   height: 100vh;
 }
+
+/* Demo switcher */
+.demo-nav {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 20;
+  padding: 5px;
+  border-radius: 12px;
+  background: rgba(10, 12, 24, 0.55);
+  backdrop-filter: blur(6px);
+}
+.demo-nav button {
+  font: 700 13px/1 system-ui, sans-serif;
+  color: #c7cbe0;
+  background: transparent;
+  border: none;
+  padding: 9px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.demo-nav button.on {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Drag & drop demo */
+.dnd {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 90px 24px 32px;
+  color: #eef0fb;
+}
+.dnd-head {
+  text-align: center;
+  max-width: 640px;
+}
+.dnd-head h1 {
+  font-size: 26px;
+  font-weight: 800;
+}
+.dnd-head p {
+  margin: 8px 0 14px;
+  font-size: 14px;
+  color: #aeb3cc;
+}
+.dnd-head button {
+  font: 700 13px/1 system-ui, sans-serif;
+  color: #fff;
+  background: linear-gradient(180deg, #4a5168, #2c3142);
+  border: none;
+  padding: 11px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #171a24;
+}
+.dnd-zones {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 18px;
+  width: 100%;
+  max-width: 940px;
+}
+.dnd-zone {
+  min-height: 300px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: rgba(12, 16, 32, 0.5);
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+}
+.dnd-zone .cm-dropzone-label {
+  color: #9aa0bf;
+}
+.dnd-zone .cm-dropzone-body {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-content: flex-start;
+}
+.dnd-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #6b7193;
+  pointer-events: none;
+}
+
+/* The hand: a tray of overlapping cards at the bottom, like the game. */
+.dnd-hand {
+  margin-top: auto;
+  width: 100%;
+  max-width: 940px;
+  padding: 20px 26px 16px;
+  background: rgba(8, 10, 22, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+.dnd-hand .cm-dropzone-body {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  min-height: 130px;
+}
+/* Overlap the hand cards and lift each on hover. The lift lives on the inner
+   `.cm-card`, NOT the `.cm-draggable` wrapper — the wrapper's transform is owned
+   by GSAP, and a CSS transition there would fight (and flash) on cleanup. */
+.dnd-hand .cm-draggable:not(:first-child) {
+  margin-left: -30px;
+}
+.dnd-hand .cm-draggable:hover {
+  z-index: 5;
+}
+.dnd-hand .cm-draggable .cm-card {
+  transition: transform 0.16s ease;
+}
+.dnd-hand .cm-draggable:hover .cm-card {
+  transform: translateY(-14px);
+}
+.dnd-hand .cm-draggable.cm-dragging .cm-card {
+  transform: none;
+  transition: none;
+}

@@ -25,6 +25,7 @@ Shuffle, deal, select and play with juicy GSAP timelines, a pointer-driven 3D ti
 - ✋ **Click to select / play** — click a hand card to **select** it (it lifts with a gold ring), click again to **deselect**; play the selected cards or the whole hand.
 - 🃏 **`<Card>`** — cream face, corner indices, big pip, an always-on holographic **foil** for special cards, and a pointer-following **3D tilt**.
 - 🧠 **Headless `useCardTable`** — owns deck/hand/table state, the GSAP timelines, selection, and reactive `counts`/`hand`; you render the cards and controls.
+- 🖐️ **Drag & drop zones** — `<DragDropProvider>` + `<DropZone>` + `<DraggableCard>` to build solitaire, freecell, or any "drag a card into a slot" game. Mouse, touch & pen; valid/invalid highlight; spring-back on reject.
 - 📱 **Responsive** — the fan and the cards shrink to fit narrow screens; nothing overflows.
 - ♿ **Accessible** — keyboard-operable cards, ARIA roles/labels, a focus ring, a live-region status, and `prefers-reduced-motion` support.
 - 🌀 **`<BackgroundShader>`** — optional fullscreen WebGL swirl with configurable colors, GPU-rendered.
@@ -204,6 +205,80 @@ return (
 );
 ```
 
+### Drag & drop — build solitaire & friends
+
+Three primitives turn the deck into a board game. The library owns the **mechanics** — pointer/touch dragging, zone hit-testing, a valid/invalid highlight, and a spring-back when a drop is rejected — and **you own the state and the rules**. On a valid drop, `onDrop` fires and you move the card between zones in your own state.
+
+```tsx
+import { useState } from 'react';
+import { DragDropProvider, DropZone, DraggableCard, Card, buildDeck, shuffleInPlace, type CardData } from 'card-motion';
+
+const ZONES = ['stock', 'tableau', 'foundation'] as const;
+
+function Solitaire() {
+  const [zones, setZones] = useState<Record<string, CardData[]>>(() => ({
+    stock: shuffleInPlace(buildDeck()).slice(0, 8),
+    tableau: [],
+    foundation: [],
+  }));
+
+  // Return false to reject the move (the card springs back).
+  const onDrop = (cardId: number, to: string, from: string | null) => {
+    if (!from) return false;
+    setZones((z) => {
+      const card = z[from].find((c) => c.id === cardId);
+      if (!card) return z;
+      return { ...z, [from]: z[from].filter((c) => c.id !== cardId), [to]: [...z[to], card] };
+    });
+    return true;
+  };
+
+  return (
+    <DragDropProvider onDrop={onDrop}>
+      {ZONES.map((id) => (
+        <DropZone
+          key={id}
+          id={id}
+          label={id}
+          accepts={(cardId, from) => from !== id}   // your rule here
+        >
+          {zones[id].map((c) => (
+            <DraggableCard key={c.id} id={c.id} zone={id}>
+              <Card rank={c.rank} suit={c.suit} color={c.color} tilt={false} />
+            </DraggableCard>
+          ))}
+        </DropZone>
+      ))}
+    </DragDropProvider>
+  );
+}
+```
+
+**`<DragDropProvider>`** — coordinates the drag.
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `onDrop` | `(cardId, toZone, fromZone) => boolean \| void` | Fires on a valid drop. Return `false` to reject (snap back). |
+| `onDragStart` | `(cardId, fromZone) => void` | Fires once a drag passes the movement threshold. |
+| `onDragEnd` | `(accepted) => void` | Fires when the drag ends. |
+| `disabled` | `boolean` | Turn off all dragging. |
+| `dropDuration` | `number` (`0.4`) | Seconds for the accepted card (and the others) to glide into their new slots. |
+| `dropEase` | `string` (`'power2.out'`) | GSAP easing for that settle animation. |
+
+On an accepted drop the moved card doesn't teleport — a lightweight FLIP animation glides it from where you released it into its final slot, and the surrounding cards slide over to make room. It honors `prefers-reduced-motion` (snaps instantly).
+
+**`<DropZone>`** — a registered target. Highlights green when accepting, red when rejecting. Lay cards out inside however you like.
+
+| Prop | Type | Description |
+| --- | --- | --- |
+| `id` | `string` | Zone id, reported to `onDrop`. |
+| `accepts` | `(cardId, fromZone) => boolean` | Per-zone rule; reject and the card can't drop here. |
+| `label` | `ReactNode` | Optional heading above the drop area. |
+
+**`<DraggableCard>`** — wraps a card visual (e.g. `<Card>`) and makes it draggable. Pass the card `id` and the `zone` it currently lives in. `threshold` (default `4`px) sets how far the pointer travels before a press becomes a drag, so plain clicks still work.
+
+**`useDragDrop()`** returns the live drag state — `{ dragging, draggingId, overZoneId, overValid }` — to drive your own UI (cursors, drop hints, etc.). Highlight styling lives in `cm-dropzone` / `cm-dropzone-valid` / `cm-dropzone-reject`.
+
 ### `<BackgroundShader>`
 
 Entirely **optional** — it's a standalone component, not part of `<CardTable>`. Render it only if you want the animated backdrop. Colors are configurable; the default is the signature red/blue swirl.
@@ -258,7 +333,7 @@ All classes are prefixed `cm-` and every size scales from the `--cm-w` (card wid
 .cm-controls button { background: #2563d8; box-shadow: 0 5px 0 #14306e; }
 ```
 
-Key classes: `cm-card` (`cm-foil`, `cm-selected`), `cm-card-inner`, `cm-card-face` (`cm-red` / `cm-black`), `cm-pip`, `cm-corner`, `cm-card-foil`, `cm-bg-shader`, `cm-table`, `cm-stage`, `cm-controls` (`cm-warn`, `cm-ghost`). The foil shimmer respects `prefers-reduced-motion`.
+Key classes: `cm-card` (`cm-foil`, `cm-selected`), `cm-card-inner`, `cm-card-face` (`cm-red` / `cm-black`), `cm-pip`, `cm-corner`, `cm-card-foil`, `cm-bg-shader`, `cm-table`, `cm-stage`, `cm-controls` (`cm-warn`, `cm-ghost`), plus the drag-and-drop classes `cm-draggable` (`cm-dragging`) and `cm-dropzone` (`cm-dropzone-valid` / `cm-dropzone-reject`). The foil shimmer respects `prefers-reduced-motion`.
 
 ## Accessibility
 

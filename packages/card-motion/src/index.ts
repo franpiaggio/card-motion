@@ -7,6 +7,13 @@ export type { BackgroundShaderProps, BackgroundShaderColors } from './components
 export { CardTable } from './components/CardTable';
 export type { CardTableProps, CardTableHandle } from './components/CardTable';
 
+export { DragDropProvider, useDragDrop } from './components/DragDropProvider';
+export type { DragDropProviderProps, DropHandler, ZoneAccept, DragState } from './components/DragDropProvider';
+export { DropZone } from './components/DropZone';
+export type { DropZoneProps } from './components/DropZone';
+export { DraggableCard } from './components/DraggableCard';
+export type { DraggableCardProps } from './components/DraggableCard';
+
 export { useCardTable } from './hooks/useCardTable';
 export type { UseCardTableOptions, CardTableApi } from './hooks/useCardTable';
 

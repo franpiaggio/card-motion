@@ -156,6 +156,48 @@
   border: 0;
 }
 
+/* ── Drag & drop ──────────────────────────────────────────────────────────
+   `DraggableCard` wrapper + `DropZone` targets. `touch-action: none` lets a
+   drag start on touch without the page scrolling. */
+.cm-draggable {
+  display: inline-block;
+  cursor: grab;
+  touch-action: none;
+  will-change: transform;
+}
+.cm-draggable.cm-dragging {
+  cursor: grabbing;
+}
+/* Deepen the shadow on the lifted card so it reads as picked up. */
+.cm-draggable.cm-dragging .cm-card-face {
+  box-shadow:
+    0 calc(var(--cm-w) * 0.12) calc(var(--cm-w) * 0.24) rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.cm-dropzone {
+  position: relative;
+  border-radius: 16px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+/* Highlight while a card hovers: green when accepted, red when rejected. */
+.cm-dropzone-valid {
+  background: rgba(74, 222, 128, 0.1);
+  box-shadow: inset 0 0 0 3px #4ade80;
+}
+.cm-dropzone-reject {
+  background: rgba(248, 113, 113, 0.1);
+  box-shadow: inset 0 0 0 3px #f87171;
+}
+.cm-dropzone-label {
+  font: 700 13px/1 system-ui, sans-serif;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+.cm-dropzone-body {
+  position: relative;
+}
+
 /* Background shader canvas */
 .cm-bg-shader {
   position: fixed;

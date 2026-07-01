@@ -7,6 +7,7 @@ All notable changes to `card-motion` are documented here. This project adheres t
 
 ### Added
 
+- **Drag & drop primitives** — `<DragDropProvider>` + `<DropZone>` + `<DraggableCard>` for building solitaire / freecell / any "drag a card into a slot" game. The library owns the *mechanics* (pointer/touch dragging, zone hit-testing, valid/invalid highlight, snap-back); you own the card state and rules. `onDrop(cardId, toZone, fromZone)` reports each drop (return `false` to reject); per-zone `accepts` gates moves. `useDragDrop()` exposes the live drag state.
 - `<CardTable>` — ready-made table with **shuffle / deal / play / play-all / clear / reset** and a **contextual** controls bar (buttons render only when their action can run); imperative handle via `ref`.
 - **Click-to-select** — click a hand card to select it (it lifts with a gold ring), click again to deselect. `playSelected()` plays only the selected cards; `play()` plays the whole hand.
 - **Special foil cards** — one random hand card carries an always-on, subtle holographic foil (re-picked each deal). Configurable via `specialCount` / `foilCardIds`.
