@@ -695,6 +695,8 @@ body {
   height: 112px;
   cursor: grab;
   touch-action: none; /* let pointer-drag own the gesture */
+  user-select: none; /* no text highlight while dragging */
+  -webkit-user-select: none;
 }
 .sb-slot.in-deck {
   cursor: default;

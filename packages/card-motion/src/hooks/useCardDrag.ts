@@ -30,6 +30,8 @@ export interface UseCardDragOptions<P extends string = string> {
   pileOf?: (id: number) => P | null;
   /** Whether a card may be dragged (e.g. only the hand). Default: always. */
   canDrag?: (id: number) => boolean;
+  /** Fires once, when a drag actually begins (after the threshold) — e.g. to mark the card selected. */
+  onDragStart?: (id: number) => void;
   /** Fires when the pointer is released without dragging — a tap (use it to select). */
   onTap?: (id: number) => void;
   /** Px the pointer must travel before it counts as a drag (vs a tap). Default `6`. */
@@ -55,7 +57,7 @@ export interface CardDragApi {
  * click-to-select keeps working on the same nodes.
  */
 export function useCardDrag<P extends string = string>(opts: UseCardDragOptions<P>): CardDragApi {
-  const { stageRef, resolveDrop, onDrop, move, pileOf, canDrag, onTap, threshold = 6 } = opts;
+  const { stageRef, resolveDrop, onDrop, move, pileOf, canDrag, onDragStart, onTap, threshold = 6 } = opts;
   const drag = useRef<{ id: number; offX: number; offY: number; sx: number; sy: number; moved: boolean } | null>(null);
   const [dragId, setDragId] = useState<number | null>(null);
 
@@ -81,6 +83,7 @@ export function useCardDrag<P extends string = string>(opts: UseCardDragOptions<
         if (!d.moved) {
           d.moved = true;
           setDragId(id);
+          onDragStart?.(id);
           gsap.set(e.currentTarget, { zIndex: 99999 });
         }
         const stage = stageRef.current?.getBoundingClientRect();
@@ -108,7 +111,7 @@ export function useCardDrag<P extends string = string>(opts: UseCardDragOptions<
         }
       },
     }),
-    [stageRef, resolveDrop, onDrop, move, pileOf, canDrag, onTap, threshold],
+    [stageRef, resolveDrop, onDrop, move, pileOf, canDrag, onDragStart, onTap, threshold],
   );
 
   return { dragId, dragProps };

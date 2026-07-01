@@ -114,6 +114,7 @@ export default function Sandbox() {
   const { dragId, dragProps } = useCardDrag<PileId>({
     stageRef,
     canDrag: (id) => !piles.deck.includes(id), // deck is browsed via the modal
+    onDragStart: setSel, // the grabbed card becomes the selected one
     onTap: toggleSel,
     resolveDrop: (id, p, s) => {
       const zone: PileId = p.y < s.height * 0.44 ? 'zoneA' : p.y < s.height * 0.7 ? 'zoneB' : 'hand';

@@ -54,6 +54,25 @@ describe('useCardDrag', () => {
     expect(onDrop).toHaveBeenCalledWith(9, null);
   });
 
+  it('fires onDragStart once when a drag begins, but not on a tap', () => {
+    const onDragStart = vi.fn();
+    const resolveDrop = () => 'z' as const;
+    const { result } = renderHook(() => useCardDrag({ stageRef, resolveDrop, onDrop: () => {}, onDragStart }));
+    const p = result.current.dragProps(4);
+    const t = makeTarget();
+    // a tap → never starts a drag
+    p.onPointerDown(ptr(10, 10, t));
+    p.onPointerUp(ptr(11, 11, t));
+    expect(onDragStart).not.toHaveBeenCalled();
+    // a real drag → fires exactly once with the id, even across several moves
+    p.onPointerDown(ptr(10, 10, t));
+    p.onPointerMove(ptr(60, 60, t));
+    p.onPointerMove(ptr(90, 90, t));
+    p.onPointerUp(ptr(90, 90, t));
+    expect(onDragStart).toHaveBeenCalledTimes(1);
+    expect(onDragStart).toHaveBeenCalledWith(4);
+  });
+
   it('does not start a drag on a card that canDrag rejects', () => {
     const onTap = vi.fn();
     const resolveDrop = vi.fn(() => 'z' as const);
