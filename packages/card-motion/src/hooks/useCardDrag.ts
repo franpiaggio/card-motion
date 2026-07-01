@@ -48,6 +48,7 @@ export interface CardDragApi {
     onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
     onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
     onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
+    onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
   };
 }
 
@@ -109,6 +110,24 @@ export function useCardDrag<P extends string = string>(opts: UseCardDragOptions<
           onDrop(id, target, point);
         } else if (move) {
           const dest = target ?? pileOf?.(id) ?? null;
+          if (dest) void move(id, dest);
+        }
+      },
+      // The pointer stream can be canceled (OS gesture, context menu, touch
+      // interruption) with no pointerup. Treat it as a rejected drop so the card
+      // snaps home instead of being left lifted and stuck.
+      onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => {
+        const d = drag.current;
+        if (!d || d.id !== id) return;
+        drag.current = null;
+        if (!d.moved) return;
+        setDragId(null);
+        const stage = stageRef.current?.getBoundingClientRect();
+        const point = stage ? { x: e.clientX - stage.left, y: e.clientY - stage.top } : { x: 0, y: 0 };
+        if (onDrop) {
+          onDrop(id, null, point);
+        } else if (move) {
+          const dest = pileOf?.(id) ?? null;
           if (dest) void move(id, dest);
         }
       },

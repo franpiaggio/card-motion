@@ -109,7 +109,7 @@ const { piles, move, draw, gather } = useCardPiles({
 ## Building blocks
 
 - **Drag & drop** — `<DragDropProvider onDrop>` + `<DropZone id accepts>` + `<DraggableCard id zone>` to build solitaire and friends. `onDrop` fires on a valid drop; return `false` to reject (the card springs back).
-- **`useCardDrag`** — pointer dragging for engine-positioned cards. You get `resolveDrop(id, point, stage)` to pick a target (or reject) and `onDrop` to apply it; taps and drags are told apart, so click-to-select keeps working.
+- **`useCardDrag`** — pointer dragging for engine-positioned cards. You give it a `resolveDrop(id, point, stage)` that picks a target (or rejects) and an `onDrop` that applies it; taps and drags are told apart, so click-to-select keeps working.
 - **`fan` / `row` / `stack`** — layout factories, e.g. `fan({ spread: 0.6, maxSpacing: 98 })`. Zero-config instances (`fanLayout`, `rowLayout`, `stackLayout`) are exported too.
 - **`<Card>`** — the card visual: corner indices, big pip, an optional holographic `foil`, and a pointer-driven 3D `tilt`.
 - **`<BackgroundShader>`** — an optional fullscreen WebGL swirl. `<BackgroundShader colors={{ deep, warm, cool }} speed={1.2} />`.

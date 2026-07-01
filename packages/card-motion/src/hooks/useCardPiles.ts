@@ -297,8 +297,10 @@ export function useCardPiles<P extends string = string, C extends { id: number }
 
   const draw = useCallback(
     (fromPile: P, toPile: P, count: number, opts?: MoveOptions): Promise<void> => {
+      const n = Math.max(0, count);
+      if (n === 0) return Promise.resolve(); // slice(-0) would take the whole pile
       const orders = ordersRef.current!;
-      const take = orders[fromPile].slice(-Math.max(0, count)); // the top of the pile
+      const take = orders[fromPile].slice(-n); // the top of the pile
       return take.length ? move(take, toPile, opts) : Promise.resolve();
     },
     [move],

@@ -110,9 +110,19 @@ export function BackgroundShader({ speed = 1, maxDpr = 1.5, colors, className, s
     if (!gl) return;
 
     const prog = gl.createProgram()!;
-    gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
-    gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
+    const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
+    gl.attachShader(prog, vs);
+    gl.attachShader(prog, fs);
     gl.linkProgram(prog);
+    // Shaders can be freed once linked; keeping them attached leaks GPU objects.
+    gl.deleteShader(vs);
+    gl.deleteShader(fs);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.error('[card-motion] BackgroundShader failed to link:', gl.getProgramInfoLog(prog));
+      gl.deleteProgram(prog);
+      return;
+    }
     gl.useProgram(prog);
 
     const buf = gl.createBuffer();
@@ -129,30 +139,41 @@ export function BackgroundShader({ speed = 1, maxDpr = 1.5, colors, className, s
     const uCool = gl.getUniformLocation(prog, 'u_cool');
 
     const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
-    const resize = () => {
-      canvas.width = Math.floor(canvas.clientWidth * dpr);
-      canvas.height = Math.floor(canvas.clientHeight * dpr);
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    let raf = 0;
-    let last = performance.now();
-    let elapsed = 0;
-    const loop = (now: number) => {
-      elapsed += ((now - last) / 1000) * speedRef.current;
-      last = now;
+    const draw = (t: number) => {
       const c = colorsRef.current;
-      gl.uniform1f(uTime, elapsed);
+      gl.uniform1f(uTime, t);
       gl.uniform2f(uRes, canvas.width, canvas.height);
       gl.uniform3fv(uDeep, c.deep);
       gl.uniform3fv(uWarm, c.warm);
       gl.uniform3fv(uCool, c.cool);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
-      raf = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(loop);
+
+    let elapsed = 0;
+    const reduce = !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const resize = () => {
+      canvas.width = Math.floor(canvas.clientWidth * dpr);
+      canvas.height = Math.floor(canvas.clientHeight * dpr);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      if (reduce) draw(elapsed); // static: repaint on resize since there's no loop
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Reduced motion: paint one still frame and stop — no perpetual animation.
+    let raf = 0;
+    if (reduce) {
+      draw(0);
+    } else {
+      let last = performance.now();
+      const loop = (now: number) => {
+        elapsed += ((now - last) / 1000) * speedRef.current;
+        last = now;
+        draw(elapsed);
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    }
 
     return () => {
       cancelAnimationFrame(raf);

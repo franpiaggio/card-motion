@@ -2,6 +2,7 @@
 
 import { forwardRef, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
 import { useCardTilt } from '../hooks/useCardTilt';
+import { CARD_H, CARD_W } from '../lib/layout';
 import type { CardColor, Suit } from '../types';
 
 const RED_SUITS: Suit[] = ['♥', '♦'];
@@ -74,7 +75,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
 ) {
   const { containerRef, contentRef, onPointerMove, onPointerLeave } = useCardTilt({ maxTilt });
   const resolvedColor: CardColor = color ?? (RED_SUITS.includes(suit) ? 'red' : 'black');
-  const height = width * (134 / 96);
+  const height = width * (CARD_H / CARD_W);
   const name = label ?? cardLabel(rank, suit);
 
   const setOuter = (node: HTMLDivElement | null) => {

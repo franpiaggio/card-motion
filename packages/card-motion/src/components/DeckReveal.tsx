@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 
 export interface DeckRevealProps<C extends { id: number }> {
   /** Header text. */
@@ -35,9 +35,19 @@ export function DeckReveal<C extends { id: number }>({
   className,
   emptyLabel = 'Empty.',
 }: DeckRevealProps<C>) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    panelRef.current?.focus(); // move focus into the dialog on open
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   return (
     <div className={`cm-reveal-overlay${className ? ` ${className}` : ''}`} role="dialog" aria-modal="true" onClick={onClose}>
-      <div className="cm-reveal-panel" onClick={(e) => e.stopPropagation()}>
+      <div className="cm-reveal-panel" ref={panelRef} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         {(title || title === '') && (
           <div className="cm-reveal-head">
             <span>{title}</span>

@@ -1,10 +1,10 @@
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
-// Registro único de side-effects de GSAP para toda la librería.
+// A single place to register GSAP's side effects for the whole library.
 gsap.registerPlugin(useGSAP);
-// Sin lagSmoothing: si la pestaña pierde foco y el navegador frena rAF,
-// GSAP se pone al día al volver en lugar de congelarse a mitad de animación.
+// No lag smoothing: if the tab loses focus and the browser throttles rAF, GSAP
+// catches up on return instead of freezing mid-animation.
 gsap.ticker.lagSmoothing(0);
 
 export { gsap, useGSAP };
