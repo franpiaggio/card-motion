@@ -8,7 +8,7 @@ export default defineConfig({
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
-  sourcemap: true,
+  sourcemap: false,
   treeshake: true,
   minify: false,
   // react / react-dom / gsap / @gsap/react stay external (peer + deps)

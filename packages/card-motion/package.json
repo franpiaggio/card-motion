@@ -1,7 +1,7 @@
 {
   "name": "card-motion",
   "version": "0.1.0",
-  "description": "Balatro-style playing-card animations for React — shuffle, deal, play, 3D tilt and a WebGL background. Powered by GSAP.",
+  "description": "Juicy playing-card animations for React — shuffle, deal, play, 3D tilt and a WebGL background. Powered by GSAP.",
   "keywords": [
     "react",
     "cards",
@@ -11,18 +11,10 @@
     "gsap",
     "deck",
     "shuffle",
-    "webgl",
-    "balatro"
+    "webgl"
   ],
   "license": "MIT",
   "author": "Francisco Piaggio",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/franpiaggio/card-motion.git",
-    "directory": "packages/card-motion"
-  },
-  "homepage": "https://github.com/franpiaggio/card-motion#readme",
-  "bugs": "https://github.com/franpiaggio/card-motion/issues",
   "type": "module",
   "sideEffects": [
     "**/*.css"
@@ -54,8 +46,7 @@
   },
   "peerDependencies": {
     "gsap": ">=3.12",
-    "react": ">=18",
-    "react-dom": ">=18"
+    "react": ">=18"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2"

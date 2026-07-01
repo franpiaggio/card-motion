@@ -82,7 +82,7 @@ export interface CardTableApi {
 type Orders = Record<'deck' | 'hand' | 'table', number[]>;
 
 /**
- * Headless engine for a Balatro-style card table. Owns the deck/hand/table
+ * Headless engine for a classic card table. Owns the deck/hand/table
  * state and drives the GSAP timelines; you render the cards and the controls.
  */
 export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {

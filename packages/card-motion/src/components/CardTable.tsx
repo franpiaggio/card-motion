@@ -48,7 +48,7 @@ export interface CardTableProps extends UseCardTableOptions {
 const DEFAULT_LABELS = { shuffle: 'Shuffle', deal: 'Deal', play: 'Play', playAll: 'Play All', clear: 'Clear', reset: 'Reset' };
 
 /**
- * A ready-to-use Balatro-style card table: a full deck with shuffle / deal /
+ * A ready-to-use card table: a full deck with shuffle / deal /
  * play / clear / reset animations, click- or keyboard-driven selection, and an
  * optional controls bar. Drive it imperatively via a ref or the built-in buttons.
  *
