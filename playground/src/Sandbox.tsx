@@ -120,18 +120,29 @@ export default function Sandbox() {
       const zone: PileId = p.y < s.height * 0.44 ? 'zoneA' : p.y < s.height * 0.7 ? 'zoneB' : 'hand';
       return acceptsZone(byId.get(id)!, zone) ? zone : null; // null → rejected, snaps back
     },
-    onDrop: (id, target) =>
+    onDrop: (id, target, point) =>
       act(async () => {
         if (target == null) {
           await move(id, pileOf(id) ?? 'hand'); // rejected → back to where it was
           pushLog('✕ rechazado — zona no admite esa carta');
           return;
         }
-        if (target === 'hand') await move(id, 'hand');
+        if (target === 'hand') await move(id, 'hand', { index: handIndexAt(point.x) }); // drop position → reorder
         else await playTo(id, target);
         setSel(id);
       }),
   });
+
+  // Which slot in the hand a drop at stage-x lands on (mirrors the hand layout's
+  // row spacing) — lets you reorder the hand by dropping between cards.
+  const handIndexAt = (x: number): number => {
+    const w = stageRef.current?.clientWidth ?? 0;
+    const n = piles.hand.length;
+    if (n < 2 || w === 0) return n;
+    const spacing = Math.min(98, (w * 0.6) / n);
+    const idx = Math.round((x - w * 0.5) / spacing + (n - 1) / 2);
+    return Math.max(0, Math.min(n - 1, idx));
+  };
 
   const toZone = (zone: PileId) =>
     sel != null &&

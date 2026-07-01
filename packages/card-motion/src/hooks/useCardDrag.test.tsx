@@ -38,7 +38,7 @@ describe('useCardDrag', () => {
     p.onPointerMove(ptr(120, 120, t)); // past threshold → a drag
     p.onPointerUp(ptr(120, 120, t));
     expect(resolveDrop).toHaveBeenCalledWith(3, { x: 120, y: 120 }, { width: 200, height: 200 });
-    expect(onDrop).toHaveBeenCalledWith(3, 'zoneA');
+    expect(onDrop).toHaveBeenCalledWith(3, 'zoneA', { x: 120, y: 120 });
   });
 
   it('a rejected drop (resolveDrop → null) reports null so the caller snaps back', () => {
@@ -51,7 +51,7 @@ describe('useCardDrag', () => {
     p.onPointerDown(ptr(40, 56, t));
     p.onPointerMove(ptr(120, 120, t));
     p.onPointerUp(ptr(120, 120, t));
-    expect(onDrop).toHaveBeenCalledWith(9, null);
+    expect(onDrop).toHaveBeenCalledWith(9, null, { x: 120, y: 120 });
   });
 
   it('fires onDragStart once when a drag begins, but not on a tap', () => {

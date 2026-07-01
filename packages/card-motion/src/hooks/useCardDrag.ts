@@ -20,10 +20,12 @@ export interface UseCardDragOptions<P extends string = string> {
    */
   resolveDrop: (id: number, point: DragPoint, stage: { width: number; height: number }) => P | null;
   /**
-   * Handle the drop yourself — do the `move` and any side-effects here. If
-   * omitted, the hook calls `move(id, target ?? pileOf(id))` for you.
+   * Handle the drop yourself — do the `move` and any side-effects here. `point`
+   * is the release location in stage coords (use it to pick a drop index, e.g.
+   * to reorder within a pile). If omitted, the hook calls
+   * `move(id, target ?? pileOf(id))` for you.
    */
-  onDrop?: (id: number, target: P | null) => void;
+  onDrop?: (id: number, target: P | null, point: DragPoint) => void;
   /** Engine `move`, used by the default drop when `onDrop` is omitted. */
   move?: (id: number, toPile: P) => Promise<void> | void;
   /** Engine `pileOf`, used to snap back when a drop resolves to null. */
@@ -104,7 +106,7 @@ export function useCardDrag<P extends string = string>(opts: UseCardDragOptions<
         const point = { x: e.clientX - stage.left, y: e.clientY - stage.top };
         const target = resolveDrop(id, point, { width: stage.width, height: stage.height });
         if (onDrop) {
-          onDrop(id, target);
+          onDrop(id, target, point);
         } else if (move) {
           const dest = target ?? pileOf?.(id) ?? null;
           if (dest) void move(id, dest);
