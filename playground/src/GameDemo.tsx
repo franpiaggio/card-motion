@@ -94,6 +94,7 @@ export default function GameDemo() {
 
   const onCardClick = (id: number) => {
     if (phase !== 'playing') return;
+    if (!piles.hand.includes(id)) return; // only cards in your hand are selectable
     if (!selected.has(id) && selected.size >= MAX_SELECT) return;
     toggle(id);
   };
@@ -242,7 +243,7 @@ export default function GameDemo() {
                   tilt={false}
                   selected={selected.has(c.id)}
                   interactive={phase === 'playing' && inHand}
-                  onClick={() => onCardClick(c.id)}
+                  onClick={inHand ? () => onCardClick(c.id) : undefined}
                   hiddenFromAt={!inHand && !inPlayed}
                   style={{ position: 'absolute', top: 0, left: 0 }}
                 />
