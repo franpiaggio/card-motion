@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useCardPiles, useCardDrag, DeckReveal, stackLayout, row, type PileLayoutFn } from 'card-motion';
 
-// ── Spike: an effects sandbox to validate the engine for other games ──────────
+// ── Sandbox: exercising the engine for games other than the poker Demo ────────
 // Custom (non-<Card>) rectangular faces, per-game effects on top of the engine:
 // drag or play a card into a zone (which fires its effect), rotate / orient it
 // in place, and a reusable "open the deck" modal to search and pull a card.
@@ -29,12 +29,12 @@ function buildCards(): EffectCard[] {
 
 // The whole point: YOU render the card face, not <Card>.
 function CardFace({ card, faceDown }: { card: EffectCard; faceDown?: boolean }) {
-  if (faceDown) return <div className="ef-card ef-back" aria-hidden />;
+  if (faceDown) return <div className="sb-card sb-back" aria-hidden />;
   return (
-    <div className={`ef-card k-${card.kind}`}>
-      <span className="ef-kind">{card.kind}</span>
-      <span className="ef-glyph">{GLYPH[card.kind]}</span>
-      <span className="ef-eff">{EFFECT[card.kind]}</span>
+    <div className={`sb-card k-${card.kind}`}>
+      <span className="sb-kind">{card.kind}</span>
+      <span className="sb-glyph">{GLYPH[card.kind]}</span>
+      <span className="sb-eff">{EFFECT[card.kind]}</span>
     </div>
   );
 }
@@ -58,7 +58,7 @@ const zoneBase = row({ spacing: 66, scale: 0.94 });
 const handLayout: PileLayoutFn<EffectCard> = (i, n, ctx) => ({ ...handBase(i, n, ctx), rotation: orientRot(ctx.card.orient) });
 const zoneLayout: PileLayoutFn<EffectCard> = (i, n, ctx) => ({ ...zoneBase(i, n, ctx), rotation: orientRot(ctx.card.orient) });
 
-export default function EffectsSpike() {
+export default function Sandbox() {
   const allCards = useMemo(buildCards, []);
   const deckIds = useMemo(() => allCards.map((c) => c.id).filter((id) => !HAND_IDS.includes(id)), [allCards]);
 
@@ -150,22 +150,22 @@ export default function EffectsSpike() {
   const pickFromDeck = (id: number) => act(async () => { setReveal(false); await move(id, 'hand'); setSel(id); });
 
   return (
-    <div className="ef">
-      <div className="ef-hud">
-        <div className="ef-scorebox">
+    <div className="sb">
+      <div className="sb-hud">
+        <div className="sb-scorebox">
           <span className="game-label">Puntaje (efecto boost)</span>
           <strong className="game-score">{score}</strong>
         </div>
-        <div className="ef-logbox">
-          <div className="ef-logbox-head">
+        <div className="sb-logbox">
+          <div className="sb-logbox-head">
             <span className="game-label">Registro</span>
-            <button type="button" className="ef-loglink" onClick={() => setLogOpen(true)} disabled={log.length === 0}>
+            <button type="button" className="sb-loglink" onClick={() => setLogOpen(true)} disabled={log.length === 0}>
               Ver todo{log.length ? ` (${log.length})` : ''}
             </button>
           </div>
-          <div className="ef-loglist-mini">
+          <div className="sb-loglist-mini">
             {log.length === 0 ? (
-              <span className="ef-log-empty">Bajá una carta a una zona para disparar su efecto…</span>
+              <span className="sb-log-empty">Bajá una carta a una zona para disparar su efecto…</span>
             ) : (
               log.slice(0, 3).map((l, i) => (
                 <div key={i} style={{ opacity: 1 - i * 0.28 }}>{l}</div>
@@ -175,25 +175,25 @@ export default function EffectsSpike() {
         </div>
       </div>
 
-      <div className="ef-bar">
-        <span className="ef-hint">
+      <div className="sb-bar">
+        <span className="sb-hint">
           {sel == null
             ? 'Seleccioná o arrastrá una carta, o abrí la baraja'
             : byId.get(sel)?.kind === 'boost'
               ? 'Regla: un boost solo entra en Zona 1'
               : 'Efecto para la carta seleccionada — o arrastrala a una zona'}
         </span>
-        <div className="ef-actions">
+        <div className="sb-actions">
           <button type="button" disabled={sel == null || !acceptsZone(byId.get(sel)!, 'zoneA')} onClick={() => toZone('zoneA')}>Bajar a Zona 1</button>
           <button type="button" disabled={sel == null || !acceptsZone(byId.get(sel)!, 'zoneB')} onClick={() => toZone('zoneB')}>Bajar a Zona 2</button>
           <button type="button" disabled={sel == null} onClick={rotate}>Rotar 90°</button>
           <button type="button" disabled={sel == null} onClick={() => setOrient('h')}>Horizontal</button>
           <button type="button" disabled={sel == null} onClick={() => setOrient('v')}>Vertical</button>
-          <button type="button" className="ef-search" onClick={() => setReveal(true)}>Buscar en la baraja</button>
+          <button type="button" className="sb-search" onClick={() => setReveal(true)}>Buscar en la baraja</button>
         </div>
       </div>
 
-      <div className="ef-stagewrap">
+      <div className="sb-stagewrap">
         <div className="cm-stage" ref={stageRef}>
           {cards.map((c) => {
             const inDeck = piles.deck.includes(c.id);
@@ -201,7 +201,7 @@ export default function EffectsSpike() {
               <div
                 key={c.id}
                 ref={(n) => registerCard(c.id, n)}
-                className={`ef-slot${sel === c.id ? ' selected' : ''}${inDeck ? ' in-deck' : ''}${dragId === c.id ? ' dragging' : ''}`}
+                className={`sb-slot${sel === c.id ? ' selected' : ''}${inDeck ? ' in-deck' : ''}${dragId === c.id ? ' dragging' : ''}`}
                 {...dragProps(c.id)}
                 style={{ position: 'absolute', top: 0, left: 0 }}
               >
@@ -210,9 +210,9 @@ export default function EffectsSpike() {
             );
           })}
         </div>
-        <span className="ef-tag" style={{ left: '12%', top: 'calc(42% + 64px)' }}>Baraja · {piles.deck.length}</span>
-        <span className="ef-tag" style={{ left: '62%', top: 'calc(30% + 62px)' }}>Zona 1</span>
-        <span className="ef-tag" style={{ left: '62%', top: 'calc(56% + 62px)' }}>Zona 2</span>
+        <span className="sb-tag" style={{ left: '12%', top: 'calc(42% + 64px)' }}>Baraja · {piles.deck.length}</span>
+        <span className="sb-tag" style={{ left: '62%', top: 'calc(30% + 62px)' }}>Zona 1</span>
+        <span className="sb-tag" style={{ left: '62%', top: 'calc(56% + 62px)' }}>Zona 2</span>
       </div>
 
       {reveal && (
@@ -226,17 +226,17 @@ export default function EffectsSpike() {
       )}
 
       {logOpen && (
-        <div className="ef-modal" role="dialog" aria-modal="true" onClick={() => setLogOpen(false)}>
-          <div className="ef-modal-panel ef-modal-log" onClick={(e) => e.stopPropagation()}>
-            <div className="ef-modal-head">
+        <div className="sb-modal" role="dialog" aria-modal="true" onClick={() => setLogOpen(false)}>
+          <div className="sb-modal-panel sb-modal-log" onClick={(e) => e.stopPropagation()}>
+            <div className="sb-modal-head">
               <span>Registro de acciones</span>
-              <button type="button" className="ef-modal-close" onClick={() => setLogOpen(false)} aria-label="Cerrar">✕</button>
+              <button type="button" className="sb-modal-close" onClick={() => setLogOpen(false)} aria-label="Cerrar">✕</button>
             </div>
-            <div className="ef-loglist">
+            <div className="sb-loglist">
               {log.length === 0 ? (
-                <div className="ef-reveal-empty">Sin acciones todavía.</div>
+                <div className="sb-reveal-empty">Sin acciones todavía.</div>
               ) : (
-                log.map((l, i) => <div key={i} className="ef-logrow">{l}</div>)
+                log.map((l, i) => <div key={i} className="sb-logrow">{l}</div>)
               )}
             </div>
           </div>

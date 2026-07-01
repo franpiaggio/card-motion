@@ -3,9 +3,9 @@ import { BackgroundShader, CardTable } from 'card-motion';
 import 'card-motion/styles.css';
 import DragDropDemo from './DragDropDemo';
 import GameDemo from './GameDemo';
-import EffectsSpike from './EffectsSpike';
+import Sandbox from './Sandbox';
 
-type Demo = 'table' | 'dnd' | 'game' | 'spike';
+type Demo = 'table' | 'dnd' | 'game' | 'sandbox';
 
 export default function App() {
   const [demo, setDemo] = useState<Demo>('table');
@@ -23,14 +23,14 @@ export default function App() {
         <button type="button" className={demo === 'game' ? 'on' : ''} onClick={() => setDemo('game')}>
           Demo
         </button>
-        <button type="button" className={demo === 'spike' ? 'on' : ''} onClick={() => setDemo('spike')}>
-          Spike
+        <button type="button" className={demo === 'sandbox' ? 'on' : ''} onClick={() => setDemo('sandbox')}>
+          Sandbox
         </button>
       </nav>
       {demo === 'table' && <CardTable handSize={8} cardWidth={96} />}
       {demo === 'dnd' && <DragDropDemo />}
       {demo === 'game' && <GameDemo />}
-      {demo === 'spike' && <EffectsSpike />}
+      {demo === 'sandbox' && <Sandbox />}
     </div>
   );
 }
