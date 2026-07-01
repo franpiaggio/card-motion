@@ -1,7 +1,8 @@
-import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
-import { useCardPiles } from './useCardPiles';
+import { act, render, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it } from 'vitest';
+import { useCardPiles, type CardPilesApi } from './useCardPiles';
 import { stackLayout, fanLayout } from '../lib/layout';
+import { gsap } from '../internal/gsap';
 import type { CardData } from '../types';
 
 type Pile = 'deck' | 'hand' | 'discard';
@@ -154,6 +155,58 @@ describe('useCardPiles — relayout', () => {
         void result.current.relayout(['hand', 'discard']);
       }),
     ).not.toThrow();
+    expectConserved(result.current.piles, 8);
+  });
+});
+
+// A harness that attaches a real stage so the engine measures and honors reduced
+// motion — which makes the selection tween apply instantly (duration 0), so we
+// can read the resulting position and check the configured lift.
+let motionApi: CardPilesApi<Pile>;
+function MotionHarness({ lift }: { lift: number }) {
+  motionApi = useCardPiles<Pile>({ cards: makeCards(6), piles: PILES, initial: { hand: [0, 1, 2] }, motion: { selectLift: lift } });
+  return (
+    <div ref={motionApi.stageRef} style={{ width: 400, height: 300 }}>
+      {motionApi.cards.map((c) => (
+        <div key={c.id} data-id={c.id} ref={(n) => motionApi.registerCard(c.id, n)} />
+      ))}
+    </div>
+  );
+}
+
+describe('useCardPiles — motion config', () => {
+  beforeEach(() => {
+    window.matchMedia = ((q: string) => ({
+      matches: q.includes('reduce'),
+      media: q,
+      onchange: null,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+      dispatchEvent: () => false,
+    })) as never;
+  });
+
+  it('applies a custom selectLift to the selected card', () => {
+    const { container } = render(<MotionHarness lift={60} />);
+    const node = container.querySelector('[data-id="0"]') as HTMLElement;
+    act(() => motionApi.toggle(0)); // select → rises by `lift`
+    const ySelected = gsap.getProperty(node, 'y') as number;
+    act(() => motionApi.toggle(0)); // deselect → back to base
+    const yBase = gsap.getProperty(node, 'y') as number;
+    expect(yBase - ySelected).toBeCloseTo(60);
+  });
+
+  it('keeps conserving cards with fully custom timings', () => {
+    const { result } = renderHook(() =>
+      useCardPiles<Pile>({ cards: makeCards(8), piles: PILES, motion: { moveDuration: 0.1, dealDuration: 0.2, riffleScale: 0.5 } }),
+    );
+    act(() => {
+      for (let i = 0; i < 8; i++) result.current.registerCard(i, document.createElement('div'));
+    });
+    act(() => void result.current.draw('deck', 'hand', 3));
+    expect(result.current.piles.hand).toHaveLength(3);
     expectConserved(result.current.piles, 8);
   });
 });

@@ -26,6 +26,7 @@ export type {
   CardPilesApi,
   MoveOptions,
   GatherOptions,
+  PileMotion,
 } from './hooks/useCardPiles';
 
 export { useCardTilt } from './hooks/useCardTilt';

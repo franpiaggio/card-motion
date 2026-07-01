@@ -5,12 +5,33 @@ import { gsap, useGSAP } from '../internal/gsap';
 import { buildDeck, shuffleInPlace } from '../lib/deck';
 import type { CardData, PileConfig, Point } from '../types';
 
-/** How far (px) a card rises when selected. */
-const LIFT = 30;
-/** Scale of a selected card. */
-const SELECT_SCALE = 1.06;
 /** z-index headroom between piles (declaration order → stack order). */
 const PILE_Z = 1000;
+
+/**
+ * Timing knobs for the engine's animations. Every field is optional and
+ * defaults to the built-in choreography, so you override only what you want.
+ */
+export interface PileMotion {
+  /** Duration (s) settled cards take to slide into place. Default `0.4`. */
+  moveDuration?: number;
+  /** Ease for settled cards sliding into place. Default `'power3.inOut'`. */
+  moveEase?: string;
+  /** Duration (s) a card takes to settle as it arrives in a pile (deal/draw/move-in). Default `0.45`. */
+  dealDuration?: number;
+  /** Ease for cards arriving in a pile. Default `'back.out(1.2)'`. */
+  dealEase?: string;
+  /** Stagger (s) between successive arriving cards. Default `0.07`. */
+  dealStagger?: number;
+  /** Time-scale for the riffle (shuffle / gather): `0.5` = twice as fast, `2` = half speed. Default `1`. */
+  riffleScale?: number;
+  /** How far (px) a card rises when selected. Default `30`. */
+  selectLift?: number;
+  /** Scale of a selected card. Default `1.06`. */
+  selectScale?: number;
+  /** Duration (s) of the select / deselect lift. Default `0.2`. */
+  selectDuration?: number;
+}
 
 export interface UseCardPilesOptions<P extends string = string, C extends { id: number } = CardData> {
   /**
@@ -26,6 +47,8 @@ export interface UseCardPilesOptions<P extends string = string, C extends { id: 
    * declared pile. Defaults to all cards in the first pile.
    */
   initial?: Partial<Record<P, number[]>>;
+  /** Override the engine's animation timings. Anything omitted keeps the default. */
+  motion?: PileMotion;
 }
 
 export interface MoveOptions {
@@ -90,6 +113,18 @@ export function useCardPiles<P extends string = string, C extends { id: number }
   // id → card, for handing the payload to layouts (built once; cards are stable).
   const cardByIdRef = useRef<Map<number, C> | null>(null);
   if (cardByIdRef.current === null) cardByIdRef.current = new Map(cards.map((c) => [c.id, c]));
+
+  // Animation timings — defaults reproduce the built-in choreography exactly.
+  const mo = options.motion ?? {};
+  const MOVE_DUR = mo.moveDuration ?? 0.4;
+  const MOVE_EASE = mo.moveEase ?? 'power3.inOut';
+  const DEAL_DUR = mo.dealDuration ?? 0.45;
+  const DEAL_EASE = mo.dealEase ?? 'back.out(1.2)';
+  const DEAL_STAGGER = mo.dealStagger ?? 0.07;
+  const RIFFLE = mo.riffleScale ?? 1;
+  const LIFT = mo.selectLift ?? 30;
+  const SELECT_SCALE = mo.selectScale ?? 1.06;
+  const SELECT_DUR = mo.selectDuration ?? 0.2;
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const nodesRef = useRef(new Map<number, HTMLElement>());
@@ -229,11 +264,11 @@ export function useCardPiles<P extends string = string, C extends { id: number }
           node(id),
           {
             ...t,
-            duration: isNew ? 0.45 : 0.4,
-            ease: isNew ? 'back.out(1.2)' : 'power3.inOut',
+            duration: isNew ? DEAL_DUR : MOVE_DUR,
+            ease: isNew ? DEAL_EASE : MOVE_EASE,
             onStart: () => gsap.set(node(id), { zIndex: t.zIndex }),
           },
-          isNew ? (arriving++ * 0.07) : 0,
+          isNew ? arriving++ * DEAL_STAGGER : 0,
         );
       });
     }
@@ -272,11 +307,11 @@ export function useCardPiles<P extends string = string, C extends { id: number }
   // A riffle animation gathering `ids` onto `center`, then settling as a stack.
   const riffle = (tl: gsap.core.Timeline, ids: number[], center: Point, layoutStack: () => void) => {
     ids.forEach((id, i) => {
-      tl.to(node(id), { x: center.x, y: center.y, rotation: 0, scale: 1, duration: 0.3, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.003);
+      tl.to(node(id), { x: center.x, y: center.y, rotation: 0, scale: 1, duration: 0.3 * RIFFLE, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.003 * RIFFLE);
     });
     ids.forEach((id, i) => {
       const side = i % 2 ? 1 : -1;
-      tl.to(node(id), { x: center.x + side * 60, y: center.y - i * 0.3, rotation: side * 5, duration: 0.2, ease: 'power1.inOut' }, 0.45 + i * 0.004);
+      tl.to(node(id), { x: center.x + side * 60, y: center.y - i * 0.3, rotation: side * 5, duration: 0.2 * RIFFLE, ease: 'power1.inOut' }, (0.45 + i * 0.004) * RIFFLE);
     });
     layoutStack();
   };
@@ -302,7 +337,7 @@ export function useCardPiles<P extends string = string, C extends { id: number }
       riffle(tl, gathered, center, () => {
         gathered.forEach((id, i) => {
           const t = targetOf(toPile, i, gathered.length, center, id, zBase);
-          tl.to(node(id), { ...t, duration: 0.24, ease: 'power2.out', onStart: () => gsap.set(node(id), { zIndex: t.zIndex }) }, 0.78 + i * 0.012);
+          tl.to(node(id), { ...t, duration: 0.24 * RIFFLE, ease: 'power2.out', onStart: () => gsap.set(node(id), { zIndex: t.zIndex }) }, (0.78 + i * 0.012) * RIFFLE);
         });
       });
     });
@@ -322,7 +357,7 @@ export function useCardPiles<P extends string = string, C extends { id: number }
       riffle(tl, ids, center, () => {
         ids.forEach((id, i) => {
           const t = targetOf(pile, i, ids.length, center, id, zBase);
-          tl.to(node(id), { ...t, duration: 0.24, ease: 'power2.out', onStart: () => gsap.set(node(id), { zIndex: t.zIndex }) }, 0.78 + i * 0.012);
+          tl.to(node(id), { ...t, duration: 0.24 * RIFFLE, ease: 'power2.out', onStart: () => gsap.set(node(id), { zIndex: t.zIndex }) }, (0.78 + i * 0.012) * RIFFLE);
         });
       });
     });
@@ -341,7 +376,7 @@ export function useCardPiles<P extends string = string, C extends { id: number }
       height: sizeRef.current.h,
       card: cardByIdRef.current!.get(id)!,
     });
-    const dur = reduceRef.current ? 0 : 0.2;
+    const dur = reduceRef.current ? 0 : SELECT_DUR;
     if (selectedRef.current.has(id)) {
       selectedRef.current.delete(id);
       syncSelected();
