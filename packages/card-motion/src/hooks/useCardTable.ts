@@ -6,10 +6,31 @@ import { buildDeck, shuffleInPlace } from '../lib/deck';
 import { getZones as defaultGetZones, deckTarget, handTarget, tableTarget } from '../lib/layout';
 import type { CardData, LayoutFn, Zones } from '../types';
 
-/** How far (px) a card rises when selected. */
-const LIFT = 30;
-/** Scale of a selected card. */
-const SELECT_SCALE = 1.06;
+/**
+ * Timing knobs for the table's animations. Every field is optional and defaults
+ * to the built-in choreography, so you override only what you want. Mirrors
+ * `PileMotion` on `useCardPiles`.
+ */
+export interface CardTableMotion {
+  /** Cards being dealt into the hand. Defaults: `0.45` / `'back.out(1.3)'`, stagger `0.09`. */
+  dealDuration?: number;
+  dealEase?: string;
+  dealStagger?: number;
+  /** Cards flying onto the table when played. Defaults: `0.5` / `'power3.inOut'`. */
+  playDuration?: number;
+  playEase?: string;
+  /** Cards re-tweening into place (refan / deck slide / clear / reset). Overrides the built-in per-phase durations & eases. */
+  moveDuration?: number;
+  moveEase?: string;
+  /** Time-scale for the riffle shuffle: `0.5` = twice as fast, `2` = half speed. Default `1`. */
+  riffleScale?: number;
+  /** How far (px) a hand card rises when selected. Default `30`. */
+  selectLift?: number;
+  /** Scale of a selected card. Default `1.06`. */
+  selectScale?: number;
+  /** Duration (s) of the select / deselect lift. Default `0.2`. */
+  selectDuration?: number;
+}
 
 export interface UseCardTableOptions {
   /** The cards to manage. Defaults to a fresh 52-card deck. */
@@ -20,6 +41,8 @@ export interface UseCardTableOptions {
   getZones?: (w: number, h: number) => Zones;
   /** Override the per-zone layout functions. */
   layout?: Partial<Record<'deck' | 'hand' | 'table', LayoutFn>>;
+  /** Override the table's animation timings. Anything omitted keeps the default. */
+  motion?: CardTableMotion;
 }
 
 export interface CardTableApi {
@@ -67,6 +90,21 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
   const deckT = layout?.deck ?? deckTarget;
   const handT = layout?.hand ?? handTarget;
   const tableT = layout?.table ?? tableTarget;
+
+  // Animation timings — defaults reproduce the built-in choreography. MOVE_DUR /
+  // MOVE_EASE stay possibly-undefined so each re-tween site keeps its own default.
+  const mo = options.motion ?? {};
+  const MOVE_DUR = mo.moveDuration;
+  const MOVE_EASE = mo.moveEase;
+  const DEAL_DUR = mo.dealDuration ?? 0.45;
+  const DEAL_EASE = mo.dealEase ?? 'back.out(1.3)';
+  const DEAL_STAGGER = mo.dealStagger ?? 0.09;
+  const PLAY_DUR = mo.playDuration ?? 0.5;
+  const PLAY_EASE = mo.playEase ?? 'power3.inOut';
+  const RIFFLE = mo.riffleScale ?? 1;
+  const LIFT = mo.selectLift ?? 30;
+  const SELECT_SCALE = mo.selectScale ?? 1.06;
+  const SELECT_DUR = mo.selectDuration ?? 0.2;
 
   const [cards] = useState<CardData[]>(() => options.deck ?? buildDeck());
 
@@ -170,7 +208,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     const orders = ordersRef.current!;
     orders.deck.forEach((id, i) => {
       const t = deckT(i, orders.deck.length, z);
-      tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, duration, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, 0);
+      tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, duration: MOVE_DUR ?? duration, ease: MOVE_EASE ?? 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, 0);
     });
   };
 
@@ -180,11 +218,11 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
     orders.hand.forEach((id, i) => {
       const t = handT(i, orders.hand.length, z);
       const sel = selectedRef.current.has(id);
-      tl.to(node(id), { x: t.x, y: t.y - (sel ? LIFT : 0), rotation: t.rotation, scale: sel ? SELECT_SCALE : t.scale, zIndex: sel ? 150 : 100 + i, duration: 0.35, ease: 'power2.out' }, 0);
+      tl.to(node(id), { x: t.x, y: t.y - (sel ? LIFT : 0), rotation: t.rotation, scale: sel ? SELECT_SCALE : t.scale, zIndex: sel ? 150 : 100 + i, duration: MOVE_DUR ?? 0.35, ease: MOVE_EASE ?? 'power2.out' }, 0);
     });
     orders.table.forEach((id, i) => {
       const t = tableT(i, orders.table.length, z);
-      tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, zIndex: 200 + i, duration: 0.45, ease: 'power3.inOut' }, 0);
+      tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, zIndex: 200 + i, duration: MOVE_DUR ?? 0.45, ease: MOVE_EASE ?? 'power3.inOut' }, 0);
     });
   };
 
@@ -200,17 +238,17 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
 
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
-          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.3, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.003);
+          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.3 * RIFFLE, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.003 * RIFFLE);
         });
 
         shuffleInPlace(all);
         all.forEach((id, i) => {
           const side = i % 2 ? 1 : -1;
-          tl.to(node(id), { x: z.deck.x + side * 74, y: z.deck.y - i * 0.3, rotation: side * 5, duration: 0.2, ease: 'power1.inOut' }, 0.45 + i * 0.004);
+          tl.to(node(id), { x: z.deck.x + side * 74, y: z.deck.y - i * 0.3, rotation: side * 5, duration: 0.2 * RIFFLE, ease: 'power1.inOut' }, (0.45 + i * 0.004) * RIFFLE);
         });
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
-          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, duration: 0.24, ease: 'power2.out', onStart: () => gsap.set(node(id), { zIndex: i }) }, 0.78 + i * 0.012);
+          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, duration: 0.24 * RIFFLE, ease: 'power2.out', onStart: () => gsap.set(node(id), { zIndex: i }) }, (0.78 + i * 0.012) * RIFFLE);
         });
       }),
     [deckT],
@@ -245,11 +283,11 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
               y: t.y,
               rotation: t.rotation,
               scale: t.scale,
-              duration: isNew ? 0.45 : 0.3,
-              ease: isNew ? 'back.out(1.3)' : 'power2.out',
+              duration: isNew ? DEAL_DUR : (MOVE_DUR ?? 0.3),
+              ease: isNew ? DEAL_EASE : (MOVE_EASE ?? 'power2.out'),
               onStart: () => gsap.set(node(id), { zIndex: 100 + i }),
             },
-            isNew ? (i - firstNew) * 0.09 : 0,
+            isNew ? (i - firstNew) * DEAL_STAGGER : 0,
           );
         });
       }),
@@ -270,7 +308,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
         const n = table.length;
         table.forEach((id, i) => {
           const t = tableT(i, n, z);
-          tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, duration: 0.5, ease: 'power3.inOut', onStart: () => gsap.set(node(id), { zIndex: 200 + i }) }, i * 0.06);
+          tl.to(node(id), { x: t.x, y: t.y, rotation: t.rotation, scale: t.scale, duration: PLAY_DUR, ease: PLAY_EASE, onStart: () => gsap.set(node(id), { zIndex: 200 + i }) }, i * 0.06);
         });
       }),
     [tableT],
@@ -318,7 +356,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
         const z = computeZones(); // idle → deck centered
         all.forEach((id, i) => {
           const t = deckT(i, all.length, z);
-          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: 0.4, ease: 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.008);
+          tl.to(node(id), { x: t.x, y: t.y, rotation: 0, scale: 1, duration: MOVE_DUR ?? 0.4, ease: MOVE_EASE ?? 'power2.inOut', onStart: () => gsap.set(node(id), { zIndex: i }) }, i * 0.008);
         });
       }),
     [deckT],
@@ -333,7 +371,7 @@ export function useCardTable(options: UseCardTableOptions = {}): CardTableApi {
       const i = orders.hand.indexOf(id);
       const t = handT(i, orders.hand.length, z);
 
-      const dur = reduceRef.current ? 0 : 0.2;
+      const dur = reduceRef.current ? 0 : SELECT_DUR;
       if (selectedRef.current.has(id)) {
         selectedRef.current.delete(id);
         syncSelected();

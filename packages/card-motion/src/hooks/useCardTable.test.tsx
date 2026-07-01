@@ -1,6 +1,7 @@
 import { act, render } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { useCardTable, type CardTableApi } from './useCardTable';
+import { useCardTable, type CardTableApi, type CardTableMotion } from './useCardTable';
+import { gsap } from '../internal/gsap';
 import type { CardData } from '../types';
 
 const makeCards = (n: number): CardData[] =>
@@ -87,5 +88,39 @@ describe('useCardTable', () => {
     act(() => api.deal());
     act(() => api.shuffle());
     expect(api.counts).toEqual({ deck: 10, hand: 0, table: 0 });
+  });
+});
+
+let mtApi: CardTableApi;
+function MotionHarness({ motion }: { motion: CardTableMotion }) {
+  mtApi = useCardTable({ deck: makeCards(6), handSize: 3, motion });
+  return (
+    <div ref={mtApi.stageRef} style={{ width: 800, height: 600 }}>
+      {mtApi.cards.map((c) => (
+        <div key={c.id} data-id={c.id} ref={(el) => mtApi.registerCard(c.id, el)} />
+      ))}
+    </div>
+  );
+}
+
+describe('useCardTable — motion config', () => {
+  it('applies a custom selectLift when a hand card is selected', () => {
+    const { container } = render(<MotionHarness motion={{ selectLift: 50 }} />);
+    act(() => mtApi.deal());
+    const id = mtApi.hand[0];
+    const node = container.querySelector(`[data-id="${id}"]`) as HTMLElement;
+    act(() => mtApi.toggleCard(id)); // select → rises by `lift`
+    const ySelected = gsap.getProperty(node, 'y') as number;
+    act(() => mtApi.toggleCard(id)); // deselect → back to base
+    const yBase = gsap.getProperty(node, 'y') as number;
+    expect(yBase - ySelected).toBeCloseTo(50);
+  });
+
+  it('keeps conserving cards with fully custom timings', () => {
+    render(<MotionHarness motion={{ moveDuration: 0.1, dealDuration: 0.2, playDuration: 0.15, dealStagger: 0.02, riffleScale: 0.5 }} />);
+    act(() => mtApi.deal());
+    act(() => mtApi.play());
+    act(() => mtApi.shuffle());
+    expect(mtApi.counts).toEqual({ deck: 6, hand: 0, table: 0 });
   });
 });

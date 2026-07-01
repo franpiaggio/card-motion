@@ -18,7 +18,7 @@ export { DraggableCard } from './components/DraggableCard';
 export type { DraggableCardProps } from './components/DraggableCard';
 
 export { useCardTable } from './hooks/useCardTable';
-export type { UseCardTableOptions, CardTableApi } from './hooks/useCardTable';
+export type { UseCardTableOptions, CardTableApi, CardTableMotion } from './hooks/useCardTable';
 
 export { useCardPiles } from './hooks/useCardPiles';
 export type {
