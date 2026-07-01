@@ -61,37 +61,78 @@ export const tableTarget: LayoutFn = (index, count, zones) => {
 };
 
 // ── Generic pile layouts (for `useCardPiles`) ───────────────────────────────
-// Each is a `PileLayoutFn` anchored at the pile's own point, so the same layout
-// works for any pile you declare.
+// Each is a configurable factory returning a `PileLayoutFn` anchored at the
+// pile's own point, plus a default instance (e.g. `fanLayout = fan()`) for the
+// common case. Tune spacing / tilt / scale per pile without writing a layout by
+// hand — the built-ins stay card-agnostic (they never read the card payload).
 
+/** Options for {@link stack}. */
+export interface StackOptions {
+  /** Per-card px offset that gives the stack volume. Default `0.35`. */
+  offset?: number;
+  scale?: number;
+}
 /** A tight stack with a slight offset for volume (deck / discard pile). */
-export const stackLayout: PileLayoutFn = (index, _count, { anchor }) => ({
-  x: anchor.x + index * 0.35,
-  y: anchor.y - index * 0.35,
-  rotation: 0,
-  scale: 1,
-});
-
-/** An arc fan centered on the anchor — the center card highest, edges tilted. */
-export const fanLayout: PileLayoutFn = (index, count, { anchor, width }) => {
-  const off = index - (count - 1) / 2;
-  const spacingX = count > 1 ? Math.min(112, (width * 0.92) / count) : 0;
-  return {
-    x: anchor.x + off * spacingX,
-    y: anchor.y + off * off * 4,
-    rotation: off * 5,
-    scale: 1,
-  };
-};
-
-/** A straight row centered on the anchor, clamped so it never overflows. */
-export const rowLayout: PileLayoutFn = (index, count, { anchor, width }) => {
-  const spacingX = count > 1 ? Math.min(108, (width * 0.6) / count) : 0;
-  const rowWidth = spacingX * (count - 1);
-  return {
-    x: anchor.x - rowWidth / 2 + index * spacingX,
-    y: anchor.y,
+export function stack({ offset = 0.35, scale = 1 }: StackOptions = {}): PileLayoutFn<{ id: number }> {
+  return (index, _count, { anchor }) => ({
+    x: anchor.x + index * offset,
+    y: anchor.y - index * offset,
     rotation: 0,
-    scale: 0.92,
+    scale,
+  });
+}
+
+/** Options for {@link fan}. */
+export interface FanOptions {
+  /** Fraction of the stage width the fan may span. Default `0.92`. */
+  spread?: number;
+  /** Max px between adjacent cards. Default `112`. */
+  maxSpacing?: number;
+  /** Degrees of tilt per card away from center. Default `5`. */
+  tilt?: number;
+  /** Px of vertical dip per unit² of offset (arc curvature). Default `4`. */
+  dip?: number;
+  scale?: number;
+}
+/** An arc fan centered on the anchor — the center card highest, edges tilted. */
+export function fan({ spread = 0.92, maxSpacing = 112, tilt = 5, dip = 4, scale = 1 }: FanOptions = {}): PileLayoutFn<{ id: number }> {
+  return (index, count, { anchor, width }) => {
+    const off = index - (count - 1) / 2;
+    const spacingX = count > 1 ? Math.min(maxSpacing, (width * spread) / count) : 0;
+    return {
+      x: anchor.x + off * spacingX,
+      y: anchor.y + off * off * dip,
+      rotation: off * tilt,
+      scale,
+    };
   };
-};
+}
+
+/** Options for {@link row}. */
+export interface RowOptions {
+  /** Fixed px between adjacent cards; overrides `spread`/`maxSpacing` when set. */
+  spacing?: number;
+  /** Fraction of the stage width the row may span (clamps spacing). Default `0.6`. */
+  spread?: number;
+  /** Max px between adjacent cards. Default `108`. */
+  maxSpacing?: number;
+  scale?: number;
+}
+/** A straight row centered on the anchor, clamped so it never overflows. */
+export function row({ spacing, spread = 0.6, maxSpacing = 108, scale = 0.92 }: RowOptions = {}): PileLayoutFn<{ id: number }> {
+  return (index, count, { anchor, width }) => {
+    const spacingX = spacing != null ? spacing : count > 1 ? Math.min(maxSpacing, (width * spread) / count) : 0;
+    const rowWidth = spacingX * (count - 1);
+    return {
+      x: anchor.x - rowWidth / 2 + index * spacingX,
+      y: anchor.y,
+      rotation: 0,
+      scale,
+    };
+  };
+}
+
+/** Default layout instances for the common case (equivalent to `stack()` etc.). */
+export const stackLayout: PileLayoutFn<{ id: number }> = stack();
+export const fanLayout: PileLayoutFn<{ id: number }> = fan();
+export const rowLayout: PileLayoutFn<{ id: number }> = row();

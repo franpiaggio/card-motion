@@ -57,27 +57,38 @@ export interface Stage {
   height: number;
 }
 
-/** Context a {@link PileLayoutFn} receives: the pile's anchor plus the stage size. */
-export interface PileLayoutContext {
+/**
+ * Context a {@link PileLayoutFn} receives: the pile's anchor, the stage size,
+ * and the card itself — so a layout can branch on the card's payload (a
+ * game-specific type, orientation, size…), not just its index. Generic over the
+ * card shape `C`; defaults to {@link CardData}.
+ */
+export interface PileLayoutContext<C = CardData> {
   /** The pile's resolved anchor point (px). */
   anchor: Point;
   /** Stage width in px. */
   width: number;
   /** Stage height in px. */
   height: number;
+  /** The card being placed (its full payload). */
+  card: C;
 }
 
 /**
  * Computes the target transform for the card at `index` within a pile that
  * currently holds `count` cards — a generalized {@link LayoutFn} for arbitrary
- * piles (see `useCardPiles`).
+ * piles (see `useCardPiles`). Generic over the card shape `C`.
  */
-export type PileLayoutFn = (index: number, count: number, ctx: PileLayoutContext) => CardTarget;
+export type PileLayoutFn<C = CardData> = (
+  index: number,
+  count: number,
+  ctx: PileLayoutContext<C>,
+) => CardTarget;
 
 /** Declares one pile: where it sits on the stage and how its cards arrange. */
-export interface PileConfig {
+export interface PileConfig<C = CardData> {
   /** Where the pile anchors, from the current stage size. */
   anchor: (stage: Stage) => Point;
   /** How cards stack/fan/spread within the pile. */
-  layout: PileLayoutFn;
+  layout: PileLayoutFn<C>;
 }

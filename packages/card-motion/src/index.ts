@@ -4,6 +4,9 @@ export type { CardProps } from './components/Card';
 export { BackgroundShader } from './components/BackgroundShader';
 export type { BackgroundShaderProps, BackgroundShaderColors } from './components/BackgroundShader';
 
+export { DeckReveal } from './components/DeckReveal';
+export type { DeckRevealProps } from './components/DeckReveal';
+
 export { CardTable } from './components/CardTable';
 export type { CardTableProps, CardTableHandle } from './components/CardTable';
 
@@ -28,8 +31,25 @@ export type {
 export { useCardTilt } from './hooks/useCardTilt';
 export type { UseCardTiltOptions } from './hooks/useCardTilt';
 
+export { useCardDrag } from './hooks/useCardDrag';
+export type { UseCardDragOptions, CardDragApi, DragPoint } from './hooks/useCardDrag';
+
 export { buildDeck, shuffleInPlace, SUITS, RANKS } from './lib/deck';
-export { getZones, deckTarget, handTarget, tableTarget, stackLayout, fanLayout, rowLayout, CARD_W, CARD_H } from './lib/layout';
+export {
+  getZones,
+  deckTarget,
+  handTarget,
+  tableTarget,
+  stack,
+  fan,
+  row,
+  stackLayout,
+  fanLayout,
+  rowLayout,
+  CARD_W,
+  CARD_H,
+} from './lib/layout';
+export type { StackOptions, FanOptions, RowOptions } from './lib/layout';
 
 export type {
   Suit,

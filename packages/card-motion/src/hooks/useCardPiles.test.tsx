@@ -135,3 +135,25 @@ describe('useCardPiles — queries & selection', () => {
     expect(result.current.selected.has(3)).toBe(false);
   });
 });
+
+describe('useCardPiles — relayout', () => {
+  it('re-runs the layout without changing pile membership', () => {
+    const { result } = setup(8, { hand: [0, 1, 2] });
+    const handBefore = result.current.piles.hand;
+    act(() => void result.current.relayout('hand'));
+    expect(result.current.piles.hand).toEqual(handBefore); // only positions change
+    expectConserved(result.current.piles, 8);
+  });
+
+  it('accepts one pile, an array of piles, or nothing (all piles)', () => {
+    const { result } = setup(8, { hand: [0, 1, 2] });
+    expect(() =>
+      act(() => {
+        void result.current.relayout();
+        void result.current.relayout('deck');
+        void result.current.relayout(['hand', 'discard']);
+      }),
+    ).not.toThrow();
+    expectConserved(result.current.piles, 8);
+  });
+});

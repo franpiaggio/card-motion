@@ -12,11 +12,15 @@ const SELECT_SCALE = 1.06;
 /** z-index headroom between piles (declaration order → stack order). */
 const PILE_Z = 1000;
 
-export interface UseCardPilesOptions<P extends string = string> {
-  /** The cards to manage. Defaults to a fresh 52-card deck. */
-  cards?: CardData[];
+export interface UseCardPilesOptions<P extends string = string, C extends { id: number } = CardData> {
+  /**
+   * The cards to manage — any object with a numeric `id`. The engine only ever
+   * reads `id`; the rest of the payload is yours (rank/suit, or a token's
+   * type/cost/effect). Defaults to a fresh 52-card French deck.
+   */
+  cards?: C[];
   /** Declares each pile: its anchor on the stage and how its cards arrange. */
-  piles: Record<P, PileConfig>;
+  piles: Record<P, PileConfig<C>>;
   /**
    * Which cards start in which pile. Any cards not listed go into the first
    * declared pile. Defaults to all cards in the first pile.
@@ -36,9 +40,9 @@ export interface GatherOptions<P extends string = string> {
   shuffle?: boolean;
 }
 
-export interface CardPilesApi<P extends string = string> {
+export interface CardPilesApi<P extends string = string, C extends { id: number } = CardData> {
   /** The full, stable set of cards. Render one node per card and wire {@link registerCard}. */
-  cards: CardData[];
+  cards: C[];
   /** Ref for the positioned stage element that contains the cards. */
   stageRef: RefObject<HTMLDivElement | null>;
   /** Ref callback to register each card's DOM node by id. */
@@ -57,6 +61,12 @@ export interface CardPilesApi<P extends string = string> {
   gather: (toPile: P, opts?: GatherOptions<P>) => Promise<void>;
   /** Riffle-shuffle the order of a single pile in place. Resolves when done. */
   shuffle: (pile: P) => Promise<void>;
+  /**
+   * Re-run the layout for one/all piles and animate cards to the new targets —
+   * e.g. after mutating a card's payload (rotate, flip, resize). Resolves when
+   * done. Pass nothing to relayout every pile.
+   */
+  relayout: (which?: P | P[]) => Promise<void>;
   /** Toggle a card's selection (lifts it). Works in any pile. */
   toggle: (id: number) => void;
   /** Ids of the currently selected (lifted) cards. */
@@ -70,11 +80,16 @@ export interface CardPilesApi<P extends string = string> {
  * timelines and card positions. `useCardTable` is a deck/hand/table preset; this
  * is the general primitive for solitaire, discard piles, and anything else.
  */
-export function useCardPiles<P extends string = string>(options: UseCardPilesOptions<P>): CardPilesApi<P> {
+export function useCardPiles<P extends string = string, C extends { id: number } = CardData>(
+  options: UseCardPilesOptions<P, C>,
+): CardPilesApi<P, C> {
   const { piles: pileConfig } = options;
   const pileIds = Object.keys(pileConfig) as P[];
 
-  const [cards] = useState<CardData[]>(() => options.cards ?? buildDeck());
+  const [cards] = useState<C[]>(() => options.cards ?? (buildDeck() as unknown as C[]));
+  // id → card, for handing the payload to layouts (built once; cards are stable).
+  const cardByIdRef = useRef<Map<number, C> | null>(null);
+  if (cardByIdRef.current === null) cardByIdRef.current = new Map(cards.map((c) => [c.id, c]));
 
   const stageRef = useRef<HTMLDivElement | null>(null);
   const nodesRef = useRef(new Map<number, HTMLElement>());
@@ -132,7 +147,8 @@ export function useCardPiles<P extends string = string>(options: UseCardPilesOpt
 
   // Target transform for a card at index `i` in pile `p`, honoring selection.
   const targetOf = (p: P, i: number, count: number, anchor: Point, id: number, zBase: number) => {
-    const t = pileConfig[p].layout(i, count, { anchor, width: sizeRef.current.w, height: sizeRef.current.h });
+    const card = cardByIdRef.current!.get(id)!;
+    const t = pileConfig[p].layout(i, count, { anchor, width: sizeRef.current.w, height: sizeRef.current.h, card });
     const sel = selectedRef.current.has(id);
     return {
       x: t.x,
@@ -319,7 +335,12 @@ export function useCardPiles<P extends string = string>(options: UseCardPilesOpt
     if (!p) return;
     const i = orders[p].indexOf(id);
     const a = pileConfig[p].anchor({ width: sizeRef.current.w, height: sizeRef.current.h });
-    const base = pileConfig[p].layout(i, orders[p].length, { anchor: a, width: sizeRef.current.w, height: sizeRef.current.h });
+    const base = pileConfig[p].layout(i, orders[p].length, {
+      anchor: a,
+      width: sizeRef.current.w,
+      height: sizeRef.current.h,
+      card: cardByIdRef.current!.get(id)!,
+    });
     const dur = reduceRef.current ? 0 : 0.2;
     if (selectedRef.current.has(id)) {
       selectedRef.current.delete(id);
@@ -330,6 +351,13 @@ export function useCardPiles<P extends string = string>(options: UseCardPilesOpt
       syncSelected();
       gsap.to(node(id), { y: base.y - LIFT, scale: SELECT_SCALE, zIndex: 90000, duration: dur, ease: 'power2.out' });
     }
+  }, []);
+
+  const doRelayout = useCallback((which?: P | P[]) => {
+    return run((tl) => {
+      const list = which == null ? pileIds : Array.isArray(which) ? which : [which];
+      relayout(tl, anchors(), list);
+    });
   }, []);
 
   const pileOf = useCallback((id: number): P | null => {
@@ -348,6 +376,7 @@ export function useCardPiles<P extends string = string>(options: UseCardPilesOpt
     draw,
     gather,
     shuffle,
+    relayout: doRelayout,
     toggle,
     selected,
   };
