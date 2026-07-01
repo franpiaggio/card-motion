@@ -515,3 +515,351 @@ body {
   cursor: not-allowed;
   opacity: 0.7;
 }
+
+/* ── Effects spike (custom cards + per-game effects) ───────────────────────── */
+.ef {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 16px 14px;
+  color: var(--paper);
+  background: color-mix(in oklch, var(--ink-950) 30%, transparent);
+}
+.ef-hud {
+  width: 100%;
+  max-width: 880px;
+  height: 92px; /* fixed — the log never grows and pushes the table down */
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--ink-850);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.ef-scorebox {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.ef-scorebox .game-score {
+  font-size: 30px;
+}
+/* Log, separated from the score by a hairline; last 3 lines at a fixed height. */
+.ef-logbox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 250px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+}
+.ef-logbox-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.ef-loglink {
+  font: 700 9px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--info);
+  background: transparent;
+  border: 1px solid color-mix(in oklch, var(--info) 45%, transparent);
+  border-radius: var(--radius);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.ef-loglink:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ef-loglist-mini {
+  height: 48px;
+  overflow: hidden;
+  text-align: right;
+  font: 500 12px/1.35 var(--font-display);
+  color: var(--paper-dim);
+}
+.ef-log-empty {
+  color: var(--paper-faint);
+}
+/* Full log in a modal — a fixed-height, scrollable list of recent actions. */
+.ef-modal-log {
+  max-width: 460px;
+}
+.ef-loglist {
+  height: 300px;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 4px;
+}
+.ef-logrow {
+  font: 500 13px/1.4 var(--font-display);
+  color: var(--paper-dim);
+  padding: 8px 10px;
+  background: var(--ink-850);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.ef-bar {
+  width: 100%;
+  max-width: 880px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--ink-850);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.ef-hint {
+  font: 500 11px/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+}
+.ef-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.ef-actions button {
+  font: 700 11px/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background-color 0.15s var(--ease-out), border-color 0.15s var(--ease-out), color 0.15s var(--ease-out),
+    opacity 0.15s var(--ease-out);
+}
+.ef-actions button:hover:not(:disabled) {
+  border-color: var(--paper-faint);
+}
+.ef-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ef-actions .ef-search {
+  color: var(--ink-950);
+  background: var(--accent);
+  border-color: transparent;
+  box-shadow: 2px 2px 0 var(--coral-deep);
+}
+.ef-actions .ef-search:hover {
+  background: color-mix(in oklch, var(--accent) 88%, white);
+}
+
+.ef-stagewrap {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  flex: 1;
+  min-height: 320px;
+}
+.ef-stagewrap .cm-stage {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.ef-tag {
+  position: absolute;
+  transform: translateX(-50%);
+  font: 500 10px/1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* A slot holds one custom card face; the engine positions & rotates the slot. */
+.ef-slot {
+  width: 80px;
+  height: 112px;
+  cursor: grab;
+  touch-action: none; /* let pointer-drag own the gesture */
+}
+.ef-slot.in-deck {
+  cursor: default;
+}
+.ef-slot.dragging {
+  cursor: grabbing;
+}
+.ef-card {
+  width: 80px;
+  height: 112px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 7px 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--ink-800);
+  color: var(--paper);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+}
+.ef-slot.selected .ef-card {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.ef-kind {
+  align-self: flex-start;
+  font: 500 8px/1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+}
+.ef-glyph {
+  font: 700 30px/1 var(--font-display);
+}
+.ef-eff {
+  font: 500 8px/1 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+}
+.ef-card.k-boost {
+  border-color: color-mix(in oklch, var(--accent) 55%, transparent);
+  background: var(--coral-soft);
+  color: var(--accent);
+}
+.ef-card.k-draw {
+  border-color: color-mix(in oklch, var(--info) 55%, transparent);
+  background: var(--blue-soft);
+  color: var(--info);
+}
+.ef-card.k-search {
+  border-color: color-mix(in oklch, var(--gold) 50%, transparent);
+  background: color-mix(in oklch, var(--gold) 14%, transparent);
+  color: var(--gold);
+}
+/* Card back — clearly a face-down deck card. */
+.ef-card.ef-back {
+  background:
+    repeating-linear-gradient(45deg, transparent 0 6px, color-mix(in oklch, var(--info) 22%, transparent) 6px 12px),
+    var(--ink-850);
+  border-color: var(--line);
+}
+
+.ef-note {
+  max-width: 800px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--paper-faint);
+  margin-top: 6px;
+}
+.ef-note code {
+  font-family: ui-monospace, monospace;
+  color: var(--paper-dim);
+}
+.ef-note b {
+  color: var(--paper-dim);
+  font-weight: 700;
+}
+
+/* ── Deck-reveal modal (reusable) ──────────────────────────────────────────── */
+.ef-modal {
+  position: fixed;
+  inset: 0;
+  /* Above every card node — the engine/drag pushes cards up to ~99999. */
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in oklch, var(--ink-950) 72%, transparent);
+  backdrop-filter: blur(3px);
+}
+.ef-modal-panel {
+  width: 100%;
+  max-width: 860px;
+  max-height: 86vh;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  background: var(--ink-900);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.ef-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font: 500 12px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+}
+.ef-modal-close {
+  font: 700 14px/1 var(--font-ui);
+  color: var(--paper-faint);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+.ef-modal-close:hover {
+  color: var(--paper);
+}
+.ef-reveal {
+  flex: 1;
+  min-height: 0; /* allow the grid to shrink so overflow-y actually scrolls */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-content: flex-start;
+  overflow-y: auto;
+  padding: 6px 6px 2px;
+}
+.ef-reveal-empty {
+  color: var(--paper-faint);
+  padding: 40px;
+}
+.ef-reveal-card {
+  width: 80px;
+  height: 112px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transform-origin: center bottom;
+  animation: ef-fan-in 0.32s var(--ease-out) both;
+  transition: transform 0.14s var(--ease-out);
+}
+.ef-reveal-card:hover {
+  transform: translateY(-8px);
+}
+@keyframes ef-fan-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
