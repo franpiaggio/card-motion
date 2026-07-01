@@ -71,6 +71,9 @@ body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100% - 24px);
   gap: 4px;
   z-index: 20;
   padding: 4px;
@@ -783,23 +786,6 @@ body {
   border-color: var(--line);
 }
 
-.sb-note {
-  max-width: 800px;
-  text-align: center;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--paper-faint);
-  margin-top: 6px;
-}
-.sb-note code {
-  font-family: ui-monospace, monospace;
-  color: var(--paper-dim);
-}
-.sb-note b {
-  color: var(--paper-dim);
-  font-weight: 700;
-}
-
 /* ── Deck-reveal modal (reusable) ──────────────────────────────────────────── */
 .sb-modal {
   position: fixed;
@@ -848,42 +834,7 @@ body {
 .sb-modal-close:hover {
   color: var(--paper);
 }
-.sb-reveal {
-  flex: 1;
-  min-height: 0; /* allow the grid to shrink so overflow-y actually scrolls */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  align-content: flex-start;
-  overflow-y: auto;
-  padding: 6px 6px 2px;
-}
 .sb-reveal-empty {
   color: var(--paper-faint);
   padding: 40px;
-}
-.sb-reveal-card {
-  width: 80px;
-  height: 112px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transform-origin: center bottom;
-  animation: sb-fan-in 0.32s var(--ease-out) both;
-  transition: transform 0.14s var(--ease-out);
-}
-.sb-reveal-card:hover {
-  transform: translateY(-8px);
-}
-@keyframes sb-fan-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }

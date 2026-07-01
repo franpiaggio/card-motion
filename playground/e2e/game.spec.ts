@@ -5,7 +5,7 @@ import { expect, test } from '@playwright/test';
 test('Demo: deals a hand and scores a played hand', async ({ page }) => {
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Demo' }).click();
+  await page.getByRole('button', { name: 'Poker' }).click();
   await page.getByRole('button', { name: 'Shuffle & deal' }).click();
 
   // The deal finished once the play control appears (phase → 'playing').
@@ -30,7 +30,7 @@ test('Demo: deals a hand and scores a played hand', async ({ page }) => {
 // Only cards in your hand are selectable — clicking the deck/discard must not.
 test('Demo: cards outside your hand cannot be selected', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Demo' }).click();
+  await page.getByRole('button', { name: 'Poker' }).click();
   await page.getByRole('button', { name: 'Shuffle & deal' }).click();
 
   const play = page.getByRole('button', { name: /^Play hand/ });

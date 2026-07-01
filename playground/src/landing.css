@@ -67,6 +67,7 @@ body:has(.lp) {
 /* Drop the table so its top lines up with the title (past the kicker),
    keeping it visually anchored to the headline rather than the whole column. */
 .lp-hero-stage {
+  position: relative;
   margin-top: clamp(6px, 4vw, 52px);
 }
 
@@ -177,9 +178,6 @@ body:has(.lp) {
 }
 
 /* Hero card table — a dark felt inset with a live <CardTable>. */
-.lp-hero-stage {
-  position: relative;
-}
 .lp-felt {
   position: relative;
   height: clamp(360px, 42vw, 480px);
@@ -447,9 +445,6 @@ body:has(.lp) {
   line-height: 1.55;
   color: var(--lp-ink-soft);
   max-width: 62ch;
-}
-.lp-foot-fine em {
-  font-style: italic;
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */

@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { BackgroundShader, Card, CardTable, useCardTable } from 'card-motion';
+import DragDropDemo from './DragDropDemo';
+import GameDemo from './GameDemo';
+import Sandbox from './Sandbox';
 
 // A tiny, dependency-free highlighter for the short JSX snippets below. Tokenizes
 // into React spans (no dangerouslySetInnerHTML) — strings, keywords, component
@@ -29,9 +32,6 @@ function Code({ src }: { src: string }) {
   if (last < src.length) nodes.push(src.slice(last));
   return <code>{nodes}</code>;
 }
-import DragDropDemo from './DragDropDemo';
-import GameDemo from './GameDemo';
-import Sandbox from './Sandbox';
 
 type Demo = 'table' | 'dnd' | 'game' | 'sandbox';
 
@@ -84,7 +84,7 @@ export default () => (
     tag: 'headless',
     accent: 'blue',
     name: 'useCardTable()',
-    blurb: 'Render your own cards and rules. The hook owns deck/hand/table state, the GSAP timelines, and selection.',
+    blurb: 'Render your own cards and rules. It owns deck/hand/table state and the timelines — or reach for useCardPiles for arbitrary piles (what the Poker and Sandbox demos run on).',
     code: `const {
   cards, deal, playSelected,
   toggleCard, registerCard,
@@ -249,7 +249,7 @@ export default function Landing() {
           <div className="lp-felt">
             <HeroTable />
           </div>
-          <p className="lp-felt-note">Live. Real GSAP, on loop.</p>
+          <p className="lp-felt-note">Live. GSAP timelines, on a loop.</p>
         </div>
       </header>
 
@@ -297,16 +297,16 @@ export default function Landing() {
         <div className="lp-stage">
           <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
           <nav className="demo-nav" aria-label="Live demos">
-            <button type="button" className={demo === 'table' ? 'on' : ''} onClick={() => setDemo('table')}>
+            <button type="button" className={demo === 'table' ? 'on' : ''} aria-current={demo === 'table' ? 'true' : undefined} onClick={() => setDemo('table')}>
               Card table
             </button>
-            <button type="button" className={demo === 'dnd' ? 'on' : ''} onClick={() => setDemo('dnd')}>
+            <button type="button" className={demo === 'dnd' ? 'on' : ''} aria-current={demo === 'dnd' ? 'true' : undefined} onClick={() => setDemo('dnd')}>
               Drag &amp; drop
             </button>
-            <button type="button" className={demo === 'game' ? 'on' : ''} onClick={() => setDemo('game')}>
-              Demo
+            <button type="button" className={demo === 'game' ? 'on' : ''} aria-current={demo === 'game' ? 'true' : undefined} onClick={() => setDemo('game')}>
+              Poker
             </button>
-            <button type="button" className={demo === 'sandbox' ? 'on' : ''} onClick={() => setDemo('sandbox')}>
+            <button type="button" className={demo === 'sandbox' ? 'on' : ''} aria-current={demo === 'sandbox' ? 'true' : undefined} onClick={() => setDemo('sandbox')}>
               Sandbox
             </button>
           </nav>

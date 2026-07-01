@@ -1,7 +1,7 @@
 import 'card-motion/styles.css';
 import { useSyncExternalStore } from 'react';
 import Landing from './Landing';
-import Demos from './Demos';
+import Demos, { isDemo } from './Demos';
 
 // Tiny hash router: `#/demo` (optionally `#/demo/<name>`) opens the demos on
 // their own full-screen page; everything else is the landing.
@@ -18,8 +18,11 @@ function useHash() {
 
 export default function App() {
   const hash = useHash();
-  if (hash.startsWith('#/demo')) {
-    return <Demos initial={hash.split('/')[2]} />;
+  if (hash === '#/demo' || hash.startsWith('#/demo/')) {
+    // The active demo is derived from the hash, so browser Back/Forward works.
+    const parsed = hash.split('/')[2];
+    const demo = isDemo(parsed) ? parsed : 'game';
+    return <Demos demo={demo} onPick={(d) => (window.location.hash = `#/demo/${d}`)} />;
   }
   return <Landing />;
 }
