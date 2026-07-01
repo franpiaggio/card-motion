@@ -46,3 +46,34 @@ test('Sandbox: a forbidden drag is rejected and snaps back', async ({ page }) =>
   await expect(page.locator('.sb-loglist-mini')).toContainText('rechazado');
   await expect(page.locator('.sb-scorebox .game-score')).toHaveText('0');
 });
+
+// Dragging a hand card sideways reorders the hand (drop position → index).
+test('Sandbox: dragging a hand card reorders the hand', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Sandbox' }).click();
+
+  const hand = page.locator('.sb-slot:not(.in-deck)');
+  await expect(hand).toHaveCount(5);
+
+  const leftmostIsSearch = async () => {
+    const cards = await hand.evaluateAll((els) =>
+      els.map((el) => ({ x: el.getBoundingClientRect().x, search: !!el.querySelector('.k-search') })),
+    );
+    return cards.reduce((a, b) => (b.x < a.x ? b : a)).search;
+  };
+
+  // The SEARCH card starts 2nd, so it is not the left-most yet.
+  expect(await leftmostIsSearch()).toBe(false);
+
+  // Drag it left of the first card → it should become the left-most.
+  const search = page.locator('.sb-slot:not(.in-deck)', { has: page.locator('.k-search') }).first();
+  const box = (await search.boundingBox())!;
+  const cy = box.y + box.height / 2;
+  await page.mouse.move(box.x + box.width / 2, cy);
+  await page.mouse.down();
+  await page.mouse.move(box.x - 110, cy, { steps: 12 });
+  await page.mouse.up();
+
+  await page.waitForTimeout(600); // let the relayout settle
+  expect(await leftmostIsSearch()).toBe(true);
+});
