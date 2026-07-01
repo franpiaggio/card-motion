@@ -22,8 +22,13 @@ pnpm-debug.log*
 .idea/
 *.sw?
 
-# misc
+# test output
 coverage/
+test-results/
+playwright-report/
+.playwright/
+
+# misc
 *.local
 .env
 .env.*

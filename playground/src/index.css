@@ -1,3 +1,43 @@
+/* ── Playground design tokens ─────────────────────────────────────────────
+   "Riso Arcade": warm-ink ground, two flat riso inks (blue + coral) plus a
+   sparing marigold for scoring. Flat blocks, hard edges, no gloss. Documented
+   in playground/DESIGN.md. All neutrals are tinted warm; no pure #000 / #fff. */
+:root {
+  /* Warm-ink surface ramp */
+  --ink-950: oklch(0.15 0.014 55);
+  --ink-900: oklch(0.185 0.015 55);
+  --ink-850: oklch(0.225 0.016 55);
+  --ink-800: oklch(0.27 0.016 55);
+  --line: oklch(0.34 0.017 58);
+
+  /* Paper (warm off-whites for text on ink) */
+  --paper: oklch(0.95 0.012 85);
+  --paper-dim: oklch(0.74 0.02 78);
+  --paper-faint: oklch(0.56 0.022 72);
+
+  /* Riso inks */
+  --blue: oklch(0.66 0.16 248);
+  --blue-soft: oklch(0.66 0.16 248 / 0.2);
+  --coral: oklch(0.68 0.19 34);
+  --coral-deep: oklch(0.5 0.16 34);
+  --coral-soft: oklch(0.68 0.19 34 / 0.18);
+  --marigold: oklch(0.82 0.14 78);
+
+  /* Semantic roles */
+  --accent: var(--coral); /* primary actions */
+  --info: var(--blue); /* progress, selection, chips */
+  --gold: var(--marigold); /* score / mult emphasis */
+
+  /* Type */
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Shape & motion — riso wants tight radii and quick, flat transitions */
+  --radius: 6px;
+  --radius-lg: 10px;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -12,8 +52,9 @@ body,
 }
 
 body {
-  background: #07070f;
-  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--ink-950);
+  font-family: var(--font-ui);
+  color: var(--paper);
   overflow: hidden;
 }
 
@@ -30,25 +71,33 @@ body {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  gap: 8px;
+  gap: 4px;
   z-index: 20;
-  padding: 5px;
-  border-radius: 12px;
-  background: rgba(10, 12, 24, 0.55);
+  padding: 4px;
+  border-radius: var(--radius);
+  background: color-mix(in oklch, var(--ink-900) 78%, transparent);
+  border: 1px solid var(--line);
   backdrop-filter: blur(6px);
 }
 .demo-nav button {
-  font: 700 13px/1 system-ui, sans-serif;
-  color: #c7cbe0;
+  font: 500 12px/1 var(--font-display);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--paper-dim);
   background: transparent;
   border: none;
-  padding: 9px 16px;
-  border-radius: 8px;
+  padding: 9px 15px;
+  border-radius: 4px;
   cursor: pointer;
+  transition: color 0.15s var(--ease-out), background-color 0.15s var(--ease-out);
+}
+.demo-nav button:hover {
+  color: var(--paper);
 }
 .demo-nav button.on {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.14);
+  color: var(--ink-950);
+  background: var(--paper);
 }
 
 /* Drag & drop demo */
@@ -159,4 +208,310 @@ body {
 .dnd-hand .cm-draggable.cm-dragging .cm-card {
   transform: none;
   transition: none;
+}
+
+/* ── Game demo · "Riso Arcade" identity ────────────────────────────────────
+   Warm-ink ground over the shader, two flat riso inks, a printed grain wash.
+   Blocky panels, tight radii, no gloss. See playground/DESIGN.md. */
+.game {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 74px 16px 24px;
+  color: var(--paper);
+  /* Keep the BackgroundShader visible — just a light warm veil so free-floating
+     text stays legible over the brighter parts of the swirl. */
+  background: color-mix(in oklch, var(--ink-950) 22%, transparent);
+}
+/* Riso print grain — a faint fractal-noise wash behind the UI. */
+.game::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.game > * {
+  position: relative;
+  z-index: 1;
+}
+
+.game-hud {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--ink-850);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.game-scorebox {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.game-label {
+  display: block;
+  font: 500 10px/1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+  margin-bottom: 6px;
+}
+/* Score is the hero; the target reads as a subordinate reference beside it. */
+.game-scoreline {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.game-scorebox strong.game-score {
+  font-family: var(--font-display);
+  font-size: clamp(30px, 7vw, 44px);
+  font-weight: 700;
+  line-height: 1;
+  display: inline-block;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+.game-target {
+  font: 500 16px/1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  color: var(--paper-faint);
+}
+.game-bar {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--ink-950);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.game-bar-fill {
+  height: 100%;
+  background: var(--info);
+  transition: width 0.4s var(--ease-out);
+}
+.game-counters {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.game-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 60px;
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font: 500 9px/1 var(--font-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+}
+.game-chip span {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--paper);
+  font-variant-numeric: tabular-nums;
+}
+.game-hands span { color: var(--info); }
+.game-discards span { color: var(--accent); }
+
+.game-readout {
+  height: 44px;
+  margin: 16px 0 4px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+.game-preview {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-family: var(--font-display);
+  font-size: 19px;
+}
+.game-preview.muted {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--paper-faint);
+}
+.game-preview b { color: var(--gold); font-weight: 700; }
+.game-math {
+  font-variant-numeric: tabular-nums;
+  color: var(--paper-dim);
+}
+/* Live scoring readout: hand name, then chips × mult. */
+.game-tally {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.game-tally b { color: var(--gold); font-size: 17px; margin-right: 4px; }
+.game-chips,
+.game-mult {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  padding: 4px 12px;
+  border-radius: var(--radius);
+  border: 1px solid;
+}
+.game-chips {
+  color: var(--info);
+  background: var(--blue-soft);
+  border-color: color-mix(in oklch, var(--info) 45%, transparent);
+}
+.game-x { color: var(--paper-faint); }
+.game-mult {
+  color: var(--accent);
+  background: var(--coral-soft);
+  border-color: color-mix(in oklch, var(--accent) 45%, transparent);
+}
+.game-banner {
+  font: 700 20px/1 var(--font-display);
+  letter-spacing: 0.01em;
+  padding: 9px 20px;
+  border-radius: var(--radius);
+  border: 1px solid;
+}
+.game-banner.win {
+  color: var(--info);
+  background: var(--blue-soft);
+  border-color: color-mix(in oklch, var(--info) 45%, transparent);
+}
+.game-banner.lose {
+  color: var(--accent);
+  background: var(--coral-soft);
+  border-color: color-mix(in oklch, var(--accent) 45%, transparent);
+}
+
+/* The animated table (deck / hand / play area) driven by useCardPiles. */
+.game-stagewrap {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  flex: 1;
+  min-height: 360px;
+}
+.game-stagewrap .cm-table,
+.game-stagewrap .cm-stage {
+  position: absolute;
+  inset: 0;
+}
+/* Let cards spill past the stage during the shuffle riffle instead of clipping
+   at the top edge (the library stage is overflow:hidden by default). */
+.game-stagewrap .cm-stage {
+  overflow: visible;
+}
+/* Hover lift for the interactive hand cards — raises the pointed card clear of
+   its neighbours (and to the front) so you can read and pick it. The lift lives
+   on the inner element; GSAP owns the outer node's transform. */
+.game .cm-card-inner {
+  transition: transform 0.18s var(--ease-out);
+}
+.game .cm-card[role='button']:hover .cm-card-inner {
+  transform: translateY(-14px);
+}
+.game .cm-card[role='button']:hover {
+  z-index: 99999 !important;
+}
+/* Fixed board positions for the deck & discard — a printed placeholder frame
+   that stays put even when a pile is empty. Centered on the pile anchors. */
+.game-slot {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  border: 1.5px dashed color-mix(in oklch, var(--line) 85%, transparent);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+.game-slot-deck { left: 12%; top: 32%; }
+.game-slot-discard { left: 88%; top: 32%; }
+/* Pile labels sit just under the deck / discard slots. */
+.game-piletag {
+  position: absolute;
+  transform: translateX(-50%);
+  top: calc(32% + 74px);
+  font: 500 10px/1 var(--font-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--paper-faint);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.game-decktag { left: 12%; }
+.game-discardtag { left: 88%; color: var(--accent); }
+
+.game-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+.game-controls button {
+  font: 700 14px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 13px 26px;
+  cursor: pointer;
+  transition: transform 0.1s var(--ease-out), box-shadow 0.1s var(--ease-out),
+    background-color 0.15s var(--ease-out), color 0.15s var(--ease-out),
+    border-color 0.15s var(--ease-out), opacity 0.15s var(--ease-out);
+}
+/* Primary: a printed coral sticker with a hard 2px offset — flat, not glossy. */
+.game-play {
+  color: var(--ink-950);
+  background: var(--accent);
+  box-shadow: 2px 2px 0 var(--coral-deep);
+}
+.game-play:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 88%, white);
+}
+.game-play:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--coral-deep);
+}
+.game-play:disabled {
+  color: var(--paper-faint);
+  background: var(--ink-800);
+  box-shadow: 2px 2px 0 var(--ink-950);
+  cursor: not-allowed;
+}
+/* Secondary: a ghost with a hairline; borrows the coral ink on interaction. */
+.game-discard {
+  color: var(--paper);
+  background: transparent;
+  border-color: var(--line);
+}
+.game-discard:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--coral-soft);
+}
+.game-discard:active:not(:disabled) {
+  transform: translate(1px, 1px);
+}
+.game-discard:disabled {
+  color: var(--paper-faint);
+  border-color: var(--ink-800);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
