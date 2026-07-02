@@ -118,7 +118,7 @@ export default function Golf() {
             </div>
             <DropZone id="waste" className="sol-cell" ariaLabel="Waste" accepts={(id) => canPlay(state, byId, id)}>
               {wasteTop != null && (
-                <div className="sol-cardwrap">
+                <div className="sol-cardwrap" data-flip-id={wasteTop}>
                   <Card rank={byId.get(wasteTop)!.rank} suit={byId.get(wasteTop)!.suit} color={byId.get(wasteTop)!.color} width={cardW} tilt={false} />
                 </div>
               )}

@@ -108,12 +108,17 @@ export function useFlip(ref: { current: HTMLElement | null }, dep: unknown, enab
     }
     const els = Array.from(c.querySelectorAll<HTMLElement>('[data-flip-id]'));
     const curr = new Map(els.map((el) => [el.dataset.flipId!, el.getBoundingClientRect()]));
+    const hadPrev = prev.current.size > 0;
     for (const el of els) {
       const id = el.dataset.flipId!;
       const old = prev.current.get(id);
       const now = curr.get(id)!;
       if (old && (Math.abs(old.left - now.left) > 0.5 || Math.abs(old.top - now.top) > 0.5)) {
+        // Moved: glide from the old box to the new one.
         gsap.fromTo(el, { x: old.left - now.left, y: old.top - now.top }, { x: 0, y: 0, duration: 0.4, ease: 'power3.out' });
+      } else if (!old && hadPrev) {
+        // Appeared mid-tutorial (e.g. a card drawn to the waste): pop in.
+        gsap.fromTo(el, { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.6)' });
       }
     }
     prev.current = curr;

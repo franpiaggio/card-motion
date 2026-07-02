@@ -131,7 +131,7 @@ export default function FreeCell() {
                 {f.length === 0 ? (
                   <div className={`sol-slot${SUITS[i].color === 'red' ? ' red' : ''}`}>{SUITS[i].glyph}</div>
                 ) : (
-                  <div className="sol-cardwrap">
+                  <div className="sol-cardwrap" data-flip-id={f[f.length - 1]}>
                     <Card
                       rank={byId.get(f[f.length - 1])!.rank}
                       suit={byId.get(f[f.length - 1])!.suit}

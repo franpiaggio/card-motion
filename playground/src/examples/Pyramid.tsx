@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Card } from 'card-motion';
 import { byIdMap, deal, draw, isFreeId, isStuck, isWon, remove, rowOf, slotIndex, type PyramidState } from './pyramidRules';
-import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
 
 interface Game {
   state: PyramidState;
@@ -27,6 +27,8 @@ export default function Pyramid() {
   const vStep = Math.round(cardH * 0.44);
   const pyrW = cardW * 7;
   const pyrH = vStep * 6 + cardH;
+
+  useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
     setGame(newGame());
@@ -117,6 +119,7 @@ export default function Pyramid() {
             return (
               <div
                 key={id}
+                data-flip-id={id}
                 className={`sol-pyr-card${free ? ' free' : ' covered'}${selected === id ? ' selected' : ''}`}
                 style={{ left: (3 + i - r / 2) * cardW, top: r * vStep }}
                 onClick={() => tapCard(id)}
@@ -133,7 +136,7 @@ export default function Pyramid() {
           </div>
           <div className="sol-cell" style={{ width: cardW }}>
             {wasteTop != null ? (
-              <div className={`sol-pyr-card free static${selected === wasteTop ? ' selected' : ''}`} onClick={() => tapCard(wasteTop)}>
+              <div className={`sol-pyr-card free static${selected === wasteTop ? ' selected' : ''}`} data-flip-id={wasteTop} onClick={() => tapCard(wasteTop)}>
                 <Card rank={byId.get(wasteTop)!.rank} suit={byId.get(wasteTop)!.suit} color={byId.get(wasteTop)!.color} width={cardW} tilt={false} />
               </div>
             ) : (

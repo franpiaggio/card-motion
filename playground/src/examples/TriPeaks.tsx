@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Card } from 'card-motion';
 import { byIdMap, canPlay, deal, draw, isFreeSlot, isStuck, isWon, play, SLOTS, type TriPeaksState } from './tripeaksRules';
-import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
 
 interface Game {
   state: TriPeaksState;
@@ -26,6 +26,8 @@ export default function TriPeaks() {
   const vStep = Math.round(cardH * 0.42);
   const peaksW = cardW * 10;
   const peaksH = vStep * 3 + cardH;
+
+  useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
     setGame(newGame());
@@ -98,6 +100,7 @@ export default function TriPeaks() {
             return (
               <div
                 key={id}
+                data-flip-id={id}
                 className={`sol-pyr-card${free ? ' free' : ' covered'}${playable ? ' playable' : ''}`}
                 style={{ left: SLOTS[slot].x * cardW, top: SLOTS[slot].row * vStep }}
                 onClick={() => tapCard(id)}
@@ -113,7 +116,7 @@ export default function TriPeaks() {
             {state.stock.length > 0 ? <CardBack width={cardW} /> : <div className="sol-stock-empty" style={{ width: cardW, height: cardH }}>✕</div>}
           </div>
           {wasteTop != null && (
-            <div className="sol-cardwrap">
+            <div className="sol-cardwrap" data-flip-id={wasteTop}>
               <Card rank={byId.get(wasteTop)!.rank} suit={byId.get(wasteTop)!.suit} color={byId.get(wasteTop)!.color} width={cardW} tilt={false} />
             </div>
           )}

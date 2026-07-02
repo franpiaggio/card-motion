@@ -1,3 +1,5 @@
+import { GAMES } from './games';
+
 // Index for the "Working examples" section: real games built with card-motion.
 export default function Examples() {
   return (
@@ -9,25 +11,19 @@ export default function Examples() {
         <h1 className="ex-title">
           Working <span>examples</span>
         </h1>
-        <p className="ex-sub">Complete games built with the library. Each is a real, playable example — drag to move, double-tap to send a card home.</p>
+        <p className="ex-sub">Six complete solitaire games built with the library. Each is a real, playable example — drag or tap to move, and hit Tutorial to learn the rules by watching.</p>
       </header>
 
       <div className="ex-grid">
-        <a className="ex-card" href="#/freecell">
-          <span className="ex-tag ex-tag-coral">Drag &amp; drop</span>
-          <h2>FreeCell</h2>
-          <p>All 52 cards face-up, four free cells, eight columns. Deterministic and pure logic.</p>
-          <span className="ex-uses">DragDropProvider · DropZone · DraggableCard · Card</span>
-          <span className="ex-play">Play →</span>
-        </a>
-
-        <a className="ex-card" href="#/klondike">
-          <span className="ex-tag ex-tag-blue">Drag &amp; drop + stock</span>
-          <h2>Klondike</h2>
-          <p>The classic Solitaire: a stock and waste, face-down tableau, King-only empty columns.</p>
-          <span className="ex-uses">DragDropProvider · DropZone · DraggableCard · Card</span>
-          <span className="ex-play">Play →</span>
-        </a>
+        {GAMES.map((g) => (
+          <a key={g.href} className="ex-card" href={g.href}>
+            <span className={`ex-tag ex-tag-${g.accent}`}>{g.tag}</span>
+            <h2>{g.name}</h2>
+            <p>{g.blurb}</p>
+            <span className="ex-uses">{g.uses}</span>
+            <span className="ex-play">Play →</span>
+          </a>
+        ))}
       </div>
     </div>
   );

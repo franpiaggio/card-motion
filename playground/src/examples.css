@@ -496,6 +496,9 @@ body:has(.ex) {
 .ex-tag-blue {
   background: var(--ex-blue);
 }
+.ex-tag-marigold {
+  background: oklch(0.55 0.12 68);
+}
 .ex-card h2 {
   font-family: 'Bricolage Grotesque', system-ui, sans-serif;
   font-size: 26px;

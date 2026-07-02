@@ -4,6 +4,7 @@ import DragDropDemo from './DragDropDemo';
 import GameDemo from './GameDemo';
 import Sandbox from './Sandbox';
 import { Highlight } from './highlight';
+import { GAMES } from './examples/games';
 
 type Demo = 'table' | 'dnd' | 'game' | 'sandbox';
 
@@ -56,7 +57,7 @@ export default () => (
     tag: 'headless',
     accent: 'blue',
     name: 'useCardTable()',
-    blurb: 'Render your own cards and rules. It owns deck/hand/table state and the timelines — or reach for useCardPiles for arbitrary piles (what the Poker and Sandbox demos run on).',
+    blurb: 'Render your own cards and rules — it owns the state and timelines. Or useCardPiles for arbitrary piles (Poker & Sandbox).',
     code: `const {
   cards, deal, playSelected,
   toggleCard, registerCard,
@@ -296,18 +297,14 @@ export default function Landing() {
           Complete games built with the library — drag to move, double-tap to send a card home.
         </p>
         <div className="lp-examples-grid">
-          <a className="lp-example lp-accent-coral" href="#/freecell">
-            <span className="lp-way-tag">Drag &amp; drop</span>
-            <h3 className="lp-way-name">FreeCell</h3>
-            <p className="lp-way-blurb">All 52 cards face-up, four free cells, eight columns. Deterministic and pure logic.</p>
-            <span className="lp-example-play">Play&nbsp;→</span>
-          </a>
-          <a className="lp-example lp-accent-blue" href="#/klondike">
-            <span className="lp-way-tag">Drag &amp; drop + stock</span>
-            <h3 className="lp-way-name">Klondike</h3>
-            <p className="lp-way-blurb">The classic Solitaire: a stock and waste, face-down tableau, King-only empty columns.</p>
-            <span className="lp-example-play">Play&nbsp;→</span>
-          </a>
+          {GAMES.map((g) => (
+            <a key={g.href} className={`lp-example lp-accent-${g.accent}`} href={g.href}>
+              <span className="lp-way-tag">{g.tag}</span>
+              <h3 className="lp-way-name">{g.name}</h3>
+              <p className="lp-way-blurb">{g.blurb}</p>
+              <span className="lp-example-play">Play&nbsp;→</span>
+            </a>
+          ))}
         </div>
       </section>
 
