@@ -39,7 +39,7 @@ export default function App() {
   if (hash === '#/demo' || hash.startsWith('#/demo/')) {
     // The active demo is derived from the hash, so browser Back/Forward works.
     const parsed = hash.split('/')[2];
-    const demo = isDemo(parsed) ? parsed : 'game';
+    const demo = isDemo(parsed) ? parsed : 'table';
     return <Demos demo={demo} onPick={(d) => (window.location.hash = `#/demo/${d}`)} />;
   }
   return <Landing />;

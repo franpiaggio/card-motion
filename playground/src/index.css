@@ -102,6 +102,20 @@ body {
   color: var(--ink-950);
   background: var(--paper);
 }
+/* On narrow screens keep the switcher a single slim row (scroll if needed)
+   instead of wrapping into a tall block that covers the demo. */
+@media (max-width: 640px) {
+  .demo-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    max-width: calc(100% - 24px);
+    scrollbar-width: none;
+  }
+  .demo-nav::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 /* Back-to-landing link on the standalone demos page. */
 .demo-back {
@@ -837,4 +851,62 @@ body {
 .sb-reveal-empty {
   color: var(--paper-faint);
   padding: 40px;
+}
+
+/* ── Embedded demos on phones ──────────────────────────────────────────────
+   In the landing the switcher sits above the board (in flow), so the demos no
+   longer need the tall top padding that clears the standalone overlay nav.
+   Compress dense layouts so hands and effect rows aren't clipped. */
+.lp-stage .dnd {
+  padding: 16px 14px 12px;
+}
+.lp-stage .sb {
+  padding: 14px 12px 12px;
+}
+@media (max-width: 640px) {
+  /* Drag & drop */
+  .dnd-head h1 {
+    font-size: 20px;
+  }
+  .dnd-head p {
+    font-size: 12.5px;
+    margin: 6px 0 10px;
+  }
+  .dnd-zones {
+    margin-top: 14px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .dnd-zone {
+    min-height: 128px;
+    padding: 10px;
+  }
+  .dnd-hand {
+    padding: 12px 12px 10px;
+  }
+  .dnd-hand .cm-dropzone-body {
+    min-height: 100px;
+  }
+  .dnd-hand .cm-draggable:not(:first-child) {
+    margin-left: -44px;
+  }
+
+  /* Sandbox */
+  .sb-hud {
+    height: auto;
+    min-height: 78px;
+    padding: 10px 12px;
+  }
+  .sb-logbox {
+    min-width: 0;
+  }
+  .sb-scorebox .game-score {
+    font-size: 24px;
+  }
+  .sb-stagewrap {
+    min-height: 240px;
+  }
+  .sb-actions button {
+    padding: 8px 10px;
+  }
 }

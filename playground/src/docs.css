@@ -221,6 +221,12 @@ body:has(.docs) {
 }
 
 /* ── Reference tables ─────────────────────────────────────────────────────── */
+/* Wrapper keeps wide reference tables scrollable on narrow screens instead of
+   overflowing the page. On desktop the table fits, so the wrapper is inert. */
+.docs-tablewrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
 .docs-table {
   width: 100%;
   border-collapse: collapse;
@@ -275,5 +281,13 @@ body:has(.docs) {
     grid-auto-flow: row;
     padding-bottom: 12px;
     border-bottom: 1.5px solid var(--d-line);
+  }
+  /* Keep columns readable and let the wrapper scroll rather than crushing them. */
+  .docs-tablewrap {
+    margin: 14px 0;
+  }
+  .docs-table {
+    min-width: 480px;
+    margin: 0;
   }
 }

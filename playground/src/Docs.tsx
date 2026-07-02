@@ -27,58 +27,62 @@ function P({ children }: { children: ReactNode }) {
 // Props table: [name, type, default, description]
 function PropsTable({ rows }: { rows: ReadonlyArray<readonly [string, string, string, string]> }) {
   return (
-    <table className="docs-table">
-      <thead>
-        <tr>
-          <th>Prop</th>
-          <th>Type</th>
-          <th>Default</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(([name, type, def, desc]) => (
-          <tr key={name}>
-            <td className="t-name">
-              <code>{name}</code>
-            </td>
-            <td className="t-type">
-              <code>{type}</code>
-            </td>
-            <td className="t-def">{def ? <code>{def}</code> : '—'}</td>
-            <td>{desc}</td>
+    <div className="docs-tablewrap">
+      <table className="docs-table">
+        <thead>
+          <tr>
+            <th>Prop</th>
+            <th>Type</th>
+            <th>Default</th>
+            <th>Description</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map(([name, type, def, desc]) => (
+            <tr key={name}>
+              <td className="t-name">
+                <code>{name}</code>
+              </td>
+              <td className="t-type">
+                <code>{type}</code>
+              </td>
+              <td className="t-def">{def ? <code>{def}</code> : '—'}</td>
+              <td>{desc}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
 // Fields table: [name, type, description]
 function FieldsTable({ head = 'Field', rows }: { head?: string; rows: ReadonlyArray<readonly [string, string, string]> }) {
   return (
-    <table className="docs-table">
-      <thead>
-        <tr>
-          <th>{head}</th>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map(([name, type, desc]) => (
-          <tr key={name}>
-            <td className="t-name">
-              <code>{name}</code>
-            </td>
-            <td className="t-type">
-              <code>{type}</code>
-            </td>
-            <td>{desc}</td>
+    <div className="docs-tablewrap">
+      <table className="docs-table">
+        <thead>
+          <tr>
+            <th>{head}</th>
+            <th>Type</th>
+            <th>Description</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {rows.map(([name, type, desc]) => (
+            <tr key={name}>
+              <td className="t-name">
+                <code>{name}</code>
+              </td>
+              <td className="t-type">
+                <code>{type}</code>
+              </td>
+              <td>{desc}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 

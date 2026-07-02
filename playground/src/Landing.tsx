@@ -180,7 +180,7 @@ function HeroTable() {
 }
 
 export default function Landing() {
-  const [demo, setDemo] = useState<Demo>('game');
+  const [demo, setDemo] = useState<Demo>('table');
 
   return (
     <div className="lp">
@@ -265,8 +265,7 @@ export default function Landing() {
             Open full screen&nbsp;↗
           </a>
         </div>
-        <div className="lp-stage">
-          <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+        <div className="lp-stage-wrap">
           <nav className="demo-nav" aria-label="Live demos">
             <button type="button" className={demo === 'table' ? 'on' : ''} aria-current={demo === 'table' ? 'true' : undefined} onClick={() => setDemo('table')}>
               Card table
@@ -281,10 +280,13 @@ export default function Landing() {
               Sandbox
             </button>
           </nav>
-          {demo === 'table' && <CardTable handSize={8} cardWidth={96} />}
-          {demo === 'dnd' && <DragDropDemo />}
-          {demo === 'game' && <GameDemo />}
-          {demo === 'sandbox' && <Sandbox />}
+          <div className="lp-stage">
+            <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+            {demo === 'table' && <CardTable handSize={8} cardWidth={96} />}
+            {demo === 'dnd' && <DragDropDemo />}
+            {demo === 'game' && <GameDemo />}
+            {demo === 'sandbox' && <Sandbox />}
+          </div>
         </div>
       </section>
 
