@@ -29,15 +29,16 @@
   background-size: 22px 22px, 180px 180px;
 }
 
+/* Let the document (viewport) be the scroll container — not body/#root — so the
+   sticky table of contents can follow the scroll. */
 html:has(.docs),
 body:has(.docs),
 #root:has(.docs) {
   height: auto;
   min-height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
 }
 body:has(.docs) {
+  overflow: visible;
   background: var(--d-paper);
   color: var(--d-ink);
 }
@@ -195,6 +196,28 @@ body:has(.docs) {
 }
 .d-code code {
   white-space: pre;
+}
+/* Syntax colors (shared token classes from src/highlight.tsx). */
+.d-code .tok-str {
+  color: oklch(0.8 0.13 145);
+}
+.d-code .tok-key {
+  color: oklch(0.74 0.13 300);
+}
+.d-code .tok-tag {
+  color: oklch(0.72 0.16 34);
+}
+.d-code .tok-attr {
+  color: oklch(0.74 0.11 236);
+}
+.d-code .tok-fn {
+  color: oklch(0.82 0.13 82);
+}
+.d-code .tok-num {
+  color: oklch(0.78 0.12 52);
+}
+.d-code .tok-punc {
+  color: oklch(0.62 0.014 85);
 }
 
 /* ── Reference tables ─────────────────────────────────────────────────────── */

@@ -1,10 +1,11 @@
 import { Fragment, useEffect, type ReactNode } from 'react';
+import { Highlight } from './highlight';
 
 // ── Small presentational helpers ────────────────────────────────────────────
 function Code({ children }: { children: string }) {
   return (
     <pre className="d-code">
-      <code>{children}</code>
+      <Highlight src={children} />
     </pre>
   );
 }
