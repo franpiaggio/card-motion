@@ -1,0 +1,420 @@
+/* ── Working examples: FreeCell & Klondike ──────────────────────────────────
+   Full-screen dark board (cream cards pop), riso-accent chrome, responsive down
+   to phones. Reuses the playground tokens from index.css. */
+
+/* Narrow phones: give the title room by dropping the move count and the
+   back-link label (the arrow stays). */
+@media (max-width: 460px) {
+  .sol-stat {
+    display: none;
+  }
+  .sol-back-label {
+    display: none;
+  }
+}
+
+.sol {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--paper);
+  font-family: var(--font-display);
+  background:
+    radial-gradient(120% 90% at 50% -10%, oklch(0.24 0.02 265) 0%, var(--ink-950) 60%);
+  overflow: hidden;
+  touch-action: manipulation; /* no double-tap zoom on cards */
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────────────── */
+.sol-bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px clamp(10px, 3vw, 22px);
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in oklch, var(--ink-900) 70%, transparent);
+}
+.sol-bar-left,
+.sol-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.sol-back {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--paper-dim);
+  white-space: nowrap;
+}
+.sol-back:hover {
+  color: var(--paper);
+}
+.sol-title {
+  font-size: clamp(15px, 2.4vw, 20px);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sol-stat {
+  font-size: 12px;
+  color: var(--paper-dim);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.sol-btn {
+  font: 600 12px/1 var(--font-display);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink-800);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s var(--ease-out), transform 0.1s var(--ease-out);
+}
+.sol-btn:hover {
+  background: var(--ink-850);
+}
+.sol-btn:active {
+  transform: translateY(1px);
+}
+.sol-btn-primary {
+  color: var(--ink-950);
+  background: var(--accent);
+  border-color: transparent;
+}
+.sol-btn-primary:hover {
+  background: color-mix(in oklch, var(--accent) 88%, white);
+}
+
+/* ── Board ────────────────────────────────────────────────────────────────── */
+.sol-board {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2.5vh, 22px);
+  padding: clamp(10px, 2.5vh, 22px) clamp(8px, 2vw, 20px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.sol-top,
+.sol-tableau {
+  display: grid;
+  justify-content: center;
+  align-items: start;
+  gap: var(--sol-gap, 8px);
+  width: 100%;
+}
+.sol-top {
+  flex-shrink: 0;
+}
+
+/* Drop targets — strip the library defaults, add slot styling. */
+.sol .cm-dropzone {
+  padding: 0;
+  border: none;
+  background: none;
+  min-width: 0;
+}
+.sol .cm-dropzone-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sol-cell .cm-dropzone-body {
+  min-height: var(--sol-ch, 0);
+}
+.sol-col .cm-dropzone-body {
+  min-height: calc(var(--sol-ch, 0px) + 24px);
+}
+
+/* Empty-slot placeholder (also the foundation suit hint). */
+.sol-slot {
+  width: var(--sol-cw);
+  height: var(--sol-ch);
+  border: 1.5px solid oklch(0.9 0.02 265 / 0.16);
+  border-radius: clamp(4px, 0.9vw, 8px);
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--sol-cw) * 0.42);
+  line-height: 1;
+  color: oklch(0.9 0.02 265 / 0.22);
+}
+.sol-slot.red {
+  color: oklch(0.72 0.16 25 / 0.3);
+}
+
+/* Drag highlight on the whole slot/column. */
+.sol .cm-dropzone-valid {
+  outline: 2px solid oklch(0.74 0.15 150);
+  outline-offset: 2px;
+  border-radius: clamp(4px, 0.9vw, 8px);
+}
+.sol .cm-dropzone-reject {
+  outline: 2px solid var(--coral);
+  outline-offset: 2px;
+  border-radius: clamp(4px, 0.9vw, 8px);
+}
+
+/* Cards cascade down a tableau column via a negative top margin (set inline). */
+.sol .cm-draggable {
+  cursor: grab;
+}
+.sol .cm-draggable.cm-dragging {
+  cursor: grabbing;
+}
+.sol-cardwrap {
+  line-height: 0;
+}
+
+/* Face-down card back. */
+.sol-back {
+  border-radius: clamp(4px, 0.9vw, 8px);
+  border: 1px solid oklch(0.55 0.05 265 / 0.5);
+  background:
+    repeating-linear-gradient(45deg, oklch(0.36 0.05 265) 0 6px, oklch(0.3 0.05 265) 6px 12px);
+  box-shadow: 0 2px 6px oklch(0 0 0 / 0.3);
+}
+
+/* Stock/waste helpers (Klondike). */
+.sol-stock {
+  cursor: pointer;
+}
+.sol-stock-empty {
+  width: var(--sol-cw);
+  height: var(--sol-ch);
+  border: 1.5px solid oklch(0.9 0.02 265 / 0.16);
+  border-radius: clamp(4px, 0.9vw, 8px);
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--sol-cw) * 0.4);
+  color: oklch(0.9 0.02 265 / 0.25);
+  cursor: pointer;
+}
+
+/* ── Rules modal ──────────────────────────────────────────────────────────── */
+.sol-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: oklch(0.1 0.01 265 / 0.6);
+  backdrop-filter: blur(3px);
+}
+.sol-modal-panel {
+  width: min(520px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--paper);
+  color: var(--ink-950);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--ink-950);
+  box-shadow: 6px 6px 0 oklch(0.68 0.19 34);
+}
+.sol-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1.5px solid oklch(0.19 0.014 55 / 0.14);
+  font-size: 18px;
+  font-weight: 700;
+}
+.sol-modal-close {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: var(--ink-800);
+  line-height: 1;
+}
+.sol-modal-body {
+  padding: 16px 18px 20px;
+  font-family: var(--font-ui);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: oklch(0.32 0.02 55);
+}
+.sol-modal-body h4 {
+  font-family: var(--font-display);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-950);
+  margin: 14px 0 4px;
+}
+.sol-modal-body h4:first-child {
+  margin-top: 0;
+}
+.sol-modal-body ul {
+  margin: 4px 0;
+  padding-left: 18px;
+}
+.sol-modal-body li {
+  margin: 3px 0;
+}
+
+/* ── Examples index (paper) ───────────────────────────────────────────────── */
+.ex {
+  --ex-paper: oklch(0.955 0.013 85);
+  --ex-ink: oklch(0.19 0.014 55);
+  --ex-ink-soft: oklch(0.42 0.021 58);
+  --ex-line: oklch(0.19 0.014 55 / 0.16);
+  --ex-coral: oklch(0.61 0.2 32);
+  --ex-blue: oklch(0.55 0.16 250);
+  --ex-felt: oklch(0.16 0.014 55);
+  position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  background-color: var(--ex-paper);
+  color: var(--ex-ink);
+  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  background-image: radial-gradient(oklch(0.19 0.014 55 / 0.05) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+html:has(.ex),
+body:has(.ex),
+#root:has(.ex) {
+  height: auto;
+  min-height: 100%;
+}
+body:has(.ex) {
+  overflow: visible;
+  background: var(--ex-paper);
+}
+.ex-head {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: clamp(40px, 8vw, 88px) clamp(20px, 5vw, 48px) clamp(20px, 4vw, 40px);
+}
+.ex-back {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--ex-ink);
+  border-bottom: 1.5px solid var(--ex-coral);
+  padding-bottom: 1px;
+}
+.ex-title {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(34px, 6vw, 60px);
+  letter-spacing: -0.025em;
+  margin: 22px 0 10px;
+}
+.ex-title span {
+  color: var(--ex-coral);
+}
+.ex-sub {
+  max-width: 60ch;
+  font-size: clamp(15px, 1.6vw, 17px);
+  line-height: 1.5;
+  color: var(--ex-ink-soft);
+}
+.ex-grid {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 48px) clamp(48px, 8vw, 96px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+}
+.ex-card {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  text-decoration: none;
+  color: var(--ex-ink);
+  background: oklch(0.925 0.017 82);
+  border: 1.5px solid var(--ex-ink);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 6px 6px 0 var(--ex-ink);
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ex-card:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 4px 4px 0 var(--ex-coral);
+}
+.ex-tag {
+  justify-self: start;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ex-paper);
+  padding: 4px 9px;
+  border-radius: 5px;
+}
+.ex-tag-coral {
+  background: var(--ex-coral);
+}
+.ex-tag-blue {
+  background: var(--ex-blue);
+}
+.ex-card h2 {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin-top: 6px;
+}
+.ex-card p {
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--ex-ink-soft);
+}
+.ex-uses {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11.5px;
+  color: var(--ex-ink-soft);
+  margin-top: 4px;
+}
+.ex-play {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--ex-coral);
+  margin-top: 8px;
+}
+
+/* ── Win overlay ──────────────────────────────────────────────────────────── */
+.sol-win {
+  position: fixed;
+  inset: 0;
+  z-index: 190;
+  display: grid;
+  place-items: center;
+  background: oklch(0.1 0.01 265 / 0.55);
+  backdrop-filter: blur(2px);
+}
+.sol-win-panel {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 28px 40px;
+  background: var(--paper);
+  color: var(--ink-950);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--ink-950);
+  box-shadow: 6px 6px 0 oklch(0.66 0.16 248);
+  text-align: center;
+}
+.sol-win-panel strong {
+  font-size: 28px;
+}
+.sol-win-panel span {
+  font-family: var(--font-ui);
+  color: oklch(0.4 0.02 55);
+}

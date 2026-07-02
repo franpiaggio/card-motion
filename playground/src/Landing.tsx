@@ -203,6 +203,9 @@ export default function Landing() {
             <a className="lp-btn lp-btn-primary" href="#live">
               See it move
             </a>
+            <a className="lp-btn" href="#/examples">
+              Examples
+            </a>
             <a className="lp-btn" href="#/docs">
               Docs
             </a>
@@ -294,6 +297,7 @@ export default function Landing() {
           <a href="https://www.npmjs.com/package/card-motion" target="_blank" rel="noreferrer">
             npm
           </a>
+          <a href="#/examples">Examples</a>
           <a href="#/docs">Docs</a>
         </div>
         <p className="lp-foot-fine">
