@@ -21,7 +21,7 @@ export default function TriPeaks() {
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
 
   const { state, byId } = game;
-  const cardW = Math.min(84, Math.max(28, Math.floor((boardW - 12) / 10))); // base spans 10 units
+  const cardW = Math.min(84, Math.max(24, Math.floor((boardW - 24) / 10))); // base spans 10 units, leaving board padding
   const cardH = Math.round(cardW * CARD_RATIO);
   const vStep = Math.round(cardH * 0.42);
   const peaksW = cardW * 10;

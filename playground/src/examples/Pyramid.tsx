@@ -22,7 +22,7 @@ export default function Pyramid() {
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
 
   const { state, byId } = game;
-  const cardW = Math.min(84, Math.max(30, Math.floor((boardW - 12) / 7))); // 7 base cards
+  const cardW = Math.min(84, Math.max(28, Math.floor((boardW - 24) / 7))); // 7 base cards, leaving board padding
   const cardH = Math.round(cardW * CARD_RATIO);
   const vStep = Math.round(cardH * 0.44);
   const pyrW = cardW * 7;
