@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+**/dist
+**/dist-ssr
+**/*.tsbuildinfo
+.git
+.github
+.claude
+.agents
+test-results
+playwright-report
+coverage
+*.log
+.DS_Store
+.env
+.env.*
