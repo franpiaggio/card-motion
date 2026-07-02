@@ -231,16 +231,11 @@ export default function Landing() {
             <a className="lp-btn lp-btn-primary" href="#live">
               See it move
             </a>
+            <a className="lp-btn" href="#/docs">
+              Docs
+            </a>
             <a className="lp-btn" href="https://www.npmjs.com/package/card-motion" target="_blank" rel="noreferrer">
               npm
-            </a>
-            <a
-              className="lp-btn"
-              href="https://github.com/franpiaggio/card-motion"
-              target="_blank"
-              rel="noreferrer"
-            >
-              GitHub
             </a>
           </div>
         </div>
@@ -327,12 +322,7 @@ export default function Landing() {
           <a href="https://www.npmjs.com/package/card-motion" target="_blank" rel="noreferrer">
             npm
           </a>
-          <a href="https://github.com/franpiaggio/card-motion" target="_blank" rel="noreferrer">
-            GitHub
-          </a>
-          <a href="https://github.com/franpiaggio/card-motion/blob/main/LICENSE" target="_blank" rel="noreferrer">
-            MIT
-          </a>
+          <a href="#/docs">Docs</a>
         </div>
         <p className="lp-foot-fine">
           Juicy card animations for React, powered by GSAP. MIT &copy; Francisco Piaggio.
