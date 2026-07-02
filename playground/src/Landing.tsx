@@ -1,12 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { BackgroundShader, Card, CardTable, useCardTable } from 'card-motion';
+import { BackgroundShader, Card, CardTable, useCardTable, type CardTableHandle } from 'card-motion';
 import DragDropDemo from './DragDropDemo';
-import GameDemo from './GameDemo';
-import Sandbox from './Sandbox';
 import { Highlight } from './highlight';
 import { GAMES } from './examples/games';
 
-type Demo = 'table' | 'dnd' | 'game' | 'sandbox';
+type Demo = 'table' | 'dnd';
 
 const INSTALL = 'pnpm add card-motion gsap';
 
@@ -179,6 +177,29 @@ function HeroTable() {
   );
 }
 
+/**
+ * The embedded Card table demo. The library's built-in controls float over the
+ * felt, which crowds the fanned hand on a narrow phone stage, so here we hide
+ * them (`controls={false}`) and drive the table from a bar pinned below it.
+ */
+function TableDemo() {
+  const ref = useRef<CardTableHandle>(null);
+  return (
+    <div className="lp-tabledemo">
+      <CardTable ref={ref} controls={false} handSize={8} cardWidth={96} />
+      <div className="lp-tablebar">
+        <div className="cm-controls">
+          <button type="button" onClick={() => ref.current?.shuffle()}>Shuffle</button>
+          <button type="button" onClick={() => ref.current?.deal()}>Deal</button>
+          <button type="button" onClick={() => ref.current?.play()}>Play all</button>
+          <button type="button" className="cm-warn" onClick={() => ref.current?.clearTable()}>Clear</button>
+          <button type="button" className="cm-ghost" onClick={() => ref.current?.reset()}>Reset</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const [demo, setDemo] = useState<Demo>('table');
 
@@ -186,25 +207,29 @@ export default function Landing() {
     <div className="lp">
       {/* ── Hero ─────────────────────────────────────────────── */}
       <header className="lp-hero">
-        <div className="lp-hero-copy">
-          <p className="lp-kicker">React · GSAP · TypeScript</p>
-          <h1 className="lp-title">
-            Playing&#8209;card motion,
-            <br />
-            <span className="lp-title-mark">already built.</span>
-          </h1>
-          <p className="lp-lede">
-            A ready-made card table and the headless engine behind it. Shuffle, deal, select and play with
-            GSAP timelines, a pointer-driven tilt, and a WebGL swirl. Two imports, no motion code of your own.
-          </p>
+        <p className="lp-kicker">React · GSAP · TypeScript</p>
+        <h1 className="lp-title">
+          Playing&#8209;card motion,
+          <br />
+          <span className="lp-title-mark">already built.</span>
+        </h1>
 
+        <div className="lp-hero-stage">
+          <div className="lp-felt">
+            <HeroTable />
+          </div>
+          <p className="lp-felt-note">Live. GSAP timelines, on a loop.</p>
+        </div>
+
+        <p className="lp-lede">
+          A ready-made card table and the headless engine behind it. Shuffle, deal, select and play with
+          GSAP timelines, a pointer-driven tilt, and a WebGL swirl. Two imports, no motion code of your own.
+        </p>
+
+        <div className="lp-hero-actions">
           <CopyInstall />
-
           <div className="lp-cta">
-            <a className="lp-btn lp-btn-primary" href="#live">
-              See it move
-            </a>
-            <a className="lp-btn" href="#/examples">
+            <a className="lp-btn lp-btn-primary" href="#/examples">
               Examples
             </a>
             <a className="lp-btn" href="#/docs">
@@ -214,13 +239,6 @@ export default function Landing() {
               npm
             </a>
           </div>
-        </div>
-
-        <div className="lp-hero-stage">
-          <div className="lp-felt">
-            <HeroTable />
-          </div>
-          <p className="lp-felt-note">Live. GSAP timelines, on a loop.</p>
         </div>
       </header>
 
@@ -255,10 +273,10 @@ export default function Landing() {
         <div className="lp-live-head">
           <div>
             <h2 id="live-h" className="lp-section-h">
-              Try all four
+              See it live
             </h2>
             <p className="lp-live-sub">
-              Four ways to use the library, each running live in this page.
+              The card table and drag-and-drop zones, running right in this page. Open full screen for the poker and sandbox demos too.
             </p>
           </div>
           <a className="lp-open" href={`#/demo/${demo}`}>
@@ -273,19 +291,11 @@ export default function Landing() {
             <button type="button" className={demo === 'dnd' ? 'on' : ''} aria-current={demo === 'dnd' ? 'true' : undefined} onClick={() => setDemo('dnd')}>
               Drag &amp; drop
             </button>
-            <button type="button" className={demo === 'game' ? 'on' : ''} aria-current={demo === 'game' ? 'true' : undefined} onClick={() => setDemo('game')}>
-              Poker
-            </button>
-            <button type="button" className={demo === 'sandbox' ? 'on' : ''} aria-current={demo === 'sandbox' ? 'true' : undefined} onClick={() => setDemo('sandbox')}>
-              Sandbox
-            </button>
           </nav>
           <div className="lp-stage">
             <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
-            {demo === 'table' && <CardTable handSize={8} cardWidth={96} />}
+            {demo === 'table' && <TableDemo />}
             {demo === 'dnd' && <DragDropDemo />}
-            {demo === 'game' && <GameDemo />}
-            {demo === 'sandbox' && <Sandbox />}
           </div>
         </div>
       </section>

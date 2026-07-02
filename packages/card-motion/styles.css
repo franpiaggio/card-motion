@@ -230,7 +230,10 @@
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-wrap: wrap; /* narrow tables wrap the row instead of clipping its ends */
+  justify-content: center;
   gap: 12px;
+  max-width: calc(100% - 24px);
   z-index: 10;
 }
 .cm-controls button {
@@ -245,6 +248,17 @@
   background: linear-gradient(180deg, #ff5a6e, #d11f3a);
   box-shadow: 0 5px 0 #8c0f23, 0 9px 16px rgba(0, 0, 0, 0.5);
   transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+/* Tighten the controls on narrow tables so more fit per row before wrapping. */
+@media (max-width: 560px) {
+  .cm-controls {
+    bottom: 16px;
+    gap: 8px;
+  }
+  .cm-controls button {
+    font-size: 13px;
+    padding: 10px 15px;
+  }
 }
 .cm-controls button:hover {
   transform: translateY(-1px);

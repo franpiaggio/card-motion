@@ -61,12 +61,31 @@ body:has(.lp) {
   padding: clamp(48px, 8vw, 104px) var(--lp-pad) clamp(40px, 6vw, 72px);
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  gap: clamp(28px, 5vw, 68px);
+  column-gap: clamp(28px, 5vw, 68px);
   align-items: start;
+  /* Copy stacks on the left; the live table spans the right column. */
+  grid-template-areas:
+    'kicker  stage'
+    'title   stage'
+    'lede    stage'
+    'actions stage';
+}
+.lp-kicker {
+  grid-area: kicker;
+}
+.lp-title {
+  grid-area: title;
+}
+.lp-lede {
+  grid-area: lede;
+}
+.lp-hero-actions {
+  grid-area: actions;
 }
 /* Drop the table so its top lines up with the title (past the kicker),
    keeping it visually anchored to the headline rather than the whole column. */
 .lp-hero-stage {
+  grid-area: stage;
   position: relative;
   margin-top: clamp(6px, 4vw, 52px);
 }
@@ -392,6 +411,7 @@ body:has(.lp) {
 /* The embedded demos fill the framed stage. */
 .lp-stage > .cm-table,
 .lp-stage > .cm-stage,
+.lp-stage > .lp-tabledemo,
 .lp-stage > .game,
 .lp-stage > .sb,
 .lp-stage > .dnd {
@@ -399,6 +419,30 @@ body:has(.lp) {
   inset: 0;
   width: 100%;
   height: 100%;
+}
+/* Card table demo: the table fills the frame with its controls as a pinned bar
+   below the fanned hand, so the buttons never crowd the cards on a phone. */
+.lp-tabledemo {
+  display: flex;
+  flex-direction: column;
+}
+.lp-tabledemo .cm-table {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.lp-tablebar {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  padding: 12px 12px 16px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4), transparent);
+}
+/* Reuse the library's button styling, but in flow (not floating over the felt). */
+.lp-tablebar .cm-controls {
+  position: static;
+  transform: none;
+  max-width: 100%;
 }
 /* Nav + framed stage share a positioning context so the switcher can float
    over the board on desktop yet drop into the flow above it on mobile. */
@@ -503,11 +547,15 @@ body:has(.lp) {
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
 @media (max-width: 860px) {
+  /* One column: title, then the live animation as the hook, then copy + CTAs. */
   .lp-hero {
     grid-template-columns: 1fr;
-  }
-  .lp-hero-stage {
-    order: 2;
+    grid-template-areas:
+      'kicker'
+      'title'
+      'stage'
+      'lede'
+      'actions';
   }
 }
 
@@ -521,9 +569,26 @@ body:has(.lp) {
     width: 100%;
     max-width: 100%;
     margin-bottom: 12px;
+    justify-content: stretch;
+  }
+  /* Two tabs share the bar evenly instead of hugging the left edge. */
+  .lp-stage-wrap .demo-nav button {
+    flex: 1;
+    text-align: center;
   }
   .lp-stage {
     height: clamp(520px, 74vh, 640px);
+  }
+
+  /* Three even CTAs in one line (Examples is the primary). */
+  .lp-cta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .lp-cta .lp-btn {
+    padding: 12px 10px;
+    text-align: center;
   }
 
   /* Tighten the hero copy so the live table animation reaches into the first
@@ -542,7 +607,8 @@ body:has(.lp) {
     margin-bottom: 18px;
   }
   .lp-hero-stage {
-    margin-top: 4px;
+    margin-top: 6px;
+    margin-bottom: 22px; /* separate the animation from the description below it */
   }
   .lp-felt {
     height: clamp(320px, 62vw, 380px);

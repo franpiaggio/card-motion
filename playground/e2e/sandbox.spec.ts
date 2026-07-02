@@ -3,8 +3,7 @@ import { expect, test } from '@playwright/test';
 // The Sandbox validates the engine for a non-poker game: custom faces, per-card
 // zone rules, playing an effect, and the deck-search modal.
 test('Sandbox: zone restriction, effect on play, and deck search', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sandbox' }).click();
+  await page.goto('/#/demo/sandbox');
 
   // Custom card faces render (not <Card>).
   const boostInHand = page.locator('.sb-slot:not(.in-deck)', { has: page.locator('.k-boost') }).first();
@@ -28,11 +27,7 @@ test('Sandbox: zone restriction, effect on play, and deck search', async ({ page
 
 // Dragging a boost into a zone it isn't allowed in is rejected and snaps back.
 test('Sandbox: a forbidden drag is rejected and snaps back', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sandbox' }).click();
-  // The demo is embedded in the (scrolling) landing; align its stage to the top
-  // of the viewport so the lower drop zones are reachable by raw pointer moves.
-  await page.locator('.lp-stage').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  await page.goto('/#/demo/sandbox');
 
   const boost = page.locator('.sb-slot:not(.in-deck)', { has: page.locator('.k-boost') }).first();
   await expect(boost).toBeVisible();
@@ -52,9 +47,7 @@ test('Sandbox: a forbidden drag is rejected and snaps back', async ({ page }) =>
 
 // Dragging a hand card sideways reorders the hand (drop position → index).
 test('Sandbox: dragging a hand card reorders the hand', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Sandbox' }).click();
-  await page.locator('.lp-stage').evaluate((el) => el.scrollIntoView({ block: 'start' }));
+  await page.goto('/#/demo/sandbox');
 
   const hand = page.locator('.sb-slot:not(.in-deck)');
   await expect(hand).toHaveCount(5);
