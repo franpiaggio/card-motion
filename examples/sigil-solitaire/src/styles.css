@@ -1,0 +1,608 @@
+:root {
+  --bg: oklch(0.16 0.03 285);
+  --bg-soft: oklch(0.21 0.035 285);
+  --ink: oklch(0.96 0.012 90);
+  --ink-dim: oklch(0.74 0.02 285);
+  --ink-faint: oklch(0.58 0.02 285);
+  --line: oklch(0.34 0.03 285);
+  --gold: oklch(0.82 0.14 78);
+  --gold-deep: oklch(0.52 0.11 66);
+
+  /* Per-element palettes: bright mark, deep field. */
+  --ember: oklch(0.72 0.19 45);
+  --ember-deep: oklch(0.3 0.09 34);
+  --tide: oklch(0.72 0.13 232);
+  --tide-deep: oklch(0.3 0.07 245);
+  --gale: oklch(0.8 0.15 165);
+  --gale-deep: oklch(0.3 0.06 176);
+  --terra: oklch(0.78 0.12 82);
+  --terra-deep: oklch(0.3 0.06 74);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.sig-app {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sig-bg {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+  z-index: 0;
+}
+/* Content sits above the shader; the end overlay keeps its own fixed layer. */
+.sig-start,
+.sig-game {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Card face (fully custom) ─────────────────────────────────────────────── */
+.sig-card {
+  position: relative;
+  width: var(--cw, 92px);
+  aspect-ratio: 96 / 134;
+  border-radius: calc(var(--cw, 92px) * 0.12);
+  background: linear-gradient(158deg, color-mix(in oklch, var(--el-deep) 78%, black), oklch(0.13 0.02 285));
+  border: 1px solid color-mix(in oklch, var(--el) 40%, var(--line));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--el) 30%, transparent),
+    0 6px 14px oklch(0.08 0.02 285 / 0.55);
+  color: var(--el);
+  overflow: hidden;
+  user-select: none;
+  transition: box-shadow 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.sig-el-ember {
+  --el: var(--ember);
+  --el-deep: var(--ember-deep);
+}
+.sig-el-tide {
+  --el: var(--tide);
+  --el-deep: var(--tide-deep);
+}
+.sig-el-gale {
+  --el: var(--gale);
+  --el-deep: var(--gale-deep);
+}
+.sig-el-terra {
+  --el: var(--terra);
+  --el-deep: var(--terra-deep);
+}
+.sig-glyph-wrap {
+  position: absolute;
+  inset: 16% 12% 16%;
+  display: grid;
+  place-items: center;
+}
+.sig-glyph {
+  width: 74%;
+  height: 74%;
+  filter: drop-shadow(0 2px 6px color-mix(in oklch, var(--el) 45%, transparent));
+  opacity: 0.95;
+}
+.sig-rank {
+  position: absolute;
+  font-weight: 800;
+  font-size: calc(var(--cw, 92px) * 0.24);
+  line-height: 1;
+  color: var(--ink);
+  text-shadow: 0 1px 3px oklch(0.08 0.02 285 / 0.7);
+}
+.sig-rank-tl {
+  top: 7%;
+  left: 9%;
+}
+.sig-rank-br {
+  bottom: 7%;
+  right: 9%;
+  transform: rotate(180deg);
+}
+.sig-card.is-playable {
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--el) 40%, transparent),
+    0 0 0 2px color-mix(in oklch, var(--el) 70%, transparent),
+    0 0 22px color-mix(in oklch, var(--el) 45%, transparent),
+    0 6px 14px oklch(0.08 0.02 285 / 0.55);
+}
+.sig-card.is-dragging {
+  box-shadow: 0 18px 34px oklch(0.06 0.02 285 / 0.7);
+}
+
+/* Face-down back */
+.sig-back {
+  --el: var(--ink-faint);
+  background: repeating-linear-gradient(135deg, oklch(0.24 0.03 285), oklch(0.24 0.03 285) 6px, oklch(0.19 0.03 285) 6px, oklch(0.19 0.03 285) 12px);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+}
+.sig-back-mark {
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  border: 2px solid oklch(0.5 0.05 285 / 0.6);
+  box-shadow: inset 0 0 0 4px oklch(0.3 0.04 285 / 0.5);
+}
+
+/* ── Start screen ─────────────────────────────────────────────────────────── */
+.sig-start {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(24px, 4vw, 48px);
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 64px);
+}
+.sig-kicker {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 14px;
+}
+.sig-title {
+  font-size: clamp(44px, 8vw, 88px);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  margin: 0 0 18px;
+  font-weight: 800;
+}
+.sig-title span {
+  color: var(--gold);
+}
+.sig-lede {
+  max-width: 54ch;
+  font-size: clamp(15px, 1.5vw, 18px);
+  line-height: 1.55;
+  color: var(--ink-dim);
+  margin: 0 0 24px;
+}
+.sig-sampler {
+  display: flex;
+  gap: 12px;
+  --cw: 68px;
+}
+.sig-sampler .sig-card {
+  transform: rotate(-4deg);
+}
+.sig-sampler .sig-card:nth-child(even) {
+  transform: rotate(4deg) translateY(6px);
+}
+
+.sig-howto {
+  align-self: flex-start;
+  margin-top: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s var(--ease);
+}
+.sig-howto:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+
+.sig-diffs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+/* Tutorial coach */
+.sig-coach {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  z-index: 40;
+  width: min(560px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px 14px 20px;
+  border-radius: 16px;
+  background: color-mix(in oklch, var(--bg-soft) 92%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: 0 16px 40px oklch(0.06 0.02 285 / 0.5);
+  backdrop-filter: blur(8px);
+}
+.sig-coach-body {
+  flex: 1;
+}
+.sig-coach-step {
+  display: block;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 5px;
+}
+.sig-coach-body p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.sig-coach-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sig-coach-actions .sig-btn {
+  flex: none;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+@media (max-width: 560px) {
+  .sig-coach {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .sig-coach-actions .sig-btn {
+    flex: 1;
+  }
+}
+.sig-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+  padding: 20px;
+  border-radius: 16px;
+  background: color-mix(in oklch, var(--bg-soft) 88%, transparent);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.18s var(--ease), border-color 0.18s var(--ease), background 0.18s var(--ease);
+}
+.sig-diff:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold);
+  background: color-mix(in oklch, var(--bg-soft) 70%, var(--gold) 6%);
+}
+.sig-diff-name {
+  font-size: 22px;
+  font-weight: 800;
+}
+.sig-diff-blurb {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  flex: 1;
+}
+.sig-diff-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.sig-diff-meta span {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: oklch(0.26 0.03 285 / 0.6);
+}
+
+/* ── Game ─────────────────────────────────────────────────────────────────── */
+.sig-game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+.sig-hud {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px clamp(14px, 3vw, 28px);
+}
+.sig-quit {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.sig-quit:hover {
+  color: var(--ink);
+  border-color: var(--ink-faint);
+}
+.sig-stat {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  padding: 4px 12px;
+}
+.sig-stat-label {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.sig-stat strong {
+  font-size: 22px;
+  font-weight: 800;
+}
+.sig-stat-score {
+  margin-right: auto;
+}
+.sig-stat-score strong {
+  font-size: 30px;
+  color: var(--gold);
+}
+.sig-stat strong.hot {
+  color: var(--ember);
+}
+.sig-target {
+  display: none;
+}
+
+.sig-stage-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
+}
+.sig-stage-wrap .cm-stage {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.sig-slot {
+  cursor: default;
+}
+
+/* Foot-row zones */
+.sig-zone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: var(--cw, 92px);
+  aspect-ratio: 96 / 134;
+  border-radius: calc(var(--cw, 92px) * 0.12);
+  display: grid;
+  place-items: center;
+  gap: 2px;
+}
+.sig-altar {
+  z-index: 0;
+  border: 1.5px dashed oklch(0.5 0.05 285 / 0.6);
+  background: oklch(0.2 0.03 285 / 0.4);
+}
+.sig-stock {
+  z-index: 20;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink);
+}
+.sig-stock:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.sig-zone-count {
+  font-size: calc(var(--cw, 92px) * 0.3);
+  font-weight: 800;
+  text-shadow: 0 1px 4px oklch(0.08 0.02 285 / 0.8);
+}
+.sig-zone-label {
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.sig-stock .sig-zone-label {
+  color: var(--ink-dim);
+}
+
+.sig-toast {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-weight: 800;
+  font-size: 22px;
+  color: var(--gold);
+  text-shadow: 0 2px 8px oklch(0.08 0.02 285 / 0.8);
+  pointer-events: none;
+  animation: sig-rise 0.9s var(--ease) forwards;
+  z-index: 30;
+}
+.sig-toast em {
+  font-style: normal;
+  font-size: 13px;
+  color: var(--ember);
+}
+@keyframes sig-rise {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -20%) scale(0.8);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -170%) scale(1);
+  }
+}
+
+.sig-hint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--ink-faint);
+  padding: 10px 16px 18px;
+  margin: 0;
+}
+
+/* ── End overlay ──────────────────────────────────────────────────────────── */
+.sig-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: oklch(0.1 0.02 285 / 0.72);
+  backdrop-filter: blur(6px);
+  animation: sig-fade 0.25s var(--ease);
+}
+@keyframes sig-fade {
+  from {
+    opacity: 0;
+  }
+}
+.sig-overlay-panel {
+  width: min(420px, 100%);
+  text-align: center;
+  padding: 32px 28px;
+  border-radius: 20px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px oklch(0.06 0.02 285 / 0.6);
+}
+.sig-overlay-badge {
+  display: inline-block;
+  font-family: ui-monospace, 'SF Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.sig-overlay-panel.won .sig-overlay-badge {
+  color: oklch(0.2 0.03 285);
+  background: var(--gold);
+}
+.sig-overlay-panel.lost .sig-overlay-badge {
+  color: var(--ink-dim);
+  border: 1px solid var(--line);
+}
+.sig-overlay-panel h2 {
+  font-size: 26px;
+  margin: 0 0 18px;
+}
+.sig-overlay-score {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+.sig-overlay-score strong {
+  font-size: 56px;
+  line-height: 1;
+  color: var(--gold);
+}
+.sig-overlay-score span {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.sig-overlay-stats {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-bottom: 16px;
+}
+.sig-overlay-stats div {
+  display: flex;
+  flex-direction: column;
+}
+.sig-overlay-stats span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.sig-overlay-stats strong {
+  font-size: 22px;
+}
+.sig-overlay-note {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  margin: 0 0 22px;
+}
+.sig-overlay-actions {
+  display: flex;
+  gap: 10px;
+}
+.sig-btn {
+  flex: 1;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 12px 16px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.14s var(--ease), background 0.14s;
+}
+.sig-btn:hover {
+  transform: translateY(-2px);
+}
+.sig-btn-primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: oklch(0.2 0.03 285);
+}
+
+@media (max-width: 680px) {
+  .sig-diffs {
+    grid-template-columns: 1fr;
+  }
+  .sig-hud {
+    gap: 4px;
+    padding: 12px;
+  }
+  .sig-stat {
+    padding: 4px 8px;
+  }
+  .sig-stat strong {
+    font-size: 18px;
+  }
+  .sig-stat-score strong {
+    font-size: 24px;
+  }
+}
