@@ -69,10 +69,11 @@ export default function Game({
     };
     const altarLayout = stack({ offset: 0.06 });
 
+    // Pile declaration order sets z-stacking (later = on top). The altar is
+    // declared LAST so a card flying onto it rides above the columns and deck
+    // instead of dipping beneath them mid-flight.
     const piles: Record<PileId, PileConfig<SigilCard>> = {
-      // Declared first → lowest z. Columns sit behind the foot row.
       stock: { anchor: (s) => ({ x: metrics(s.width, s.height, cfg).stockX, y: metrics(s.width, s.height, cfg).footY }), layout: stack({ offset: 0.14 }) },
-      foundation: { anchor: (s) => ({ x: metrics(s.width, s.height, cfg).foundX, y: metrics(s.width, s.height, cfg).footY }), layout: altarLayout },
     };
     for (let c = 0; c < cfg.cols; c++) {
       piles[`col${c}`] = {
@@ -83,6 +84,7 @@ export default function Game({
         layout: columnLayout,
       };
     }
+    piles.foundation = { anchor: (s) => ({ x: metrics(s.width, s.height, cfg).foundX, y: metrics(s.width, s.height, cfg).footY }), layout: altarLayout };
 
     const initial: Record<PileId, number[]> = { stock: d.stock, foundation: d.foundation };
     d.columns.forEach((ids, c) => (initial[`col${c}`] = ids));
