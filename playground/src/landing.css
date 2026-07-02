@@ -319,17 +319,19 @@ body:has(.lp) {
 .lp-code {
   flex: 1 1 auto; /* grow to fill the card so all three panels end up equal height */
   font-family: var(--lp-mono);
-  font-size: 11.5px;
+  font-size: 11px;
   line-height: 1.62;
   color: oklch(0.88 0.012 85);
   background: var(--lp-felt);
   padding: 16px 15px;
   margin: 18px -22px 0;
-  overflow-x: auto;
   border-top: 1.5px solid var(--lp-ink);
 }
+/* Wrap long lines instead of scrolling the panel sideways — the longest snippet
+   (DragDropProvider) otherwise overflows on narrower screens / wider fonts. */
 .lp-code code {
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 /* Syntax colors, tuned for the dark felt panel. */
 .lp-code .tok-str {
