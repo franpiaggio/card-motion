@@ -13,7 +13,8 @@ const TUTORIAL_STEPS: ReadonlyArray<{ text: string; play?: number; draw?: boolea
   { text: 'Chain plays without drawing and your streak climbs. Two Embers in a row also pays an element bonus.', play: 4 },
   { text: 'One rank at a time keeps the chain alive — a 9 lands on the 8.', play: 6 },
   { text: 'Ranks wrap around, so a 1 plays on a 9.', play: 5 },
-  { text: 'No rank in reach? Draw from the stock to turn a fresh card to the altar.', draw: true },
+  { text: 'Some sigils are special. A Gale pulls a free card from the stock without breaking your chain.', play: 1 },
+  { text: 'No rank in reach? A normal draw turns a card too, but it resets your streak.', draw: true },
   { text: "That's the whole loop: chain for score, clear the board to win. Ready?" },
 ];
 
@@ -160,6 +161,10 @@ export default function Game({
       const prev = altarTop();
       await move([id], 'foundation');
       setScore((s) => scorePlay(card, prev, s));
+      // Gale sigils pull a free card from the stock and keep the chain alive.
+      if (card.power === 'draw' && stateRef.current.counts.stock > 0) {
+        await draw('stock', 'foundation', 1);
+      }
       settle();
     });
 

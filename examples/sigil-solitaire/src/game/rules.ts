@@ -6,6 +6,7 @@ import type { SigilCard } from './deck';
 // multiplier; matching the altar's element pays an elemental bonus.
 
 export function canPlay(card: SigilCard, top: SigilCard | undefined, maxRank: number, wrap: boolean): boolean {
+  if (card.power === 'wild') return true; // a wild sigil plays on any rank
   if (!top) return true; // an empty altar accepts anything
   const d = Math.abs(card.rank - top.rank);
   return d === 1 || (wrap && d === maxRank - 1);

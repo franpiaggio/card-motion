@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
-import type { ElementKey, SigilCard } from './game/deck';
+import { ELEMENTS, type ElementKey, type Power, type SigilCard } from './game/deck';
+
+const NAME = Object.fromEntries(ELEMENTS.map((e) => [e.key, e.name])) as Record<ElementKey, string>;
+const POWER_LABEL: Record<Power, string> = { wild: 'Wild', draw: 'Free draw' };
 
 // Four hand-drawn sigils. Simple geometric marks so the faces read as bespoke,
 // not as recolored playing cards.
@@ -54,14 +57,16 @@ export function CardFace({
   }
   return (
     <div
-      className={`sig-card sig-el-${card.element}${playable ? ' is-playable' : ''}${dragging ? ' is-dragging' : ''}`}
+      className={`sig-card sig-el-${card.element}${playable ? ' is-playable' : ''}${dragging ? ' is-dragging' : ''}${card.power ? ' is-power' : ''}`}
       role="img"
-      aria-label={`${card.element} ${card.rank}`}
+      aria-label={`${NAME[card.element]} ${card.rank}${card.power ? `, ${POWER_LABEL[card.power]}` : ''}`}
     >
       <span className="sig-rank sig-rank-tl">{card.rank}</span>
+      {card.power && <span className={`sig-power sig-power-${card.power}`}>{POWER_LABEL[card.power]}</span>}
       <div className="sig-glyph-wrap">
         <Sigil element={card.element} />
       </div>
+      <span className="sig-name">{NAME[card.element]}</span>
       <span className="sig-rank sig-rank-br">{card.rank}</span>
     </div>
   );

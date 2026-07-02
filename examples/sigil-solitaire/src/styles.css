@@ -93,9 +93,59 @@ body {
 }
 .sig-glyph-wrap {
   position: absolute;
-  inset: 16% 12% 16%;
+  inset: 15% 12% 26%;
   display: grid;
   place-items: center;
+}
+.sig-name {
+  position: absolute;
+  bottom: 8%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: calc(var(--cw, 92px) * 0.12);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--el) 78%, white);
+  opacity: 0.85;
+}
+/* Special-sigil badge + glow */
+.sig-power {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: calc(var(--cw, 92px) * 0.1);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: oklch(0.16 0.02 285);
+}
+.sig-power-wild {
+  background: var(--gold);
+}
+.sig-power-draw {
+  background: var(--tide);
+  color: oklch(0.98 0.01 240);
+}
+.sig-card.is-power {
+  border-color: color-mix(in oklch, var(--gold) 55%, var(--el));
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklch, var(--el) 34%, transparent),
+    0 0 16px color-mix(in oklch, var(--gold) 22%, transparent),
+    0 6px 14px oklch(0.08 0.02 285 / 0.55);
+}
+.sig-card.is-power.is-playable {
+  box-shadow:
+    0 0 0 2px color-mix(in oklch, var(--el) 70%, transparent),
+    0 0 22px color-mix(in oklch, var(--el) 45%, transparent),
+    0 0 16px color-mix(in oklch, var(--gold) 30%, transparent),
+    0 6px 14px oklch(0.08 0.02 285 / 0.55);
 }
 .sig-glyph {
   width: 74%;

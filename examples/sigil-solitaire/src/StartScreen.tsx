@@ -12,11 +12,12 @@ export default function StartScreen({ onPick, onTutorial }: { onPick: (d: Diffic
         </h1>
         <p className="sig-lede">
           Clear the board by sending each sigil to the altar one rank at a time. Keep the chain alive for a bigger
-          multiplier, and match the altar's element for a bonus.
+          multiplier, and match the altar's element for a bonus. A few special sigils bend the rules — a Wild plays
+          anywhere, a Gale draws for free.
         </p>
         <div className="sig-sampler" aria-hidden="true">
           {ELEMENTS.map((el, i) => (
-            <CardFace key={el.key} card={{ id: i, rank: i * 2 + 3, element: el.key }} />
+            <CardFace key={el.key} card={{ id: i, rank: i * 2 + 3, element: el.key, power: i === 0 ? 'wild' : i === 2 ? 'draw' : undefined }} />
           ))}
         </div>
         <button type="button" className="sig-howto" onClick={onTutorial}>

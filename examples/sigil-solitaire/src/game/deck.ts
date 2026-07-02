@@ -17,10 +17,16 @@ export const ELEMENTS: readonly ElementDef[] = [
   { key: 'terra', name: 'Terra' },
 ] as const;
 
+// Special sigils carry a power that fires when the card reaches the altar.
+//  · wild — plays on any rank (frees a stuck board)
+//  · draw — pulls a free card from the stock without breaking the chain
+export type Power = 'wild' | 'draw';
+
 export interface SigilCard {
   id: number;
   rank: number; // 1..maxRank
   element: ElementKey;
+  power?: Power;
 }
 
 export interface Deal {
@@ -53,24 +59,33 @@ export function deal(cfg: Difficulty): Deal {
   }
   const foundation = [ids[k++]];
   const stock = ids.slice(k);
+
+  // Sprinkle a few special sigils across the board and stock (never the altar
+  // seed) — enough to matter, not so many they trivialize the deal.
+  const pool = shuffleInPlace([...columns.flat(), ...stock]);
+  const powers: Power[] = ['wild', 'draw', 'draw'];
+  powers.forEach((pw, i) => {
+    if (pool[i] !== undefined) cards[pool[i]].power = pw;
+  });
+
   return { cards, columns, stock, foundation };
 }
 
 // A hand-authored deal for the tutorial, arranged so a scripted path shows off
 // each rule: a plain play, a chained + elemental bonus, a wrap, and a draw.
 export function tutorialDeal(): Deal {
-  const spec: Array<[number, ElementKey]> = [
+  const spec: Array<[number, ElementKey, Power?]> = [
     [6, 'terra'], // 0 · altar seed
-    [5, 'tide'], // 1 · col0 under
+    [5, 'gale', 'draw'], // 1 · col0 under — a Gale power sigil (demoed)
     [7, 'ember'], // 2 · col0 top
-    [4, 'gale'], // 3 · col1 under
+    [8, 'gale'], // 3 · col1 under — left stuck on the altar to show a draw
     [8, 'ember'], // 4 · col1 top
     [1, 'tide'], // 5 · col2 under
     [9, 'tide'], // 6 · col2 top
     [4, 'gale'], // 7 · stock
     [2, 'ember'], // 8 · stock top
   ];
-  const cards: SigilCard[] = spec.map(([rank, element], id) => ({ id, rank, element }));
+  const cards: SigilCard[] = spec.map(([rank, element, power], id) => ({ id, rank, element, power }));
   return {
     cards,
     columns: [
