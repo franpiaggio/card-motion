@@ -267,6 +267,40 @@
   margin: 3px 0;
 }
 
+/* Pyramid: absolutely-positioned triangle + a foot with stock and waste. */
+.sol-pyramid {
+  position: relative;
+  margin: 0 auto;
+}
+.sol-pyr-card {
+  position: absolute;
+  line-height: 0;
+  border-radius: clamp(4px, 0.9vw, 8px);
+  transition: filter 0.15s var(--ease-out);
+}
+.sol-pyr-card.static {
+  position: static;
+}
+.sol-pyr-card.covered {
+  filter: brightness(0.62) saturate(0.8);
+}
+.sol-pyr-card.free {
+  cursor: pointer;
+}
+.sol-pyr-card.selected {
+  outline: 3px solid var(--gold);
+  outline-offset: 1px;
+  border-radius: 8px;
+  z-index: 5;
+}
+.sol-pyramid-foot {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  justify-content: center;
+  margin-top: clamp(18px, 4vh, 40px);
+}
+
 /* Plain (non-drop) tableau column, e.g. Golf where only the waste is a target. */
 .sol-col-plain {
   display: flex;
