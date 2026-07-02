@@ -23,18 +23,19 @@ export function deal(deck: CardData[] = shuffleInPlace(buildDeck())): { state: G
 
 const topOf = (pile: number[]): number | undefined => pile[pile.length - 1];
 
-/** A tableau top card plays if it is one rank away from the waste top. */
-export function canPlay(state: GolfState, byId: Map<number, CardData>, id: number): boolean {
+/** A tableau top card plays if it is one rank away from the waste top (with optional King↔Ace wrap). */
+export function canPlay(state: GolfState, byId: Map<number, CardData>, id: number, wrap = false): boolean {
   const col = state.tableau.find((c) => topOf(c) === id);
   if (!col) return false;
   const top = topOf(state.waste);
   if (top === undefined) return false;
-  return Math.abs(rankVal(byId.get(id)!) - rankVal(byId.get(top)!)) === 1;
+  const diff = Math.abs(rankVal(byId.get(id)!) - rankVal(byId.get(top)!));
+  return diff === 1 || (wrap && diff === 12);
 }
 
 /** Move a playable tableau top onto the waste. Returns the next state or null. */
-export function play(state: GolfState, byId: Map<number, CardData>, id: number): GolfState | null {
-  if (!canPlay(state, byId, id)) return null;
+export function play(state: GolfState, byId: Map<number, CardData>, id: number, wrap = false): GolfState | null {
+  if (!canPlay(state, byId, id, wrap)) return null;
   const col = state.tableau.findIndex((c) => topOf(c) === id);
   const next: GolfState = { tableau: state.tableau.map((c) => [...c]), stock: [...state.stock], waste: [...state.waste] };
   next.tableau[col].pop();
@@ -55,10 +56,10 @@ export function isWon(state: GolfState): boolean {
 }
 
 /** Lost = tableau not clear, stock empty, and no column top is playable. */
-export function isStuck(state: GolfState, byId: Map<number, CardData>): boolean {
+export function isStuck(state: GolfState, byId: Map<number, CardData>, wrap = false): boolean {
   if (isWon(state)) return false;
   if (state.stock.length > 0) return false;
-  return !state.tableau.some((c) => c.length > 0 && canPlay(state, byId, topOf(c)!));
+  return !state.tableau.some((c) => c.length > 0 && canPlay(state, byId, topOf(c)!, wrap));
 }
 
 export { byIdMap };

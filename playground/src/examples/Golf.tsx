@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { Card, DragDropProvider, DropZone, DraggableCard } from 'card-motion';
 import { byIdMap, canPlay, deal, draw, isStuck, isWon, play, type GolfState } from './golfRules';
-import { CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
   state: GolfState;
@@ -12,10 +12,17 @@ const newGame = (): Game => {
   return { state: d.state, byId: byIdMap(d.deck) };
 };
 
+const DIFFS: ReadonlyArray<DiffOption> = [
+  { key: 'wrap', label: 'Simplified', note: 'Ranks wrap — an Ace plays on a King and back, so chains rarely stall.' },
+  { key: 'nowrap', label: 'Normal', note: 'No wrap: a King and an Ace do not connect.' },
+];
+
 export default function Golf() {
   const [game, setGame] = useState<Game>(newGame);
   const [moves, setMoves] = useState(0);
-  const [rulesOpen, setRulesOpen] = useState(true);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [chooseOpen, setChooseOpen] = useState(true);
+  const [wrap, setWrap] = useState(false);
   const [tut, setTut] = useState(false);
   const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
@@ -30,8 +37,14 @@ export default function Golf() {
   useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
+    setChooseOpen(true);
+    setTut(false);
+  };
+  const pick = (key: string) => {
+    setWrap(key === 'wrap');
     setGame(newGame());
     setMoves(0);
+    setChooseOpen(false);
     setTut(false);
   };
   const applyState = (fn: (s: GolfState, b: Game['byId']) => GolfState | null) =>
@@ -43,14 +56,14 @@ export default function Golf() {
   };
   const handleDrop = (cardId: number, toZone: string) => {
     if (toZone !== 'waste') return false;
-    const next = play(state, byId, cardId);
+    const next = play(state, byId, cardId, wrap);
     if (!next) return false;
     setGame((g) => ({ ...g, state: next }));
     setMoves((m) => m + 1);
     return true;
   };
   const autoPlay = (cardId: number) => {
-    const next = play(state, byId, cardId);
+    const next = play(state, byId, cardId, wrap);
     if (!next) return;
     setGame((g) => ({ ...g, state: next }));
     setMoves((m) => m + 1);
@@ -77,6 +90,7 @@ export default function Golf() {
     setGame((g) => ({ ...g, state: tutorial.initial }));
     setMoves(0);
     setRulesOpen(false);
+    setChooseOpen(false);
     setTutStep(0);
     setTut(true);
   };
@@ -104,7 +118,7 @@ export default function Golf() {
   const tableauCols = { gridTemplateColumns: `repeat(${state.tableau.length}, ${cardW}px)` } as CSSProperties;
   const wasteTop = state.waste[state.waste.length - 1];
   const won = isWon(state);
-  const lost = isStuck(state, byId);
+  const lost = isStuck(state, byId, wrap);
 
   return (
     <div className="sol">
@@ -116,7 +130,7 @@ export default function Golf() {
             <div className="sol-stock" onClick={onDraw} role="button" aria-label="Draw from stock">
               {state.stock.length > 0 ? <div className="sol-back" style={{ width: cardW, height: cardH }} /> : <div className="sol-stock-empty">✕</div>}
             </div>
-            <DropZone id="waste" className="sol-cell" ariaLabel="Waste" accepts={(id) => canPlay(state, byId, id)}>
+            <DropZone id="waste" className="sol-cell" ariaLabel="Waste" accepts={(id) => canPlay(state, byId, id, wrap)}>
               {wasteTop != null && (
                 <div className="sol-cardwrap" data-flip-id={wasteTop}>
                   <Card rank={byId.get(wasteTop)!.rank} suit={byId.get(wasteTop)!.suit} color={byId.get(wasteTop)!.color} width={cardW} tilt={false} />
@@ -139,6 +153,8 @@ export default function Golf() {
           </div>
         </div>
       </DragDropProvider>
+
+      {chooseOpen && !tut && <DifficultyPicker title="Golf — choose a difficulty" options={DIFFS} onPick={pick} />}
 
       {tut && (
         <Coach
@@ -168,8 +184,8 @@ export default function Golf() {
         </RulesModal>
       )}
 
-      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
-      {lost && !tut && <WinOverlay moves={moves} onNew={reset} lost />}
+      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} />}
+      {lost && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} lost />}
     </div>
   );
 }

@@ -36,8 +36,8 @@ export function deal(deck: CardData[] = shuffleInPlace(buildDeck())): { state: K
 
 const isUp = (state: KlondikeState, id: number): boolean => state.faceUp.includes(id);
 
-/** Flip the top stock card to the waste, or recycle the waste when stock is empty. */
-export function draw(state: KlondikeState): KlondikeState {
+/** Flip `count` stock cards to the waste, or recycle the waste when stock is empty. */
+export function draw(state: KlondikeState, count = 1): KlondikeState {
   const next = clone(state);
   if (next.stock.length === 0) {
     if (next.waste.length === 0) return state;
@@ -46,9 +46,12 @@ export function draw(state: KlondikeState): KlondikeState {
     next.waste = [];
     return next;
   }
-  const card = next.stock.pop()!;
-  next.waste.push(card);
-  next.faceUp.push(card);
+  const n = Math.min(count, next.stock.length);
+  for (let i = 0; i < n; i++) {
+    const card = next.stock.pop()!;
+    next.waste.push(card);
+    next.faceUp.push(card);
+  }
   return next;
 }
 

@@ -43,7 +43,7 @@ export function ExampleHeader({
   return (
     <header className="sol-bar">
       <div className="sol-bar-left">
-        <a className="sol-back" href="#">
+        <a className="sol-navback" href="#">
           ← <span className="sol-back-label">card-motion</span>
         </a>
         <h1 className="sol-title">{title}</h1>

@@ -41,17 +41,17 @@ export function isFreeSlot(s: TriPeaksState, slot: number): boolean {
   return CHILDREN[slot].every((c) => s.tableau[c] == null);
 }
 
-export function canPlay(s: TriPeaksState, byId: Map<number, CardData>, id: number): boolean {
+export function canPlay(s: TriPeaksState, byId: Map<number, CardData>, id: number, wrap = true): boolean {
   const slot = s.tableau.indexOf(id);
   if (slot < 0 || !isFreeSlot(s, slot)) return false;
   const top = wasteTop(s);
   if (top === undefined) return false;
   const diff = Math.abs(rankVal(byId.get(id)!) - rankVal(byId.get(top)!));
-  return diff === 1 || diff === 12; // ±1, with King↔Ace wrap
+  return diff === 1 || (wrap && diff === 12); // ±1, optionally with King↔Ace wrap
 }
 
-export function play(s: TriPeaksState, byId: Map<number, CardData>, id: number): TriPeaksState | null {
-  if (!canPlay(s, byId, id)) return null;
+export function play(s: TriPeaksState, byId: Map<number, CardData>, id: number, wrap = true): TriPeaksState | null {
+  if (!canPlay(s, byId, id, wrap)) return null;
   const slot = s.tableau.indexOf(id);
   const next: TriPeaksState = { tableau: [...s.tableau], stock: [...s.stock], waste: [...s.waste] };
   next.tableau[slot] = null;
@@ -70,10 +70,10 @@ export function isWon(s: TriPeaksState): boolean {
   return s.tableau.every((c) => c == null);
 }
 
-export function isStuck(s: TriPeaksState, byId: Map<number, CardData>): boolean {
+export function isStuck(s: TriPeaksState, byId: Map<number, CardData>, wrap = true): boolean {
   if (isWon(s)) return false;
   if (s.stock.length > 0) return false;
-  return !s.tableau.some((id, slot) => id != null && isFreeSlot(s, slot) && canPlay(s, byId, id));
+  return !s.tableau.some((id, slot) => id != null && isFreeSlot(s, slot) && canPlay(s, byId, id, wrap));
 }
 
 export { byIdMap };

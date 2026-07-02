@@ -39,6 +39,16 @@ describe('canPlay / play', () => {
     expect(canPlay(gap, byId, EIGHT)).toBe(false); // 8 on 6
   });
 
+  it('wrap is the Simplified difficulty; Normal (no wrap) blocks King↔Ace', () => {
+    const t = empty();
+    t[18] = ACE;
+    const s: TriPeaksState = { tableau: t, stock: [], waste: [KING] };
+    expect(canPlay(s, byId, ACE, false)).toBe(false); // Normal: no wrap
+    expect(canPlay(s, byId, ACE, true)).toBe(true); // Simplified: wraps
+    expect(isStuck(s, byId, false)).toBe(true); // Normal dead end
+    expect(isStuck(s, byId, true)).toBe(false); // Simplified still has a move
+  });
+
   it('will not play a covered card', () => {
     const t = empty();
     t[9] = SEVEN; t[18] = SIX; // slot 9 is covered by base slot 18

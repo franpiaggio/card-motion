@@ -31,6 +31,14 @@ describe('canPlay / play', () => {
     const s: GolfState = { tableau: [[ACE]], stock: [], waste: [KING] };
     expect(canPlay(s, byId, ACE)).toBe(false);
   });
+
+  it('wraps King↔Ace only in the Simplified (wrap) difficulty', () => {
+    const s: GolfState = { tableau: [[ACE]], stock: [], waste: [KING] };
+    expect(canPlay(s, byId, ACE, true)).toBe(true); // Simplified
+    expect(play(s, byId, ACE, true)?.waste).toEqual([KING, ACE]);
+    expect(isStuck(s, byId, true)).toBe(false); // an Ace still plays under wrap
+    expect(isStuck(s, byId, false)).toBe(true); // Normal: dead end
+  });
 });
 
 describe('draw / win / stuck', () => {

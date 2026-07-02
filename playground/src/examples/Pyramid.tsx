@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Card } from 'card-motion';
 import { byIdMap, deal, draw, isFreeId, isStuck, isWon, remove, rowOf, slotIndex, type PyramidState } from './pyramidRules';
-import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
   state: PyramidState;
@@ -12,10 +12,17 @@ const newGame = (): Game => {
   return { state: d.state, byId: byIdMap(d.deck) };
 };
 
+const DIFFS: ReadonlyArray<DiffOption> = [
+  { key: 'recycle', label: 'Simplified', note: 'Redeal the waste as often as you like — keep hunting for matches.' },
+  { key: 'onepass', label: 'Normal', note: 'One pass through the stock: no redeals once it runs out.' },
+];
+
 export default function Pyramid() {
   const [game, setGame] = useState<Game>(newGame);
   const [moves, setMoves] = useState(0);
-  const [rulesOpen, setRulesOpen] = useState(true);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [chooseOpen, setChooseOpen] = useState(true);
+  const [recycle, setRecycle] = useState(true);
   const [tut, setTut] = useState(false);
   const [tutStep, setTutStep] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -31,9 +38,16 @@ export default function Pyramid() {
   useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
+    setChooseOpen(true);
+    setSelected(null);
+    setTut(false);
+  };
+  const pick = (key: string) => {
+    setRecycle(key !== 'onepass');
     setGame(newGame());
     setMoves(0);
     setSelected(null);
+    setChooseOpen(false);
     setTut(false);
   };
   const applyState = (fn: (s: PyramidState, b: Game['byId']) => PyramidState | null) => setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
@@ -62,7 +76,7 @@ export default function Pyramid() {
   };
   const onDraw = () => {
     if (tut) return;
-    applyState((s) => draw(s));
+    applyState((s) => draw(s, recycle));
     setMoves((m) => m + 1);
     setSelected(null);
   };
@@ -90,6 +104,7 @@ export default function Pyramid() {
     setMoves(0);
     setSelected(null);
     setRulesOpen(false);
+    setChooseOpen(false);
     setTutStep(0);
     setTut(true);
   };
@@ -102,7 +117,7 @@ export default function Pyramid() {
   const boardStyle = { '--sol-cw': `${cardW}px`, '--sol-ch': `${cardH}px` } as CSSProperties;
   const wasteTop = state.waste[state.waste.length - 1];
   const won = isWon(state);
-  const lost = isStuck(state, byId);
+  const lost = isStuck(state, byId, recycle);
 
   return (
     <div className="sol">
@@ -146,6 +161,8 @@ export default function Pyramid() {
         </div>
       </div>
 
+      {chooseOpen && !tut && <DifficultyPicker title="Pyramid — choose a difficulty" options={DIFFS} onPick={pick} />}
+
       {tut && <Coach step={tutStep} total={tutorial.steps.length} text={tutorial.steps[tutStep].text} onNext={nextStep} onSkip={reset} />}
 
       {rulesOpen && !tut && (
@@ -161,13 +178,13 @@ export default function Pyramid() {
           <h4>Stock</h4>
           <ul>
             <li>Tap the stock to turn a card to the waste, which can also pair.</li>
-            <li>When the stock empties, tapping it (↻) recycles the waste.</li>
+            <li>In Simplified, tapping the empty stock (↻) recycles the waste. Normal is a single pass.</li>
           </ul>
         </RulesModal>
       )}
 
-      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
-      {lost && !tut && <WinOverlay moves={moves} onNew={reset} lost />}
+      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} />}
+      {lost && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} lost />}
     </div>
   );
 }

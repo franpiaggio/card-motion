@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { Card, DragDropProvider, DropZone, DraggableCard, SUITS } from 'card-motion';
 import { byIdMap, deal, draw, isWon, move, toFoundation, type Dest, type KlondikeState } from './klondikeRules';
-import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
   state: KlondikeState;
@@ -13,6 +13,11 @@ function newGame(): Game {
   return { state: d.state, byId: byIdMap(d.deck) };
 }
 
+const DIFFS: ReadonlyArray<DiffOption> = [
+  { key: '1', label: 'Simplified', note: 'Draw one card from the stock at a time.' },
+  { key: '3', label: 'Normal', note: 'Draw three at a time — only the top of the three is playable.' },
+];
+
 const destOf = (zone: string): Dest | null => {
   if (zone.startsWith('col-')) return { type: 'tableau', index: +zone.slice(4) };
   if (zone.startsWith('found-')) return { type: 'foundation', index: +zone.slice(6) };
@@ -22,7 +27,9 @@ const destOf = (zone: string): Dest | null => {
 export default function Klondike() {
   const [game, setGame] = useState<Game>(newGame);
   const [moves, setMoves] = useState(0);
-  const [rulesOpen, setRulesOpen] = useState(true);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [chooseOpen, setChooseOpen] = useState(true);
+  const [drawCount, setDrawCount] = useState(1);
   const [tut, setTut] = useState(false);
   const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
@@ -38,14 +45,20 @@ export default function Klondike() {
   useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
+    setChooseOpen(true);
+    setTut(false);
+  };
+  const pick = (key: string) => {
+    setDrawCount(key === '3' ? 3 : 1);
     setGame(newGame());
     setMoves(0);
+    setChooseOpen(false);
     setTut(false);
   };
   const applyState = (fn: (s: KlondikeState, b: Game['byId']) => KlondikeState | null) =>
     setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
   const onDraw = () => {
-    setGame((g) => ({ ...g, state: draw(g.state) }));
+    setGame((g) => ({ ...g, state: draw(g.state, drawCount) }));
     setMoves((m) => m + 1);
   };
 
@@ -68,6 +81,7 @@ export default function Klondike() {
     setGame((g) => ({ ...g, state: tutorial.initial }));
     setMoves(0);
     setRulesOpen(false);
+    setChooseOpen(false);
     setTutStep(0);
     setTut(true);
   };
@@ -167,6 +181,8 @@ export default function Klondike() {
         </div>
       </DragDropProvider>
 
+      {chooseOpen && !tut && <DifficultyPicker title="Klondike — choose a difficulty" options={DIFFS} onPick={pick} />}
+
       {tut && <Coach step={tutStep} total={tutorial.steps.length} text={tutorial.steps[tutStep].text} onNext={nextStep} onSkip={reset} />}
 
       {rulesOpen && !tut && (
@@ -192,7 +208,7 @@ export default function Klondike() {
         </RulesModal>
       )}
 
-      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
+      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} />}
     </div>
   );
 }

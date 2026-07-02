@@ -71,10 +71,10 @@ export function remove(s: PyramidState, byId: Map<number, CardData>, ids: number
   return next;
 }
 
-export function draw(s: PyramidState): PyramidState {
+export function draw(s: PyramidState, recycle = true): PyramidState {
   if (s.stock.length === 0) {
-    // recycle the waste back into the stock
-    if (s.waste.length === 0) return s;
+    // recycle the waste back into the stock (only when redeals are allowed)
+    if (!recycle || s.waste.length === 0) return s;
     return { tableau: [...s.tableau], stock: [...s.waste].reverse(), waste: [] };
   }
   const next: PyramidState = { tableau: [...s.tableau], stock: [...s.stock], waste: [...s.waste] };
@@ -86,17 +86,24 @@ export function isWon(s: PyramidState): boolean {
   return s.tableau.every((c) => c == null);
 }
 
-/** Stuck = not won, nothing left in stock or waste, and no free match on the board. */
-export function isStuck(s: PyramidState, byId: Map<number, CardData>): boolean {
+/**
+ * Stuck = not won, no more draws available, and no legal match among the
+ * currently-playable cards (free tableau cards plus the waste top).
+ * With `recycle`, a non-empty waste can still be redealt, so the game isn't stuck.
+ */
+export function isStuck(s: PyramidState, byId: Map<number, CardData>, recycle = true): boolean {
   if (isWon(s)) return false;
-  if (s.stock.length > 0 || s.waste.length > 0) return false;
-  const free: number[] = [];
+  const canDraw = s.stock.length > 0 || (recycle && s.waste.length > 0);
+  if (canDraw) return false;
+  const playable: number[] = [];
   s.tableau.forEach((id, slot) => {
-    if (id != null && isFreeSlot(s, slot)) free.push(id);
+    if (id != null && isFreeSlot(s, slot)) playable.push(id);
   });
-  if (free.some((id) => rankVal(byId.get(id)!) === 13)) return false;
-  for (let a = 0; a < free.length; a++)
-    for (let b = a + 1; b < free.length; b++) if (rankVal(byId.get(free[a])!) + rankVal(byId.get(free[b])!) === 13) return false;
+  const top = wasteTop(s);
+  if (top !== undefined) playable.push(top);
+  if (playable.some((id) => rankVal(byId.get(id)!) === 13)) return false;
+  for (let a = 0; a < playable.length; a++)
+    for (let b = a + 1; b < playable.length; b++) if (rankVal(byId.get(playable[a])!) + rankVal(byId.get(playable[b])!) === 13) return false;
   return true;
 }
 

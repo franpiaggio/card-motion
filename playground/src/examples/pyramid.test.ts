@@ -68,4 +68,17 @@ describe('draw / win / stuck', () => {
     t2[21] = FIVE; t2[22] = EIGHT; // 5 + 8 = 13
     expect(isStuck({ tableau: t2, stock: [], waste: [] }, byId)).toBe(false);
   });
+
+  it('Normal (one pass) neither recycles nor counts a leftover waste as a lifeline', () => {
+    const t = emptyTab();
+    t[21] = FIVE; t[22] = SIX; // on board: 5 + 6, no match
+    const withWaste: PyramidState = { tableau: t, stock: [], waste: [SEVEN] }; // waste 7: 6+7=13 possible
+    // Simplified: a non-empty waste can be redealt, so never stuck…
+    expect(isStuck(withWaste, byId, true)).toBe(false);
+    // Normal: no redeal — but the waste top (7) still pairs with the board 6.
+    expect(isStuck(withWaste, byId, false)).toBe(false);
+    const dead: PyramidState = { tableau: (() => { const a = emptyTab(); a[21] = FIVE; return a; })(), stock: [], waste: [SEVEN] };
+    expect(isStuck(dead, byId, false)).toBe(true); // 5 + 7 ≠ 13, no draws left
+    expect(draw(dead, false)).toBe(dead); // one-pass: empty stock does not recycle
+  });
 });

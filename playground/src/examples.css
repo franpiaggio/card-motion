@@ -44,7 +44,7 @@
   gap: 12px;
   min-width: 0;
 }
-.sol-back {
+.sol-navback {
   font-size: 12px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -52,7 +52,7 @@
   color: var(--paper-dim);
   white-space: nowrap;
 }
-.sol-back:hover {
+.sol-navback:hover {
   color: var(--paper);
 }
 .sol-title {

@@ -1,7 +1,7 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Card } from 'card-motion';
 import { byIdMap, canPlay, deal, draw, isFreeSlot, isStuck, isWon, play, SLOTS, type TriPeaksState } from './tripeaksRules';
-import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
   state: TriPeaksState;
@@ -12,10 +12,17 @@ const newGame = (): Game => {
   return { state: d.state, byId: byIdMap(d.deck) };
 };
 
+const DIFFS: ReadonlyArray<DiffOption> = [
+  { key: 'wrap', label: 'Simplified', note: 'Ranks wrap — an Ace plays on a King and back, keeping chains alive.' },
+  { key: 'nowrap', label: 'Normal', note: 'No wrap: a King and an Ace do not connect.' },
+];
+
 export default function TriPeaks() {
   const [game, setGame] = useState<Game>(newGame);
   const [moves, setMoves] = useState(0);
-  const [rulesOpen, setRulesOpen] = useState(true);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [chooseOpen, setChooseOpen] = useState(true);
+  const [wrap, setWrap] = useState(true);
   const [tut, setTut] = useState(false);
   const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
@@ -30,15 +37,21 @@ export default function TriPeaks() {
   useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
+    setChooseOpen(true);
+    setTut(false);
+  };
+  const pick = (key: string) => {
+    setWrap(key !== 'nowrap');
     setGame(newGame());
     setMoves(0);
+    setChooseOpen(false);
     setTut(false);
   };
   const applyState = (fn: (s: TriPeaksState, b: Game['byId']) => TriPeaksState | null) => setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
 
   const tapCard = (id: number) => {
     if (tut) return;
-    const next = play(state, byId, id);
+    const next = play(state, byId, id, wrap);
     if (!next) return;
     setGame((g) => ({ ...g, state: next }));
     setMoves((m) => m + 1);
@@ -72,6 +85,7 @@ export default function TriPeaks() {
     setGame((g) => ({ ...g, state: tutorial.initial }));
     setMoves(0);
     setRulesOpen(false);
+    setChooseOpen(false);
     setTutStep(0);
     setTut(true);
   };
@@ -84,7 +98,7 @@ export default function TriPeaks() {
   const boardStyle = { '--sol-cw': `${cardW}px`, '--sol-ch': `${cardH}px` } as CSSProperties;
   const wasteTop = state.waste[state.waste.length - 1];
   const won = isWon(state);
-  const lost = isStuck(state, byId);
+  const lost = isStuck(state, byId, wrap);
 
   return (
     <div className="sol">
@@ -95,7 +109,7 @@ export default function TriPeaks() {
           {state.tableau.map((id, slot) => {
             if (id == null) return null;
             const free = isFreeSlot(state, slot);
-            const playable = free && canPlay(state, byId, id);
+            const playable = free && canPlay(state, byId, id, wrap);
             const c = byId.get(id)!;
             return (
               <div
@@ -123,6 +137,8 @@ export default function TriPeaks() {
         </div>
       </div>
 
+      {chooseOpen && !tut && <DifficultyPicker title="Tri Peaks — choose a difficulty" options={DIFFS} onPick={pick} />}
+
       {tut && <Coach step={tutStep} total={tutorial.steps.length} text={tutorial.steps[tutStep].text} onNext={nextStep} onSkip={reset} />}
 
       {rulesOpen && !tut && (
@@ -133,7 +149,7 @@ export default function TriPeaks() {
           <ul>
             <li>A card is free when nothing rests on it (highlighted).</li>
             <li>Tap a free card one rank above or below the waste’s top card.</li>
-            <li>Ranks wrap: an Ace plays on a King and a King on an Ace.</li>
+            <li>In Simplified, ranks wrap: an Ace plays on a King and back. Normal has no wrap.</li>
           </ul>
           <h4>Stock</h4>
           <ul>
@@ -143,8 +159,8 @@ export default function TriPeaks() {
         </RulesModal>
       )}
 
-      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
-      {lost && !tut && <WinOverlay moves={moves} onNew={reset} lost />}
+      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} />}
+      {lost && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} lost />}
     </div>
   );
 }

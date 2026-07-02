@@ -8,6 +8,15 @@ async function closeRules(page: Page) {
   await expect(page.locator('.sol-modal')).toHaveCount(0);
 }
 
+// Dismiss the opening overlay: a difficulty picker (pick the first option) or a rules modal.
+async function dismissStart(page: Page) {
+  await expect(page.locator('.sol-modal')).toBeVisible();
+  const diff = page.locator('.sol-diff-opt').first();
+  if (await diff.count()) await diff.click();
+  else await page.locator('.sol-modal-close').click();
+  await expect(page.locator('.sol-modal')).toHaveCount(0);
+}
+
 async function noHorizontalOverflow(page: Page) {
   const over = await page.evaluate(() => {
     const b = document.querySelector('.sol-board') as HTMLElement;
@@ -55,7 +64,7 @@ test.describe('FreeCell', () => {
 test.describe('Klondike', () => {
   test('deals 7 columns and draws from the stock to the waste', async ({ page }) => {
     await page.goto('/#/klondike');
-    await closeRules(page);
+    await dismissStart(page);
     await expect(page.locator('.sol-col')).toHaveCount(7);
     await noHorizontalOverflow(page);
 
@@ -68,7 +77,7 @@ test.describe('Klondike', () => {
   test('is playable on a phone viewport', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/#/klondike');
-    await closeRules(page);
+    await dismissStart(page);
     await expect(page.locator('.sol-col')).toHaveCount(7);
     await noHorizontalOverflow(page);
     await page.locator('.sol-stock').click();

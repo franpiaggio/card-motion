@@ -32,6 +32,22 @@ describe('draw', () => {
     expect(s.waste).toEqual([]);
     expect(s.faceUp).not.toContain(AS);
   });
+
+  it('Normal (draw three) flips three at once; only the top is takeable', () => {
+    const s: KlondikeState = { stock: [AH, KH, QH], waste: [], tableau: [], foundations: [[], [], [], []], faceUp: [] };
+    const drawn = draw(s, 3);
+    expect(drawn.waste).toEqual([QH, KH, AH]); // three flipped, top of stock ends on top
+    expect(drawn.stock).toEqual([]);
+    // Only the waste top (AH) can be picked up; a buried card is not a valid source.
+    expect(move(drawn, byId, AH, { type: 'foundation', index: 1 })).not.toBeNull();
+    expect(move(drawn, byId, KH, { type: 'tableau', index: 0 })).toBeNull();
+  });
+
+  it('draw three flips only what remains when fewer than three are left', () => {
+    const s: KlondikeState = { stock: [AH, KH], waste: [], tableau: [], foundations: [[], [], [], []], faceUp: [] };
+    expect(draw(s, 3).waste).toEqual([KH, AH]);
+    expect(draw(s, 3).stock).toEqual([]);
+  });
 });
 
 describe('tableau placement', () => {
