@@ -287,7 +287,8 @@
 .sol-pyr-card.free {
   cursor: pointer;
 }
-.sol-pyr-card.selected {
+.sol-pyr-card.selected,
+.sol-pyr-card.playable {
   outline: 3px solid var(--gold);
   outline-offset: 1px;
   border-radius: 8px;
