@@ -287,6 +287,30 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Working examples ─────────────────────────────────── */}
+      <section className="lp-examples" id="examples" aria-labelledby="examples-h">
+        <h2 id="examples-h" className="lp-section-h">
+          Working examples
+        </h2>
+        <p className="lp-examples-sub">
+          Complete games built with the library — drag to move, double-tap to send a card home.
+        </p>
+        <div className="lp-examples-grid">
+          <a className="lp-example lp-accent-coral" href="#/freecell">
+            <span className="lp-way-tag">Drag &amp; drop</span>
+            <h3 className="lp-way-name">FreeCell</h3>
+            <p className="lp-way-blurb">All 52 cards face-up, four free cells, eight columns. Deterministic and pure logic.</p>
+            <span className="lp-example-play">Play&nbsp;→</span>
+          </a>
+          <a className="lp-example lp-accent-blue" href="#/klondike">
+            <span className="lp-way-tag">Drag &amp; drop + stock</span>
+            <h3 className="lp-way-name">Klondike</h3>
+            <p className="lp-way-blurb">The classic Solitaire: a stock and waste, face-down tableau, King-only empty columns.</p>
+            <span className="lp-example-play">Play&nbsp;→</span>
+          </a>
+        </div>
+      </section>
+
       {/* ── Footer ───────────────────────────────────────────── */}
       <footer className="lp-foot">
         <div className="lp-foot-main">
