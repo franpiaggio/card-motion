@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 // Returns just the <code>; wrap it in your own <pre>.
 export function Highlight({ src }: { src: string }) {
   const re =
-    /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(import|from|export|default|const|let|var|return|await|async|new|function)\b|(<\/?)([A-Za-z][\w]*)|([a-zA-Z_]\w*)(?=\s*[:=][^=])|([a-zA-Z_]\w*)(?=\()|(\b\d+\b)|([{}()[\]<>/=.:,]+)/g;
+    /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\b(import|from|export|default|const|let|var|return|await|async|new|function|interface|type)\b|(<\/?)([A-Za-z][\w]*)|([a-zA-Z_]\w*)(?=\s*[:=][^=])|([a-zA-Z_]\w*)(?=\()|(\b\d+\b)|([{}()[\]<>/=.:,]+)/g;
   const nodes: ReactNode[] = [];
   let last = 0;
   let k = 0;

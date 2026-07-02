@@ -389,6 +389,25 @@ export default function Docs() {
   },
   initial: { hand: [] },
 });`}</Code>
+            <h3 className="docs-h3">Custom cards</h3>
+            <P>
+              A card needs only a numeric <code>id</code>; the rest of the payload is yours. For games that
+              aren’t playing cards (deck-builders, TCGs) give <code>useCardPiles</code> your own type and render
+              your own faces — <code>Card</code> is specific to French-suit cards, and rank / suit are never
+              required.
+            </P>
+            <Code>{`interface CustomCard {
+  id: number;            // the only field the engine reads
+  name: string;
+  cost: number;
+  kind: 'animal' | 'tree';
+}
+
+const piles = useCardPiles<'deck' | 'hand', CustomCard>({ cards, piles: {/* … */} });`}</Code>
+            <P>
+              Layouts receive the card through <code>ctx.card</code>, so they can branch on your payload. The
+              Sandbox demo is a full example (custom faces, per-card effects, zone rules).
+            </P>
             <h3 className="docs-h3">Options</h3>
             <PropsTable
               rows={[
