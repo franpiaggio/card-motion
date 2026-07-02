@@ -7,6 +7,7 @@ import Examples from './examples/Examples';
 import FreeCell from './examples/FreeCell';
 import Klondike from './examples/Klondike';
 import Golf from './examples/Golf';
+import Spider from './examples/Spider';
 
 // Tiny hash router: `#/demo` (optionally `#/demo/<name>`) opens the demos on
 // their own full-screen page; everything else is the landing.
@@ -27,6 +28,7 @@ export default function App() {
   if (hash === '#/freecell') return <FreeCell />;
   if (hash === '#/klondike') return <Klondike />;
   if (hash === '#/golf') return <Golf />;
+  if (hash === '#/spider') return <Spider />;
   if (hash === '#/docs' || hash.startsWith('#/docs/')) {
     return <Docs />;
   }

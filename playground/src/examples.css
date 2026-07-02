@@ -275,6 +275,47 @@
   min-height: calc(var(--sol-ch, 0px) + 24px);
 }
 
+/* Spider: completed-runs counter + deal-row stock button. */
+.sol-spider-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+}
+.sol-spider-count {
+  font: 600 12px/1 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--paper-dim);
+}
+.sol-stock {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+.sol-stock:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.sol-stock-pile {
+  position: relative;
+  display: inline-block;
+}
+.sol-stock-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--ink-950);
+  font: 700 11px/1.4 var(--font-display);
+  text-align: center;
+}
+
 /* ── Tutorial coach ───────────────────────────────────────────────────────── */
 .sol-coach {
   position: fixed;
