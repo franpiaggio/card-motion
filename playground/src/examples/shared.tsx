@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { gsap } from 'gsap';
 
 /** Measures an element's content width (responsive card sizing). */
 export function useMeasure<T extends HTMLElement>() {
@@ -30,12 +31,14 @@ export function ExampleHeader({
   status,
   onNew,
   onRules,
+  onTutorial,
 }: {
   title: string;
   moves: number;
   status?: string;
   onNew: () => void;
   onRules: () => void;
+  onTutorial: () => void;
 }) {
   return (
     <header className="sol-bar">
@@ -49,7 +52,10 @@ export function ExampleHeader({
         <span className="sol-stat" aria-live="polite">
           {status ?? `${moves} moves`}
         </span>
-        <button type="button" className="sol-btn" onClick={onRules}>
+        <button type="button" className="sol-btn" onClick={onTutorial}>
+          Tutorial
+        </button>
+        <button type="button" className="sol-btn sol-btn-hide" onClick={onRules}>
           Rules
         </button>
         <button type="button" className="sol-btn sol-btn-primary" onClick={onNew}>
@@ -87,13 +93,67 @@ export function RulesModal({ title, onClose, children }: { title: string; onClos
   );
 }
 
-/** Win overlay with a replay button. */
-export function WinOverlay({ moves, onNew }: { moves: number; onNew: () => void }) {
+/**
+ * FLIP: when `dep` changes while `enabled`, glide every `[data-flip-id]` inside
+ * `ref` from its previous box to its new one. Used to animate the tutorial's
+ * scripted moves (drag moves are already animated by DragDropProvider).
+ */
+export function useFlip(ref: { current: HTMLElement | null }, dep: unknown, enabled: boolean) {
+  const prev = useRef(new Map<string, DOMRect>());
+  useLayoutEffect(() => {
+    const c = ref.current;
+    if (!c || !enabled) {
+      prev.current = new Map();
+      return;
+    }
+    const els = Array.from(c.querySelectorAll<HTMLElement>('[data-flip-id]'));
+    const curr = new Map(els.map((el) => [el.dataset.flipId!, el.getBoundingClientRect()]));
+    for (const el of els) {
+      const id = el.dataset.flipId!;
+      const old = prev.current.get(id);
+      const now = curr.get(id)!;
+      if (old && (Math.abs(old.left - now.left) > 0.5 || Math.abs(old.top - now.top) > 0.5)) {
+        gsap.fromTo(el, { x: old.left - now.left, y: old.top - now.top }, { x: 0, y: 0, duration: 0.4, ease: 'power3.out' });
+      }
+    }
+    prev.current = curr;
+  }, [dep, enabled, ref]);
+}
+
+export interface TutorialStep {
+  text: string;
+  /** The scripted move for this step (applied when the user presses Next). */
+  apply?: () => void;
+}
+
+/** Bottom-docked tutorial coach: explains a step and prompts the next one. */
+export function Coach({ step, total, text, onNext, onSkip }: { step: number; total: number; text: string; onNext: () => void; onSkip: () => void }) {
+  const last = step === total - 1;
   return (
-    <div className="sol-win" role="alertdialog" aria-label="You won">
+    <div className="sol-coach" role="dialog" aria-label="Tutorial">
+      <div className="sol-coach-body">
+        <span className="sol-coach-step">Tutorial · {step + 1}/{total}</span>
+        <p>{text}</p>
+      </div>
+      <div className="sol-coach-actions">
+        <button type="button" className="sol-btn" onClick={onSkip}>
+          Skip
+        </button>
+        <button type="button" className="sol-btn sol-btn-primary" onClick={onNext}>
+          {last ? 'Finish' : 'Next →'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** End-of-game overlay: a win, or a "no moves left" dead end. */
+export function WinOverlay({ moves, onNew, lost = false }: { moves: number; onNew: () => void; lost?: boolean }) {
+  return (
+    <div className="sol-win" role="alertdialog" aria-label={lost ? 'No moves left' : 'You won'}>
       <div className="sol-win-panel">
-        <strong>You win 🎉</strong>
-        <span>Solved in {moves} moves</span>
+        <strong>{lost ? 'No moves left' : 'You win 🎉'}</strong>
+        <span>{lost ? 'This deal is stuck — start a new game.' : `Solved in ${moves} moves`}</span>
         <button type="button" className="sol-btn sol-btn-primary" onClick={onNew}>
           New game
         </button>

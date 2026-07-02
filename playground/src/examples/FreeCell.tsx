@@ -1,7 +1,7 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { Card, DragDropProvider, DropZone, DraggableCard, SUITS } from 'card-motion';
 import { byIdMap, deal, isWon, move, toFoundation, type Dest, type FreeCellState } from './freecellRules';
-import { CARD_RATIO, ExampleHeader, RulesModal, useMeasure, WinOverlay } from './shared';
+import { CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
 
 interface Game {
   state: FreeCellState;
@@ -24,6 +24,8 @@ export default function FreeCell() {
   const [game, setGame] = useState<Game>(newGame);
   const [moves, setMoves] = useState(0);
   const [rulesOpen, setRulesOpen] = useState(true);
+  const [tut, setTut] = useState(false);
+  const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
 
   const { state, byId } = game;
@@ -34,9 +36,41 @@ export default function FreeCell() {
   const cardH = Math.round(cardW * CARD_RATIO);
   const marginUp = Math.round(cardH * 0.3) - cardH; // show ~30% of each stacked card
 
+  useFlip(boardRef, tutStep, tut);
+
   const reset = () => {
     setGame(newGame());
     setMoves(0);
+    setTut(false);
+  };
+  const applyState = (fn: (s: FreeCellState, b: Game['byId']) => FreeCellState | null) =>
+    setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
+
+  const tutorial = useMemo<{ initial: FreeCellState; steps: TutorialStep[] }>(() => {
+    const initial: FreeCellState = { tableau: [[6], [18], [0], [12], [], [], [], []], free: [null, null, null, null], foundations: [[], [], [], []] };
+    return {
+      initial,
+      steps: [
+        { text: 'FreeCell: build the four foundations up from Ace to King by suit. Every card is dealt face-up.' },
+        { text: 'Columns build down in alternating colors. This red 6 goes onto the black 7.', apply: () => applyState((s, b) => move(s, b, 18, { type: 'tableau', index: 0 })) },
+        { text: 'An Ace goes straight to its foundation — double-tap does this for you.', apply: () => applyState((s, b) => move(s, b, 0, { type: 'foundation', index: 0 })) },
+        { text: 'Stuck? Park a card in one of the four free cells to dig deeper.', apply: () => applyState((s, b) => move(s, b, 12, { type: 'free', index: 0 })) },
+        { text: 'Runs move together when enough free cells and empty columns are open. Finish to deal a real game.' },
+      ],
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startTutorial = () => {
+    setGame((g) => ({ ...g, state: tutorial.initial }));
+    setMoves(0);
+    setRulesOpen(false);
+    setTutStep(0);
+    setTut(true);
+  };
+  const nextStep = () => {
+    tutorial.steps[tutStep].apply?.();
+    if (tutStep + 1 >= tutorial.steps.length) reset();
+    else setTutStep((s) => s + 1);
   };
 
   const handleDrop = (cardId: number, toZone: string) => {
@@ -82,7 +116,7 @@ export default function FreeCell() {
 
   return (
     <div className="sol">
-      <ExampleHeader title="FreeCell" moves={moves} onNew={reset} onRules={() => setRulesOpen(true)} />
+      <ExampleHeader title="FreeCell" moves={moves} onNew={reset} onRules={() => setRulesOpen(true)} onTutorial={startTutorial} />
 
       <DragDropProvider onDrop={handleDrop}>
         <div className="sol-board" ref={boardRef} style={boardStyle}>
@@ -122,7 +156,9 @@ export default function FreeCell() {
         </div>
       </DragDropProvider>
 
-      {rulesOpen && (
+      {tut && <Coach step={tutStep} total={tutorial.steps.length} text={tutorial.steps[tutStep].text} onNext={nextStep} onSkip={reset} />}
+
+      {rulesOpen && !tut && (
         <RulesModal title="FreeCell — how to play" onClose={() => setRulesOpen(false)}>
           <h4>Goal</h4>
           <p>Build all four foundations up from Ace to King, one per suit.</p>
@@ -144,7 +180,7 @@ export default function FreeCell() {
         </RulesModal>
       )}
 
-      {won && <WinOverlay moves={moves} onNew={reset} />}
+      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
     </div>
   );
 }

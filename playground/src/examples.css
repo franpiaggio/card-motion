@@ -267,6 +267,61 @@
   margin: 3px 0;
 }
 
+/* Plain (non-drop) tableau column, e.g. Golf where only the waste is a target. */
+.sol-col-plain {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: calc(var(--sol-ch, 0px) + 24px);
+}
+
+/* ── Tutorial coach ───────────────────────────────────────────────────────── */
+.sol-coach {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(12px, 3vh, 28px);
+  transform: translateX(-50%);
+  z-index: 180;
+  width: min(580px, calc(100% - 20px));
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: var(--paper);
+  color: var(--ink-950);
+  border: 1.5px solid var(--ink-950);
+  border-radius: var(--radius-lg);
+  box-shadow: 5px 5px 0 oklch(0.66 0.16 248);
+  padding: 14px 16px;
+  font-family: var(--font-ui);
+}
+.sol-coach-body {
+  flex: 1;
+  min-width: 180px;
+}
+.sol-coach-step {
+  font: 700 11px/1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.sol-coach-body p {
+  font-size: 14px;
+  line-height: 1.45;
+  margin-top: 5px;
+}
+.sol-coach-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 420px) {
+  .sol-btn-hide {
+    display: none;
+  }
+}
+
 /* ── Examples index (paper) ───────────────────────────────────────────────── */
 .ex {
   --ex-paper: oklch(0.955 0.013 85);

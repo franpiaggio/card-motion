@@ -1,7 +1,7 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
 import { Card, DragDropProvider, DropZone, DraggableCard, SUITS } from 'card-motion';
 import { byIdMap, deal, draw, isWon, move, toFoundation, type Dest, type KlondikeState } from './klondikeRules';
-import { CardBack, CARD_RATIO, ExampleHeader, RulesModal, useMeasure, WinOverlay } from './shared';
+import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
 
 interface Game {
   state: KlondikeState;
@@ -23,6 +23,8 @@ export default function Klondike() {
   const [game, setGame] = useState<Game>(newGame);
   const [moves, setMoves] = useState(0);
   const [rulesOpen, setRulesOpen] = useState(true);
+  const [tut, setTut] = useState(false);
+  const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
 
   const { state, byId } = game;
@@ -33,13 +35,46 @@ export default function Klondike() {
   const peekUp = Math.round(cardH * 0.32) - cardH;
   const peekDown = Math.round(cardH * 0.16) - cardH;
 
+  useFlip(boardRef, tutStep, tut);
+
   const reset = () => {
     setGame(newGame());
     setMoves(0);
+    setTut(false);
   };
+  const applyState = (fn: (s: KlondikeState, b: Game['byId']) => KlondikeState | null) =>
+    setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
   const onDraw = () => {
     setGame((g) => ({ ...g, state: draw(g.state) }));
     setMoves((m) => m + 1);
+  };
+
+  const tutorial = useMemo<{ initial: KlondikeState; steps: TutorialStep[] }>(() => {
+    const initial: KlondikeState = { stock: [13], waste: [], tableau: [[19], [5], [37, 0]], foundations: [[], [], [], []], faceUp: [19, 5, 0] };
+    return {
+      initial,
+      steps: [
+        { text: 'Klondike (classic Solitaire): build the four foundations up from Ace to King, one per suit.' },
+        { text: 'Tap the stock (top-left) to flip a card onto the waste.', apply: () => applyState((s) => draw(s)) },
+        { text: 'That Ace goes up to its foundation. Double-tap sends a card home for you.', apply: () => applyState((s, b) => toFoundation(s, b, 13)) },
+        { text: 'The tableau builds down in alternating colors — this black 6 goes on the red 7.', apply: () => applyState((s, b) => move(s, b, 5, { type: 'tableau', index: 0 })) },
+        { text: 'Sending this Ace up turns over the face-down card beneath it.', apply: () => applyState((s, b) => toFoundation(s, b, 0)) },
+        { text: 'Empty columns take only a King. Finish to deal a real game.' },
+      ],
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const startTutorial = () => {
+    setGame((g) => ({ ...g, state: tutorial.initial }));
+    setMoves(0);
+    setRulesOpen(false);
+    setTutStep(0);
+    setTut(true);
+  };
+  const nextStep = () => {
+    tutorial.steps[tutStep].apply?.();
+    if (tutStep + 1 >= tutorial.steps.length) reset();
+    else setTutStep((s) => s + 1);
   };
 
   const handleDrop = (cardId: number, toZone: string) => {
@@ -80,7 +115,7 @@ export default function Klondike() {
 
   return (
     <div className="sol">
-      <ExampleHeader title="Klondike" moves={moves} onNew={reset} onRules={() => setRulesOpen(true)} />
+      <ExampleHeader title="Klondike" moves={moves} onNew={reset} onRules={() => setRulesOpen(true)} onTutorial={startTutorial} />
 
       <DragDropProvider onDrop={handleDrop}>
         <div className="sol-board" ref={boardRef} style={boardStyle}>
@@ -132,7 +167,9 @@ export default function Klondike() {
         </div>
       </DragDropProvider>
 
-      {rulesOpen && (
+      {tut && <Coach step={tutStep} total={tutorial.steps.length} text={tutorial.steps[tutStep].text} onNext={nextStep} onSkip={reset} />}
+
+      {rulesOpen && !tut && (
         <RulesModal title="Klondike — how to play" onClose={() => setRulesOpen(false)}>
           <h4>Goal</h4>
           <p>Build all four foundations up from Ace to King, one per suit.</p>
@@ -155,7 +192,7 @@ export default function Klondike() {
         </RulesModal>
       )}
 
-      {won && <WinOverlay moves={moves} onNew={reset} />}
+      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
     </div>
   );
 }
