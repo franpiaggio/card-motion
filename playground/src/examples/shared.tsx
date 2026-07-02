@@ -40,8 +40,8 @@ export function ExampleHeader({
   return (
     <header className="sol-bar">
       <div className="sol-bar-left">
-        <a className="sol-back" href="#/examples">
-          ← <span className="sol-back-label">Examples</span>
+        <a className="sol-back" href="#">
+          ← <span className="sol-back-label">card-motion</span>
         </a>
         <h1 className="sol-title">{title}</h1>
       </div>
