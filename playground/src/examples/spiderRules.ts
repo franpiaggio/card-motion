@@ -15,9 +15,14 @@ export interface SpiderState {
 
 export type Dest = { type: 'tableau'; index: number };
 
-/** 104 single-suit (spade) cards, ids 0–103. */
-export function buildSpiderDeck(): CardData[] {
-  return Array.from({ length: 104 }, (_, id) => ({ id, rank: RANKS[id % 13], suit: '♠' as const, color: 'black' as const }));
+const SUIT_SET = ['♠', '♥', '♦', '♣'] as const;
+
+/** 104 cards (two decks) using `suits` distinct suits — 1, 2, or 4. */
+export function buildSpiderDeck(suits = 1): CardData[] {
+  return Array.from({ length: 104 }, (_, id) => {
+    const suit = SUIT_SET[Math.floor(id / 13) % suits];
+    return { id, rank: RANKS[id % 13], suit, color: suit === '♥' || suit === '♦' ? 'red' : 'black' };
+  });
 }
 
 const topOf = (p: number[]): number | undefined => p[p.length - 1];
@@ -37,9 +42,13 @@ export function deal(deck: CardData[] = shuffleInPlace(buildSpiderDeck())): { st
 
 const isUp = (s: SpiderState, id: number) => s.faceUp.includes(id);
 
-/** A descending, consecutive run (same suit is implicit here). */
+/** A descending, consecutive, same-suit run (the movable / completable unit). */
 export function isRun(byId: Map<number, CardData>, ids: number[]): boolean {
-  for (let i = 1; i < ids.length; i++) if (rankVal(byId.get(ids[i])!) !== rankVal(byId.get(ids[i - 1])!) - 1) return false;
+  for (let i = 1; i < ids.length; i++) {
+    const a = byId.get(ids[i - 1])!;
+    const b = byId.get(ids[i])!;
+    if (rankVal(b) !== rankVal(a) - 1 || b.suit !== a.suit) return false;
+  }
   return true;
 }
 

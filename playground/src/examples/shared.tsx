@@ -152,6 +152,33 @@ export function Coach({ step, total, text, onNext, onSkip }: { step: number; tot
   );
 }
 
+export interface DiffOption {
+  key: string;
+  label: string;
+  note: string;
+}
+
+/** Start-of-game difficulty chooser (shown before dealing). */
+export function DifficultyPicker({ title, options, onPick }: { title: string; options: ReadonlyArray<DiffOption>; onPick: (key: string) => void }) {
+  return (
+    <div className="sol-modal" role="dialog" aria-modal="true" aria-label={title}>
+      <div className="sol-modal-panel sol-diff">
+        <div className="sol-modal-head">
+          <span>{title}</span>
+        </div>
+        <div className="sol-diff-grid">
+          {options.map((o) => (
+            <button key={o.key} type="button" className="sol-diff-opt" onClick={() => onPick(o.key)}>
+              <strong>{o.label}</strong>
+              <span>{o.note}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** End-of-game overlay: a win, or a "no moves left" dead end. */
 export function WinOverlay({ moves, onNew, lost = false }: { moves: number; onNew: () => void; lost?: boolean }) {
   return (

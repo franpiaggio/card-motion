@@ -13,6 +13,13 @@ export interface DraggableCardProps {
   disabled?: boolean;
   /** Pointer travel (px) before a press becomes a drag. Default `4`. */
   threshold?: number;
+  /**
+   * Ids of other cards that should drag along with this one — e.g. a solitaire
+   * run stacked on top of it. Their DOM nodes are located by `data-flip-id` and
+   * translated as a group, so the whole stack follows the pointer and settles
+   * together. The drop is still reported once, for this card's `id`.
+   */
+  stack?: number[];
   className?: string;
   style?: CSSProperties;
   /** Your card visual, e.g. `<Card … />`. */
@@ -27,10 +34,11 @@ const SNAP = { duration: 0.35, ease: 'back.out(1.5)' } as const;
  * the accepting zone (you move it in state) or springs back to where it began.
  * Works with mouse, touch, and pen via Pointer Events.
  */
-export function DraggableCard({ id, zone = null, disabled = false, threshold = 4, className, style, children }: DraggableCardProps) {
+export function DraggableCard({ id, zone = null, disabled = false, threshold = 4, stack, className, style, children }: DraggableCardProps) {
   const ctx = useDragDropContext();
   const ref = useRef<HTMLDivElement>(null);
   const press = useRef<{ x: number; y: number; dragging: boolean } | null>(null);
+  const stackEls = useRef<HTMLElement[]>([]);
 
   const onPointerDown = useCallback(
     (e: PointerEvent<HTMLDivElement>) => {
@@ -53,28 +61,37 @@ export function DraggableCard({ id, zone = null, disabled = false, threshold = 4
         p.dragging = true;
         el.classList.add('cm-dragging');
         gsap.killTweensOf(el);
-        gsap.set(el, { zIndex: 9999 });
+        // Lift the whole group above the board; keep the run's own stacking
+        // order — the grabbed card sits *under* the cards stacked on top of it.
+        gsap.set(el, { zIndex: 9900 });
         // Juicy pickup: the card lifts and straightens as you grab it.
         gsap.to(el, { scale: 1.08, rotation: 0, duration: 0.18, ease: 'power2.out' });
+        // Pick up any stacked cards (a solitaire run) so they drag as a group.
+        stackEls.current = (stack ?? [])
+          .map((sid) => document.querySelector<HTMLElement>(`[data-flip-id="${sid}"]`))
+          .filter((n): n is HTMLElement => n != null);
+        stackEls.current.forEach((s, i) => gsap.set(s, { zIndex: 9901 + i }));
         ctx.beginDrag(id, zone);
       }
       // Follow the pointer 1:1 (scale keeps animating underneath).
       gsap.set(el, { x: dx, y: dy });
+      if (stackEls.current.length) gsap.set(stackEls.current, { x: dx, y: dy });
       ctx.moveDrag(e.clientX, e.clientY);
     },
-    [ctx, id, zone, threshold],
+    [ctx, id, zone, threshold, stack],
   );
 
   const settle = useCallback((accepted: boolean) => {
     const el = ref.current;
     if (!el) return;
     el.classList.remove('cm-dragging');
-    // On accept, the provider's FLIP animates the re-rendered node into its new
-    // slot — we leave this (now-unmounting) node untouched. On reject, spring it
-    // back, then hand the transform to CSS so hover still works.
+    // On accept, the provider's FLIP animates the re-rendered nodes (this card
+    // and its stack) into their new slots — we leave them. On reject, spring the
+    // whole group back, then hand the transform to CSS so hover still works.
     if (!accepted) {
-      gsap.to(el, { x: 0, y: 0, scale: 1, ...SNAP, clearProps: 'zIndex,transform' });
+      gsap.to([el, ...stackEls.current], { x: 0, y: 0, scale: 1, ...SNAP, clearProps: 'zIndex,transform' });
     }
+    stackEls.current = [];
   }, []);
 
   const onPointerUp = useCallback(

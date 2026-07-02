@@ -1,21 +1,27 @@
 import { useMemo, useState, type CSSProperties } from 'react';
-import { Card, DragDropProvider, DropZone, DraggableCard } from 'card-motion';
-import { byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from './spiderRules';
-import { CardBack, CARD_RATIO, Coach, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type TutorialStep } from './shared';
+import { Card, DragDropProvider, DropZone, DraggableCard, shuffleInPlace } from 'card-motion';
+import { buildSpiderDeck, byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from './spiderRules';
+import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
   state: SpiderState;
   byId: ReturnType<typeof byIdMap>;
 }
-const newGame = (): Game => {
-  const d = deal();
+const newGame = (suits: number): Game => {
+  const d = deal(shuffleInPlace(buildSpiderDeck(suits)));
   return { state: d.state, byId: byIdMap(d.deck) };
 };
 
+const DIFFS: ReadonlyArray<DiffOption> = [
+  { key: '1', label: 'Simplified', note: 'One suit — the friendliest way to learn; nearly every deal is winnable.' },
+  { key: '2', label: 'Normal', note: 'Two suits — runs must share a suit to move. A real challenge.' },
+];
+
 export default function Spider() {
-  const [game, setGame] = useState<Game>(newGame);
+  const [game, setGame] = useState<Game>(() => newGame(1));
   const [moves, setMoves] = useState(0);
-  const [rulesOpen, setRulesOpen] = useState(true);
+  const [rulesOpen, setRulesOpen] = useState(false);
+  const [chooseOpen, setChooseOpen] = useState(true);
   const [tut, setTut] = useState(false);
   const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
@@ -31,8 +37,13 @@ export default function Spider() {
   useFlip(boardRef, tutStep, tut);
 
   const reset = () => {
-    setGame(newGame());
+    setChooseOpen(true);
+    setTut(false);
+  };
+  const pick = (key: string) => {
+    setGame(newGame(key === '2' ? 2 : 1));
     setMoves(0);
+    setChooseOpen(false);
     setTut(false);
   };
   const applyState = (fn: (s: SpiderState, b: Game['byId']) => SpiderState | null) => setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
@@ -72,6 +83,7 @@ export default function Spider() {
     setGame((g) => ({ ...g, state: tutorial.initial }));
     setMoves(0);
     setRulesOpen(false);
+    setChooseOpen(false);
     setTutStep(0);
     setTut(true);
   };
@@ -131,7 +143,7 @@ export default function Spider() {
                     );
                   }
                   return (
-                    <DraggableCard key={cid} id={cid} zone={`col-${ci}`} style={marginTop != null ? { marginTop } : undefined}>
+                    <DraggableCard key={cid} id={cid} zone={`col-${ci}`} stack={col.slice(idx + 1)} style={marginTop != null ? { marginTop } : undefined}>
                       {face(cid)}
                     </DraggableCard>
                   );
@@ -141,6 +153,8 @@ export default function Spider() {
           </div>
         </div>
       </DragDropProvider>
+
+      {chooseOpen && !tut && <DifficultyPicker title="Spider — choose a difficulty" options={DIFFS} onPick={pick} />}
 
       {tut && <Coach step={tutStep} total={tutorial.steps.length} text={tutorial.steps[tutStep].text} onNext={nextStep} onSkip={reset} />}
 
@@ -162,7 +176,7 @@ export default function Spider() {
         </RulesModal>
       )}
 
-      {won && !tut && <WinOverlay moves={moves} onNew={reset} />}
+      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} />}
     </div>
   );
 }
