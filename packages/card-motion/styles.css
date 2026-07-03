@@ -362,3 +362,21 @@
     transform: none;
   }
 }
+
+/* ── Card inspect (magnify overlay) ─────────────────────────────────────────── */
+.cm-inspect {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 8, 16, 0.66);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.cm-inspect-box {
+  will-change: transform, opacity;
+  transform-origin: center center;
+}

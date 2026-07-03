@@ -17,6 +17,9 @@ export type { DropZoneProps } from './components/DropZone';
 export { DraggableCard } from './components/DraggableCard';
 export type { DraggableCardProps } from './components/DraggableCard';
 
+export { CardInspectLayer } from './components/CardInspectLayer';
+export type { CardInspectLayerProps } from './components/CardInspectLayer';
+
 export { useCardTable } from './hooks/useCardTable';
 export type { UseCardTableOptions, CardTableApi, CardTableMotion } from './hooks/useCardTable';
 
@@ -34,6 +37,14 @@ export type { UseCardTiltOptions } from './hooks/useCardTilt';
 
 export { useCardDrag } from './hooks/useCardDrag';
 export type { UseCardDragOptions, CardDragApi, DragPoint } from './hooks/useCardDrag';
+
+export { useCardInspect } from './hooks/useCardInspect';
+export type {
+  UseCardInspectOptions,
+  CardInspectApi,
+  CardInspectHandlers,
+  InspectTrigger,
+} from './hooks/useCardInspect';
 
 export { buildDeck, shuffleInPlace, SUITS, RANKS } from './lib/deck';
 export {
