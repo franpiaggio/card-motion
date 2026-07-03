@@ -1,6 +1,6 @@
 {
   "name": "card-motion",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Juicy playing-card animations for React — shuffle, deal, play, 3D tilt and a WebGL background. Powered by GSAP.",
   "keywords": [
     "react",

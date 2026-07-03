@@ -3,6 +3,17 @@
 All notable changes to `card-motion` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-07-03
+
+### Added
+
+- **Card inspect** — `useCardInspect` + `<CardInspectLayer>`: tap, long-press, hover, or a programmatic `open()` magnifies a card. The hook is content-agnostic and movement-aware (it yields to a drag on the same node); `<CardInspectLayer>` animates a FLIP magnify out of the source card's rect over a dim backdrop, and back on close. You supply the enlarged content.
+
+### Changed
+
+- `<DraggableCard>` can pick up and drag a whole stack of cards together.
+- `.cm-controls` wraps and shrinks on narrow screens so the table controls never overflow.
+
 ## [0.1.0] — 2026-07-01
 
 ### Added
