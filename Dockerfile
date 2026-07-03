@@ -9,6 +9,9 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/card-motion/package.json packages/card-motion/
 COPY playground/package.json playground/
+# The playground hosts the Lastwall demo from source, so its deps must be
+# installed too (its react etc. are resolved when the playground bundles it).
+COPY examples/lastwall/package.json examples/lastwall/
 
 # Install all workspace deps (frozen to the lockfile)
 RUN pnpm install --frozen-lockfile

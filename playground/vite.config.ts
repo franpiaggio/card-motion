@@ -11,6 +11,9 @@ export default defineConfig({
     alias: {
       '@lastwall': fileURLToPath(new URL('../examples/lastwall/src', import.meta.url)),
     },
+    // The Lastwall source is a separate workspace package; force its React (and
+    // gsap) to resolve to the playground's single copy when bundling it.
+    dedupe: ['react', 'react-dom', 'gsap'],
   },
   server: { fs: { allow: ['..'] } },
 });
