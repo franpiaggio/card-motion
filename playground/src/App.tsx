@@ -1,4 +1,5 @@
 import 'card-motion/styles.css';
+import '@lastwall/styles.css';
 import { useSyncExternalStore } from 'react';
 import Landing from './Landing';
 import Demos, { isDemo } from './Demos';
@@ -10,6 +11,7 @@ import Golf from './examples/Golf';
 import Spider from './examples/Spider';
 import Pyramid from './examples/Pyramid';
 import TriPeaks from './examples/TriPeaks';
+import Lastwall from '@lastwall/App';
 
 // Tiny hash router: `#/demo` (optionally `#/demo/<name>`) opens the demos on
 // their own full-screen page; everything else is the landing.
@@ -26,6 +28,7 @@ function useHash() {
 
 export default function App() {
   const hash = useHash();
+  if (hash === '#/lastwall') return <Lastwall />;
   if (hash === '#/examples') return <Examples />;
   if (hash === '#/freecell') return <FreeCell />;
   if (hash === '#/klondike') return <Klondike />;
