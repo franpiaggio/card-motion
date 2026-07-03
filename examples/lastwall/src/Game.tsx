@@ -590,6 +590,7 @@ export default function Game({
   const activeIdRef = useRef<number | null>(null);
   activeIdRef.current = activeId;
   const tap = useRef<{ id: number; x: number; y: number } | null>(null);
+  const [dragOverLane, setDragOverLane] = useState<number | null>(null);
   const closeMenu = () => setActiveId(null);
 
   // Inspect is driven programmatically from the menu (no gesture) — it owns the
@@ -628,32 +629,44 @@ export default function Game({
     setActiveId(null);
   };
 
+  // Which empty ally lane an in-flight card would drop into (or null). Generous:
+  // it snaps to the nearest EMPTY, allowed lane anywhere in the lower board, so
+  // drops rarely miss — especially with a fingertip on a small screen.
+  const dropLane = (id: number, px: number, py: number, mm: ReturnType<typeof metrics>): number | null => {
+    if (!canAfford(id)) return null;
+    if (py < mm.markerY - mm.cardH * 0.3 || py > mm.handY - mm.cardH * 0.2) return null;
+    let best: number | null = null;
+    let bestD = Infinity;
+    for (let k = 0; k < LANES; k++) {
+      if (allyPile(k).length > 0 || !tutAllowsPlay(id, k)) continue;
+      const dx = Math.abs(px - mm.colX(k));
+      if (dx < bestD) {
+        bestD = dx;
+        best = k;
+      }
+    }
+    return best != null && bestD <= mm.spacing * 0.95 ? best : null;
+  };
+
   const { dragId, dragProps } = useCardDrag<PileId>({
     stageRef,
     canDrag: (id) => !busy.current && g.phase === 'alliance' && stateRef.current.piles.hand.includes(id) && canAfford(id) && tutCanDragCard(id),
     onDragStart: () => closeMenu(), // a drag supersedes the menu
     resolveDrop: (id, point, stage) => {
-      const mm = metrics(stage.width, stage.height);
-      if (point.y < mm.allyBandTop || point.y > mm.allyBandBot) return null;
-      let best: number | null = null;
-      let bestD = Infinity;
-      for (let k = 0; k < LANES; k++) {
-        const dx = Math.abs(point.x - mm.colX(k));
-        if (dx < bestD) {
-          bestD = dx;
-          best = k;
-        }
-      }
-      if (best == null || bestD > mm.spacing * 0.62) return null;
-      if (allyPile(best).length > 0 || !canAfford(id)) return null;
-      if (!tutAllowsPlay(id, best)) return null;
-      return `ally${best}`;
+      const lane = dropLane(id, point.x, point.y, metrics(stage.width, stage.height));
+      return lane != null ? `ally${lane}` : null;
     },
     onDrop: (id, target) => {
+      setDragOverLane(null);
       if (target && target.startsWith('ally')) act(() => playToLane(id, Number(target.slice(4))));
       else act(async () => void (await relayout('hand')));
     },
   });
+
+  // Clear the drop-target highlight whenever a drag ends.
+  useEffect(() => {
+    if (dragId == null) setDragOverLane(null);
+  }, [dragId]);
 
   // Tap detection for every card (independent of drag): a press that doesn't
   // slide opens the menu; a slide is a drag and useCardDrag handles it.
@@ -687,6 +700,14 @@ export default function Game({
       onPointerMove: (e: ReactPointerEvent<HTMLElement>) => {
         t.onPointerMove(e);
         d.onPointerMove(e);
+        // While dragging, light up the lane this card would drop into.
+        if (dragId != null) {
+          const stage = stageRef.current?.getBoundingClientRect();
+          if (stage) {
+            const lane = dropLane(id, e.clientX - stage.left, e.clientY - stage.top, metrics(stage.width, stage.height));
+            setDragOverLane((prev) => (prev === lane ? prev : lane));
+          }
+        }
       },
       onPointerUp: (e: ReactPointerEvent<HTMLElement>) => {
         t.onPointerUp(e);
@@ -768,6 +789,23 @@ export default function Game({
             </span>
           ))}
         </div>
+
+        {/* Drop zones — the empty lanes light up while dragging a playable ally,
+            and the one you're over is highlighted. */}
+        {dragId != null &&
+          Array.from({ length: LANES }, (_, k) => k)
+            .filter((k) => allyPile(k).length === 0 && canAfford(dragId) && tutAllowsPlay(dragId, k))
+            .map((k) => (
+              <div
+                key={k}
+                className={`sk-dropzone${dragOverLane === k ? ' is-over' : ''}`}
+                style={{ left: m.colX(k), top: m.allyY }}
+                aria-hidden="true"
+              >
+                <span className="sk-dropzone-mark">+</span>
+                <span className="sk-dropzone-label">Drop</span>
+              </div>
+            ))}
 
         {/* Castle panel */}
         <div className="sk-castle" style={{ left: m.castleX, top: m.castleY }}>

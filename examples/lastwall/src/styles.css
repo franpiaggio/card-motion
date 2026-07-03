@@ -326,6 +326,49 @@ body,
   background: linear-gradient(90deg, transparent, var(--lw-line), transparent);
 }
 
+/* Drop zones (shown while dragging an ally) */
+.sk-dropzone {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: var(--cw, 68px);
+  aspect-ratio: 96 / 132;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 2px dashed color-mix(in oklch, var(--good) 55%, var(--lw-line));
+  border-radius: calc(var(--cw, 68px) * 0.11);
+  background: oklch(0.6 0.13 150 / 0.07);
+  color: color-mix(in oklch, var(--good) 82%, white);
+  pointer-events: none;
+  animation: sk-dz-pulse 1.4s ease-in-out infinite;
+  transition: transform 0.14s var(--ease), background 0.14s var(--ease), border-color 0.14s var(--ease), box-shadow 0.14s var(--ease);
+}
+.sk-dropzone-mark {
+  font-size: calc(var(--cw, 68px) * 0.34);
+  font-weight: 300;
+  line-height: 1;
+}
+.sk-dropzone-label {
+  font-size: clamp(8px, calc(var(--cw, 68px) * 0.14), 12px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.sk-dropzone.is-over {
+  border-style: solid;
+  border-color: var(--good);
+  background: oklch(0.6 0.13 150 / 0.22);
+  box-shadow: 0 0 0 2px var(--good), 0 0 22px oklch(0.6 0.13 150 / 0.55);
+  transform: translate(-50%, -50%) scale(1.07);
+  animation: none;
+}
+@keyframes sk-dz-pulse {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
 /* Castle */
 .sk-castle {
   position: absolute;
