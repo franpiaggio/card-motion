@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { BackgroundShader, Card, CardTable, useCardTable, type CardTableHandle } from 'card-motion';
 import DragDropDemo from './DragDropDemo';
+import { mountVanillaTable } from './vanilla/table-demo';
 import { Highlight } from './highlight';
 import { GAMES } from './examples/games';
 
-type Demo = 'table' | 'dnd';
+type Demo = 'table' | 'dnd' | 'vanilla';
 
 const INSTALL = 'pnpm add card-motion gsap';
 
 const SPEC = [
   'GSAP timelines',
   'React 18 & 19',
-  'TypeScript-first',
+  'Vanilla TS core',
   'Keyboard + ARIA',
   'prefers-reduced-motion',
   'ESM + CJS',
@@ -44,7 +45,8 @@ const WAYS = [
     accent: 'coral',
     name: '<CardTable />',
     blurb: 'Drop in one component and get shuffle, deal, select, play, and contextual controls. Sized, responsive, accessible.',
-    code: `import { CardTable } from 'card-motion'
+    code: `import { CardTable }
+  from 'card-motion'
 import 'card-motion/styles.css'
 
 export default () => (
@@ -69,12 +71,28 @@ export default () => (
     name: 'DragDropProvider',
     blurb: 'Primitives for solitaire-style boards. It owns the pointer mechanics and snap-back; you own the rules.',
     code: `<DragDropProvider onDrop={move}>
-  <DropZone id="foundation" accepts={rule}>
-    <DraggableCard id={c.id} zone="tableau">
+  <DropZone id="pile"
+    accepts={rule}>
+    <DraggableCard id={c.id}
+      zone="hand">
       <Card {...c} />
     </DraggableCard>
   </DropZone>
 </DragDropProvider>`,
+  },
+  {
+    tag: 'no react',
+    accent: 'green',
+    name: 'card-motion/vanilla',
+    blurb: 'The same engines and UI in plain TypeScript. Mount it from Vue, Svelte, a <script> tag — or nothing at all.',
+    code: `import { mountCardTable }
+  from 'card-motion/vanilla'
+
+const table = mountCardTable(
+  document.body,
+  { handSize: 8 },
+)
+table.deal()`,
   },
 ] as const;
 
@@ -178,6 +196,21 @@ function HeroTable() {
 }
 
 /**
+ * The embedded vanilla demo: React renders only this host div — the table
+ * inside it (cards, controls, animations, keyboard) is mounted and driven by
+ * `card-motion/vanilla`, with no React underneath.
+ */
+function VanillaTableDemo() {
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+    return mountVanillaTable(host);
+  }, []);
+  return <div ref={hostRef} className="vanilla-host" />;
+}
+
+/**
  * The embedded Card table demo. The library's built-in controls float over the
  * felt, which crowds the fanned hand on a narrow phone stage, so here we hide
  * them (`controls={false}`) and drive the table from a bar pinned below it.
@@ -207,7 +240,7 @@ export default function Landing() {
     <div className="lp">
       {/* ── Hero ─────────────────────────────────────────────── */}
       <header className="lp-hero">
-        <p className="lp-kicker">React · GSAP · TypeScript</p>
+        <p className="lp-kicker">TypeScript · GSAP · React or vanilla</p>
         <h1 className="lp-title">
           Playing&#8209;card motion,
           <br />
@@ -223,7 +256,8 @@ export default function Landing() {
 
         <p className="lp-lede">
           A ready-made card table and the headless engine behind it. Shuffle, deal, select and play with
-          GSAP timelines, a pointer-driven tilt, and a WebGL swirl. Two imports, no motion code of your own.
+          GSAP timelines, a pointer-driven tilt, and a WebGL swirl. Two imports, no motion code of your own —
+          as React components, or framework-free from <code>card-motion/vanilla</code>.
         </p>
 
         <div className="lp-hero-actions">
@@ -252,7 +286,7 @@ export default function Landing() {
       {/* ── Three ways in ────────────────────────────────────── */}
       <section className="lp-ways" aria-labelledby="ways-h">
         <h2 id="ways-h" className="lp-section-h">
-          Three ways in
+          Four ways in
         </h2>
         <div className="lp-ways-grid">
           {WAYS.map((w) => (
@@ -276,10 +310,12 @@ export default function Landing() {
               See it live
             </h2>
             <p className="lp-live-sub">
-              The card table and drag-and-drop zones, running right in this page. Open full screen for the poker and sandbox demos too.
+              The card table and drag-and-drop zones, running right in this page — the third tab is the same table
+              mounted by <code>card-motion/vanilla</code>, with no React underneath. Open full screen for the poker and
+              sandbox demos too.
             </p>
           </div>
-          <a className="lp-open" href={`#/demo/${demo}`}>
+          <a className="lp-open" href={demo === 'vanilla' ? '#/vanilla' : `#/demo/${demo}`}>
             Open full screen&nbsp;↗
           </a>
         </div>
@@ -291,11 +327,15 @@ export default function Landing() {
             <button type="button" className={demo === 'dnd' ? 'on' : ''} aria-current={demo === 'dnd' ? 'true' : undefined} onClick={() => setDemo('dnd')}>
               Drag &amp; drop
             </button>
+            <button type="button" className={demo === 'vanilla' ? 'on' : ''} aria-current={demo === 'vanilla' ? 'true' : undefined} onClick={() => setDemo('vanilla')}>
+              Vanilla (no React)
+            </button>
           </nav>
           <div className="lp-stage">
             <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
             {demo === 'table' && <TableDemo />}
             {demo === 'dnd' && <DragDropDemo />}
+            {demo === 'vanilla' && <VanillaTableDemo />}
           </div>
         </div>
       </section>

@@ -148,17 +148,23 @@ export function createDraggableBehavior(
   };
 }
 
+export interface DraggableHandle {
+  /** Refresh the per-card options — e.g. its `zone` after an accepted drop. */
+  update: (next: DraggableBehaviorOptions) => void;
+  /** Remove the pointer listeners. */
+  detach: () => void;
+}
+
 /**
  * Convenience for vanilla use: makes `el` draggable into the controller's
  * zones. Sets `data-flip-id` (required for the post-drop FLIP and for `stack`
  * lookups) and the `cm-draggable` class, and wires native pointer listeners.
- * Returns a detach function.
  */
 export function attachDraggable(
   el: HTMLElement,
   controller: DragDropController,
   options: DraggableBehaviorOptions,
-): () => void {
+): DraggableHandle {
   el.setAttribute('data-flip-id', String(options.id));
   el.classList.add('cm-draggable');
   const behavior = createDraggableBehavior(() => el, controller, options);
@@ -173,10 +179,13 @@ export function attachDraggable(
   el.addEventListener('pointermove', move);
   el.addEventListener('pointerup', up);
   el.addEventListener('pointercancel', cancel);
-  return () => {
-    el.removeEventListener('pointerdown', down);
-    el.removeEventListener('pointermove', move);
-    el.removeEventListener('pointerup', up);
-    el.removeEventListener('pointercancel', cancel);
+  return {
+    update: behavior.updateOptions,
+    detach: () => {
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', cancel);
+    },
   };
 }

@@ -4,6 +4,7 @@ import { expect, test } from '@playwright/test';
 // table at #/vanilla is mounted by `card-motion/vanilla` (no React below the
 // header), and must deal, select and play exactly like the React one.
 test('Vanilla: deals a hand, selects a card, and plays it', async ({ page }) => {
+  test.setTimeout(60_000); // several retry-until-idle loops of up to 15s each
   await page.goto('/#/vanilla');
 
   // The full deck rendered and the deal control is visible.
@@ -19,14 +20,19 @@ test('Vanilla: deals a hand, selects a card, and plays it', async ({ page }) => 
   await expect(page.locator('.cm-sr-only')).toContainText('8 cards in hand');
 
   // Select one card → aria-pressed flips and "Play" replaces "Play All".
+  // Every interaction below retries: the table drops actions while an
+  // animation is still playing (same busy guard as the React <CardTable>).
   await expect(page.getByRole('button', { name: 'Play All' })).toBeVisible();
-  await handCards.first().click();
-  await expect(handCards.first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(async () => {
+    await handCards.first().click();
+    await expect(handCards.first()).toHaveAttribute('aria-pressed', 'true', { timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
   await expect(page.locator('.cm-sr-only')).toContainText('1 selected');
 
-  const play = page.getByRole('button', { name: 'Play', exact: true });
-  await play.click();
-  await expect(page.locator('.cm-sr-only')).toContainText('1 on the table', { timeout: 15_000 });
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(page.locator('.cm-sr-only')).toContainText('1 on the table', { timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
 
   // Reset collects everything back to the deck. The table drops actions while
   // an animation is still playing (same busy guard as the React <CardTable>),

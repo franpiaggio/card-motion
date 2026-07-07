@@ -623,3 +623,15 @@ body:has(.lp) {
     transition: none;
   }
 }
+
+/* Accent for the vanilla way-in card. */
+.lp-accent-green .lp-way-tag {
+  background: oklch(0.5 0.11 155);
+}
+/* Four way-in cards now: keep them on one row on wide screens (2x2 in between,
+   single column on phones — the auto-fit rule still handles those). */
+@media (min-width: 1180px) {
+  .lp-ways-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

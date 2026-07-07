@@ -50,6 +50,7 @@ export type {
   DraggableBehavior,
   DraggableBehaviorHandlers,
   DraggableBehaviorOptions,
+  DraggableHandle,
   DraggablePointerLike,
   DragCoordinator,
 } from './core/draggable';
