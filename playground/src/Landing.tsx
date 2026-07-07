@@ -320,8 +320,8 @@ export default function Landing() {
           Two versions, one engine
         </h2>
         <p className="lp-flavors-sub">
-          Everything ships twice from the same package — React bindings, and a framework-free vanilla build.
-          Same animations, same CSS, same capabilities; the React layer is a thin binding over the vanilla core.
+          One package, two entry points: <code>card-motion</code> for React, <code>card-motion/vanilla</code> for
+          everything else. You only bundle the one you import — the vanilla build carries zero React.
           <a href="#/vanilla"> Try the vanilla demo&nbsp;↗</a>
         </p>
         <div className="lp-flavors-grid">
