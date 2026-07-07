@@ -926,18 +926,3 @@ body {
   width: 100%;
   height: 100%;
 }
-.vanilla-badge {
-  align-self: center;
-  font: 500 11px/1.2 var(--font-display);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--paper-dim);
-  padding: 0 10px;
-  border-left: 1px solid var(--line);
-  white-space: nowrap;
-}
-@media (max-width: 640px) {
-  .vanilla-badge {
-    display: none;
-  }
-}

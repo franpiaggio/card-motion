@@ -45,8 +45,7 @@ const WAYS = [
     accent: 'coral',
     name: '<CardTable />',
     blurb: 'Drop in one component and get shuffle, deal, select, play, and contextual controls. Sized, responsive, accessible.',
-    code: `import { CardTable }
-  from 'card-motion'
+    code: `import { CardTable } from 'card-motion'
 import 'card-motion/styles.css'
 
 export default () => (
@@ -71,27 +70,40 @@ export default () => (
     name: 'DragDropProvider',
     blurb: 'Primitives for solitaire-style boards. It owns the pointer mechanics and snap-back; you own the rules.',
     code: `<DragDropProvider onDrop={move}>
-  <DropZone id="pile"
-    accepts={rule}>
-    <DraggableCard id={c.id}
-      zone="hand">
+  <DropZone id="foundation" accepts={rule}>
+    <DraggableCard id={c.id} zone="tableau">
       <Card {...c} />
     </DraggableCard>
   </DropZone>
 </DragDropProvider>`,
   },
-  {
-    tag: 'no react',
-    accent: 'green',
-    name: 'card-motion/vanilla',
-    blurb: 'The same engines and UI in plain TypeScript. Mount it from Vue, Svelte, a <script> tag — or nothing at all.',
-    code: `import { mountCardTable }
-  from 'card-motion/vanilla'
+] as const;
 
-const table = mountCardTable(
-  document.body,
-  { handSize: 8 },
-)
+// The two builds of the same library — one engine, two entries.
+const FLAVORS = [
+  {
+    tag: 'card-motion · react',
+    accent: 'blue',
+    name: 'Components & hooks',
+    blurb:
+      'Hooks own the state and the GSAP timelines; components render the cards. Drop-in <CardTable>, headless useCardTable / useCardPiles, and the drag & drop primitives.',
+    code: `import { CardTable } from 'card-motion'
+import 'card-motion/styles.css'
+
+export default function App() {
+  return <CardTable handSize={8} />
+}`,
+  },
+  {
+    tag: 'card-motion/vanilla · no react',
+    accent: 'green',
+    name: 'Plain TypeScript',
+    blurb:
+      'The exact same engines and UI, framework-free — getState() / subscribe() instead of hooks. Mount it from Vue, Svelte, a <script> tag, or no framework at all.',
+    code: `import { mountCardTable } from 'card-motion/vanilla'
+import 'card-motion/styles.css'
+
+const table = mountCardTable(app, { handSize: 8 })
 table.deal()`,
   },
 ] as const;
@@ -286,7 +298,7 @@ export default function Landing() {
       {/* ── Three ways in ────────────────────────────────────── */}
       <section className="lp-ways" aria-labelledby="ways-h">
         <h2 id="ways-h" className="lp-section-h">
-          Four ways in
+          Three ways in
         </h2>
         <div className="lp-ways-grid">
           {WAYS.map((w) => (
@@ -296,6 +308,30 @@ export default function Landing() {
               <p className="lp-way-blurb">{w.blurb}</p>
               <pre className="lp-code">
                 <Highlight src={w.code} />
+              </pre>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Two versions (React / vanilla) ───────────────────── */}
+      <section className="lp-flavors" aria-labelledby="flavors-h">
+        <h2 id="flavors-h" className="lp-section-h">
+          Two versions, one engine
+        </h2>
+        <p className="lp-flavors-sub">
+          Everything ships twice from the same package — React bindings, and a framework-free vanilla build.
+          Same animations, same CSS, same capabilities; the React layer is a thin binding over the vanilla core.
+          <a href="#/vanilla"> Try the vanilla demo&nbsp;↗</a>
+        </p>
+        <div className="lp-flavors-grid">
+          {FLAVORS.map((f) => (
+            <article key={f.name} className={`lp-way lp-accent-${f.accent}`}>
+              <span className="lp-way-tag">{f.tag}</span>
+              <h3 className="lp-way-name">{f.name}</h3>
+              <p className="lp-way-blurb">{f.blurb}</p>
+              <pre className="lp-code">
+                <Highlight src={f.code} />
               </pre>
             </article>
           ))}

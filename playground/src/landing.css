@@ -628,10 +628,33 @@ body:has(.lp) {
 .lp-accent-green .lp-way-tag {
   background: oklch(0.5 0.11 155);
 }
-/* Four way-in cards now: keep them on one row on wide screens (2x2 in between,
-   single column on phones — the auto-fit rule still handles those). */
-@media (min-width: 1180px) {
-  .lp-ways-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+
+/* ── Two versions (React / vanilla) ───────────────────────────────────── */
+.lp-flavors {
+  max-width: var(--lp-max);
+  margin: 0 auto;
+  padding: clamp(24px, 4vw, 48px) var(--lp-pad) 0;
+}
+.lp-flavors .lp-section-h {
+  margin-bottom: 8px;
+}
+.lp-flavors-sub {
+  max-width: 62ch;
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--lp-ink-soft);
+  margin-bottom: 28px;
+}
+.lp-flavors-sub a {
+  color: var(--lp-coral);
+  font-weight: 600;
+}
+.lp-flavors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+/* These two cards are wide; the blurbs don't need the equalizing min-height. */
+.lp-flavors-grid .lp-way-blurb {
+  min-height: 0;
 }

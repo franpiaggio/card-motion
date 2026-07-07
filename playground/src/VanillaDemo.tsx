@@ -62,7 +62,6 @@ export default function VanillaDemo() {
             {label}
           </button>
         ))}
-        <span className="vanilla-badge">card-motion/vanilla — zero React below this bar</span>
       </nav>
       <div ref={hostRef} className="vanilla-host" />
     </div>
