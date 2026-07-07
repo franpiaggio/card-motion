@@ -3,16 +3,10 @@
 import { forwardRef, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
 import { useCardTilt } from '../hooks/useCardTilt';
 import { CARD_H, CARD_W } from '../lib/layout';
+import { cardLabel, RED_SUITS } from '../lib/names';
 import type { CardColor, Suit } from '../types';
 
-const RED_SUITS: Suit[] = ['♥', '♦'];
-const SUIT_NAMES: Record<Suit, string> = { '♠': 'spades', '♥': 'hearts', '♦': 'diamonds', '♣': 'clubs' };
-const RANK_NAMES: Record<string, string> = { A: 'Ace', J: 'Jack', Q: 'Queen', K: 'King' };
-
-/** Human-readable card name, e.g. "Ace of spades". */
-export function cardLabel(rank: string, suit: Suit): string {
-  return `${RANK_NAMES[rank] ?? rank} of ${SUIT_NAMES[suit]}`;
-}
+export { cardLabel } from '../lib/names';
 
 export interface CardProps {
   /** Rank label, e.g. `A`, `7`, `10`, `K`. */
