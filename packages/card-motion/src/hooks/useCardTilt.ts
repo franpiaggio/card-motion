@@ -1,16 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, type PointerEvent } from 'react';
-import { gsap } from '../internal/gsap';
+import { createCardTilt, type CardTiltController, type CardTiltOptions } from '../core/tilt';
 
-export interface UseCardTiltOptions {
-  /** Maximum tilt in degrees at the card's edges. Default `16`. */
-  maxTilt?: number;
-  /** Easing duration for the tilt, in seconds. Default `0.4`. */
-  duration?: number;
-}
-
-type QuickTo = ReturnType<typeof gsap.quickTo>;
+export interface UseCardTiltOptions extends CardTiltOptions {}
 
 /**
  * Adds a pointer-following 3D tilt (and foil light position) to any element.
@@ -18,6 +11,9 @@ type QuickTo = ReturnType<typeof gsap.quickTo>;
  * Attach `containerRef` to the outer element (it owns `perspective` and the
  * pointer handlers) and `contentRef` to the inner element that should rotate
  * (it owns `transform-style: preserve-3d`).
+ *
+ * This is the React binding of the framework-free `attachCardTilt`
+ * (available from `card-motion/vanilla`).
  *
  * ```tsx
  * const { containerRef, contentRef, onPointerMove, onPointerLeave } = useCardTilt();
@@ -31,37 +27,31 @@ type QuickTo = ReturnType<typeof gsap.quickTo>;
 export function useCardTilt({ maxTilt = 16, duration = 0.4 }: UseCardTiltOptions = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
-  const tiltX = useRef<QuickTo | null>(null);
-  const tiltY = useRef<QuickTo | null>(null);
+  const ctrl = useRef<CardTiltController | null>(null);
+  // Refresh maxTilt live (duration is baked into the tween, so it recreates below).
+  ctrl.current?.updateOptions({ maxTilt });
+
+  const maxTiltRef = useRef(maxTilt);
+  maxTiltRef.current = maxTilt;
 
   useEffect(() => {
-    const node = contentRef.current;
-    if (!node) return;
-    tiltX.current = gsap.quickTo(node, 'rotationX', { duration, ease: 'power2.out' });
-    tiltY.current = gsap.quickTo(node, 'rotationY', { duration, ease: 'power2.out' });
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if (!container || !content) return;
+    const c = createCardTilt(container, content, { maxTilt: maxTiltRef.current, duration });
+    ctrl.current = c;
     return () => {
-      gsap.killTweensOf(node);
-      tiltX.current = null;
-      tiltY.current = null;
+      c.destroy();
+      ctrl.current = null;
     };
   }, [duration]);
 
-  const onPointerMove = useCallback(
-    (e: PointerEvent<HTMLElement>) => {
-      const el = containerRef.current;
-      if (!el || !tiltX.current || !tiltY.current) return;
-      const r = el.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5; // -0.5 .. 0.5
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      tiltY.current(px * maxTilt);
-      tiltX.current(-py * maxTilt);
-    },
-    [maxTilt],
-  );
+  const onPointerMove = useCallback((e: PointerEvent<HTMLElement>) => {
+    ctrl.current?.pointerMove(e.clientX, e.clientY);
+  }, []);
 
   const onPointerLeave = useCallback(() => {
-    tiltX.current?.(0);
-    tiltY.current?.(0);
+    ctrl.current?.pointerLeave();
   }, []);
 
   return { containerRef, contentRef, onPointerMove, onPointerLeave };
