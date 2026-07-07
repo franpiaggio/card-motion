@@ -1,9 +1,11 @@
 {
   "name": "card-motion",
-  "version": "0.2.0",
-  "description": "Juicy playing-card animations for React — shuffle, deal, play, 3D tilt and a WebGL background. Powered by GSAP.",
+  "version": "0.3.0",
+  "description": "Juicy playing-card animations — shuffle, deal, play, 3D tilt and a WebGL background. Framework-free TypeScript core with first-class React bindings. Powered by GSAP.",
   "keywords": [
     "react",
+    "vanilla",
+    "typescript",
     "cards",
     "playing-cards",
     "card-game",
@@ -38,6 +40,16 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./vanilla": {
+      "import": {
+        "types": "./dist/vanilla.d.ts",
+        "default": "./dist/vanilla.js"
+      },
+      "require": {
+        "types": "./dist/vanilla.d.cts",
+        "default": "./dist/vanilla.cjs"
+      }
+    },
     "./styles.css": "./styles.css",
     "./package.json": "./package.json"
   },
@@ -52,6 +64,11 @@
   "peerDependencies": {
     "gsap": ">=3.12",
     "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "dependencies": {
     "@gsap/react": "^2.1.2"
