@@ -81,11 +81,9 @@ export default () => (
 // The two builds of the same library — one engine, two entries.
 const FLAVORS = [
   {
-    tag: 'card-motion · react',
-    accent: 'blue',
-    name: 'Components & hooks',
+    name: 'React',
     blurb:
-      'Hooks own the state and the GSAP timelines; components render the cards. Drop-in <CardTable>, headless useCardTable / useCardPiles, and the drag & drop primitives.',
+      'Components & hooks: they own the state and the GSAP timelines, you render the cards. Drop-in <CardTable>, headless useCardTable / useCardPiles, and the drag & drop primitives.',
     code: `import { CardTable } from 'card-motion'
 import 'card-motion/styles.css'
 
@@ -94,11 +92,9 @@ export default function App() {
 }`,
   },
   {
-    tag: 'card-motion/vanilla · no react',
-    accent: 'green',
-    name: 'Plain TypeScript',
+    name: 'VanillaJS',
     blurb:
-      'The exact same engines and UI, framework-free — getState() / subscribe() instead of hooks. Mount it from Vue, Svelte, a <script> tag, or no framework at all.',
+      'The exact same engines and UI in plain TypeScript — getState() / subscribe() instead of hooks. Mount it from Vue, Svelte, a <script> tag, or no framework at all.',
     code: `import { mountCardTable } from 'card-motion/vanilla'
 import 'card-motion/styles.css'
 
@@ -310,8 +306,7 @@ export default function Landing() {
         </p>
         <div className="lp-flavors-grid">
           {FLAVORS.map((f) => (
-            <article key={f.name} className={`lp-way lp-accent-${f.accent}`}>
-              <span className="lp-way-tag">{f.tag}</span>
+            <article key={f.name} className="lp-way">
               <h3 className="lp-way-name">{f.name}</h3>
               <p className="lp-way-blurb">{f.blurb}</p>
               <pre className="lp-code">

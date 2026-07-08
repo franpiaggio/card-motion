@@ -624,10 +624,6 @@ body:has(.lp) {
   }
 }
 
-/* Accent for the vanilla way-in card. */
-.lp-accent-green .lp-way-tag {
-  background: oklch(0.5 0.11 155);
-}
 
 /* ── Two versions (React / vanilla) ───────────────────────────────────── */
 .lp-flavors {
