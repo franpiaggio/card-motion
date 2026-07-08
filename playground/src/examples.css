@@ -565,6 +565,21 @@ body:has(.ex) {
   place-items: center;
   background: oklch(0.1 0.01 265 / 0.55);
   backdrop-filter: blur(2px);
+  transition: background 0.4s ease, backdrop-filter 0.4s ease;
+}
+/* While the win cascade plays, the board stays bright — the dim (and the
+   panel) arrive once the cards have flown off. */
+.sol-win.sol-win-cascading {
+  background: transparent;
+  backdrop-filter: none;
+  pointer-events: none;
+}
+.sol-win-title {
+  background: linear-gradient(180deg, oklch(0.88 0.14 88), oklch(0.72 0.16 75) 55%, oklch(0.6 0.15 62));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 oklch(0.45 0.1 62 / 0.55));
 }
 .sol-win-panel {
   display: grid;
@@ -580,6 +595,11 @@ body:has(.ex) {
 }
 .sol-win-panel strong {
   font-size: 28px;
+}
+.sol-win-panel strong.sol-win-title {
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: -0.01em;
 }
 .sol-win-panel span {
   font-family: var(--font-ui);

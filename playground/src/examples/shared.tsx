@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { gsap } from 'gsap';
+import { burstConfetti, runWinCascade } from './winCelebration';
 
 /** Measures an element's content width (responsive card sizing). */
 export function useMeasure<T extends HTMLElement>() {
@@ -179,17 +180,51 @@ export function DifficultyPicker({ title, options, onPick }: { title: string; op
   );
 }
 
-/** End-of-game overlay: a win, or a "no moves left" dead end. */
+/**
+ * End-of-game overlay: a win, or a "no moves left" dead end. A win first
+ * plays the classic cascade — the board's cards launch and bounce off the
+ * floor — then the panel pops in under a confetti burst. Reduced motion (or a
+ * loss) goes straight to the panel.
+ */
 export function WinOverlay({ moves, onNew, lost = false }: { moves: number; onNew: () => void; lost?: boolean }) {
+  const [showPanel, setShowPanel] = useState(lost);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (lost) return;
+    let alive = true;
+    const cascade = runWinCascade();
+    void cascade.finished.then(() => {
+      if (!alive) return;
+      setShowPanel(true);
+      burstConfetti();
+    });
+    return () => {
+      alive = false;
+      cascade.cleanup();
+    };
+  }, [lost]);
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current;
+    if (!showPanel || lost || !panel) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    gsap.fromTo(panel, { y: 70, scale: 0.8, autoAlpha: 0 }, { y: 0, scale: 1, autoAlpha: 1, duration: 0.5, ease: 'back.out(1.7)' });
+    const title = panel.querySelector('.sol-win-title');
+    if (title) gsap.from(title, { scale: 1.5, autoAlpha: 0, duration: 0.4, ease: 'back.out(2.2)', delay: 0.16 });
+  }, [showPanel, lost]);
+
   return (
-    <div className="sol-win" role="alertdialog" aria-label={lost ? 'No moves left' : 'You won'}>
-      <div className="sol-win-panel">
-        <strong>{lost ? 'No moves left' : 'You win 🎉'}</strong>
-        <span>{lost ? 'This deal is stuck — start a new game.' : `Solved in ${moves} moves`}</span>
-        <button type="button" className="sol-btn sol-btn-primary" onClick={onNew}>
-          New game
-        </button>
-      </div>
+    <div className={`sol-win${showPanel ? '' : ' sol-win-cascading'}`} role="alertdialog" aria-label={lost ? 'No moves left' : 'You won'}>
+      {showPanel && (
+        <div className="sol-win-panel" ref={panelRef}>
+          {lost ? <strong>No moves left</strong> : <strong className="sol-win-title">You win!</strong>}
+          <span>{lost ? 'This deal is stuck — start a new game.' : `Solved in ${moves} moves`}</span>
+          <button type="button" className="sol-btn sol-btn-primary" onClick={onNew}>
+            New game
+          </button>
+        </div>
+      )}
     </div>
   );
 }
