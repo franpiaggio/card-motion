@@ -3,6 +3,8 @@ import { rankVal } from './cards';
 import { dealRow, move, type SpiderState } from './spiderRules';
 
 // ── Spider auto-player (pure) ────────────────────────────────────────────────
+// Full write-up of the method (maneuver search, backtracking, the traps and
+// the offline deal-validation pipeline): see SPIDER_SOLVER.md next to this file.
 // Each planning step runs a bounded best-first search from the current
 // position toward the next *strict progress*: a completed K→A run, a
 // face-down card flipped, or a net gain in in-suit adjacencies (two runs
