@@ -30,7 +30,10 @@ export default function Spider() {
   // Auto play: 'solving' computes a full winning line (backtracking solver),
   // 'playing' replays it one animated move at a time.
   const [auto, setAuto] = useState<'off' | 'solving' | 'playing'>('off');
+  const [autoNote, setAutoNote] = useState<string | null>(null);
   const queueRef = useRef<AutoAction[]>([]);
+  // A solved line plays to the win; without one we play best-effort and say so.
+  const solvedRef = useRef(false);
 
   const { state, byId } = game;
   const won = isWon(state);
@@ -81,12 +84,23 @@ export default function Spider() {
 
   const startAuto = () => {
     setAuto('solving');
+    setAutoNote(null);
     // Yield one frame so the button shows "Solving…" before the search blocks.
     window.setTimeout(() => {
-      queueRef.current = solveGame(state, byId, 9000) ?? [];
+      const solution = solveGame(state, byId, 9000);
+      solvedRef.current = solution !== null;
+      queueRef.current = solution ?? [];
+      if (!solution) setAutoNote('No winning line found — this deal may be unwinnable. Playing best effort…');
       setAuto('playing');
     }, 50);
   };
+
+  // Auto-dismiss the note after a while.
+  useEffect(() => {
+    if (!autoNote) return;
+    const t = window.setTimeout(() => setAutoNote(null), 7000);
+    return () => clearTimeout(t);
+  }, [autoNote]);
 
   // Replay loop: one action per tick; each state change re-arms the timer.
   // With no precomputed line left (unsolved deal), fall back to the greedy
@@ -103,6 +117,7 @@ export default function Spider() {
         const plan = planNext(state, byId);
         if (!plan) {
           stopAuto(); // genuinely stuck — leave the board as is
+          if (!solvedRef.current) setAutoNote('Stopped: no productive moves left from here.');
           return;
         }
         queueRef.current = plan;
@@ -163,20 +178,35 @@ export default function Spider() {
 
   return (
     <div className="sol">
-      <ExampleHeader title="Spider" moves={moves} status={`${state.completed}/8 done`} onNew={reset} onRules={() => setRulesOpen(true)} onTutorial={startTutorial} />
+      <ExampleHeader
+        title="Spider"
+        moves={moves}
+        status={`${state.completed}/8 done`}
+        onNew={reset}
+        onRules={() => setRulesOpen(true)}
+        onTutorial={startTutorial}
+        extra={
+          <button
+            type="button"
+            className={`sol-btn sol-autoplay${auto !== 'off' ? ' on' : ''}`}
+            onClick={auto === 'off' ? startAuto : stopAuto}
+            disabled={auto === 'solving' || won || chooseOpen || tut}
+          >
+            {auto === 'off' ? '▶ Auto play' : auto === 'solving' ? 'Solving…' : '■ Stop'}
+          </button>
+        }
+      />
+
+      {autoNote && (
+        <div className="sol-autonote" role="status">
+          {autoNote}
+        </div>
+      )}
 
       <DragDropProvider onDrop={handleDrop} disabled={auto !== 'off'}>
         <div className="sol-board" ref={boardRef} style={boardStyle}>
           <div className="sol-spider-top">
             <span className="sol-spider-count">{state.completed}/8 runs</span>
-            <button
-              type="button"
-              className={`sol-autoplay${auto !== 'off' ? ' on' : ''}`}
-              onClick={auto === 'off' ? startAuto : stopAuto}
-              disabled={auto === 'solving' || won || chooseOpen || tut}
-            >
-              {auto === 'off' ? '▶ Auto play' : auto === 'solving' ? 'Solving…' : '■ Stop'}
-            </button>
             <button type="button" className="sol-stock" onClick={onDealRow} disabled={dealsLeft === 0 || auto !== 'off'} aria-label="Deal a row">
               {dealsLeft > 0 ? (
                 <span className="sol-stock-pile" style={{ width: cardW, height: cardH }}>

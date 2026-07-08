@@ -33,6 +33,7 @@ export function ExampleHeader({
   onNew,
   onRules,
   onTutorial,
+  extra,
 }: {
   title: string;
   moves: number;
@@ -40,6 +41,8 @@ export function ExampleHeader({
   onNew: () => void;
   onRules: () => void;
   onTutorial: () => void;
+  /** Game-specific control(s) rendered with the other header buttons (e.g. Spider's Auto play). */
+  extra?: ReactNode;
 }) {
   return (
     <header className="sol-bar">
@@ -53,6 +56,7 @@ export function ExampleHeader({
         <span className="sol-stat" aria-live="polite">
           {status ?? `${moves} moves`}
         </span>
+        {extra}
         <button type="button" className="sol-btn" onClick={onTutorial}>
           Tutorial
         </button>
