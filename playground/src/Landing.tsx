@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { BackgroundShader, Card, CardTable, useCardTable, type CardTableHandle } from 'card-motion';
 import DragDropDemo from './DragDropDemo';
-import { mountVanillaTable } from './vanilla/table-demo';
 import { Highlight } from './highlight';
 import { GAMES } from './examples/games';
 
-type Demo = 'table' | 'dnd' | 'vanilla';
+type Demo = 'table' | 'dnd';
 
 const INSTALL = 'pnpm add card-motion gsap';
 
@@ -208,21 +207,6 @@ function HeroTable() {
 }
 
 /**
- * The embedded vanilla demo: React renders only this host div — the table
- * inside it (cards, controls, animations, keyboard) is mounted and driven by
- * `card-motion/vanilla`, with no React underneath.
- */
-function VanillaTableDemo() {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) return;
-    return mountVanillaTable(host);
-  }, []);
-  return <div ref={hostRef} className="vanilla-host" />;
-}
-
-/**
  * The embedded Card table demo. The library's built-in controls float over the
  * felt, which crowds the fanned hand on a narrow phone stage, so here we hide
  * them (`controls={false}`) and drive the table from a bar pinned below it.
@@ -346,12 +330,10 @@ export default function Landing() {
               See it live
             </h2>
             <p className="lp-live-sub">
-              The card table and drag-and-drop zones, running right in this page — the third tab is the same table
-              mounted by <code>card-motion/vanilla</code>, with no React underneath. Open full screen for the poker and
-              sandbox demos too.
+              The card table and drag-and-drop zones, running right in this page. Open full screen for the poker and sandbox demos too.
             </p>
           </div>
-          <a className="lp-open" href={demo === 'vanilla' ? '#/vanilla' : `#/demo/${demo}`}>
+          <a className="lp-open" href={`#/demo/${demo}`}>
             Open full screen&nbsp;↗
           </a>
         </div>
@@ -363,15 +345,11 @@ export default function Landing() {
             <button type="button" className={demo === 'dnd' ? 'on' : ''} aria-current={demo === 'dnd' ? 'true' : undefined} onClick={() => setDemo('dnd')}>
               Drag &amp; drop
             </button>
-            <button type="button" className={demo === 'vanilla' ? 'on' : ''} aria-current={demo === 'vanilla' ? 'true' : undefined} onClick={() => setDemo('vanilla')}>
-              Vanilla (no React)
-            </button>
           </nav>
           <div className="lp-stage">
             <BackgroundShader style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
             {demo === 'table' && <TableDemo />}
             {demo === 'dnd' && <DragDropDemo />}
-            {demo === 'vanilla' && <VanillaTableDemo />}
           </div>
         </div>
       </section>
