@@ -1,21 +1,26 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Card, DragDropProvider, DropZone, DraggableCard, shuffleInPlace } from 'card-motion';
-import { buildSpiderDeck, byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from './spiderRules';
+import { Card, DragDropProvider, DropZone, DraggableCard } from 'card-motion';
+import { byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from './spiderRules';
 import { planNext, solveGame, type AutoAction } from './spiderAuto';
+import { pickDeal } from './spiderDeals';
 import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
   state: SpiderState;
   byId: ReturnType<typeof byIdMap>;
+  /** The deal's pre-computed winning line (valid while the board is untouched). */
+  solution: AutoAction[] | null;
 }
+// Deals come from the pre-validated pool: guaranteed winnable, solved offline.
 const newGame = (suits: number): Game => {
-  const d = deal(shuffleInPlace(buildSpiderDeck(suits)));
-  return { state: d.state, byId: byIdMap(d.deck) };
+  const picked = pickDeal(suits);
+  const d = deal(picked.deck);
+  return { state: d.state, byId: byIdMap(d.deck), solution: picked.solution };
 };
 
 const DIFFS: ReadonlyArray<DiffOption> = [
-  { key: '1', label: 'Simplified', note: 'One suit — the friendliest way to learn; nearly every deal is winnable.' },
-  { key: '2', label: 'Normal', note: 'Two suits — runs must share a suit to move. A real challenge.' },
+  { key: '1', label: 'Simplified', note: 'One suit — the friendliest way to learn. Every deal is winnable.' },
+  { key: '2', label: 'Normal', note: 'Two suits — runs must share a suit to move. A real challenge, but every deal is winnable.' },
 ];
 
 export default function Spider() {
@@ -83,14 +88,22 @@ export default function Spider() {
   };
 
   const startAuto = () => {
-    setAuto('solving');
     setAutoNote(null);
+    // Untouched board: replay the deal's pre-computed winning line instantly.
+    if (moves === 0 && game.solution) {
+      solvedRef.current = true;
+      queueRef.current = [...game.solution];
+      setAuto('playing');
+      return;
+    }
+    // The player already moved — solve from the current position.
+    setAuto('solving');
     // Yield one frame so the button shows "Solving…" before the search blocks.
     window.setTimeout(() => {
       const solution = solveGame(state, byId, 9000);
       solvedRef.current = solution !== null;
       queueRef.current = solution ?? [];
-      if (!solution) setAutoNote('No winning line found — this deal may be unwinnable. Playing best effort…');
+      if (!solution) setAutoNote('No winning line found from here — earlier moves may have locked this deal. Playing best effort…');
       setAuto('playing');
     }, 50);
   };
@@ -150,6 +163,7 @@ export default function Spider() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const startTutorial = () => {
+    stopAuto();
     setGame((g) => ({ ...g, state: tutorial.initial }));
     setMoves(0);
     setRulesOpen(false);
