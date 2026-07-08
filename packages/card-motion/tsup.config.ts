@@ -1,10 +1,12 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'tsup';
 
+// Only the React entry is a client boundary. The vanilla entry must stay
+// directive-free so it loads anywhere (Node tools, workers, any framework).
 const CLIENT_FILES = ['dist/index.js', 'dist/index.cjs'];
 
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/index.ts', 'src/vanilla.ts'],
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,

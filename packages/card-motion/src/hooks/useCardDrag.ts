@@ -1,43 +1,13 @@
 'use client';
 
-import { useCallback, useRef, useState, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
-import { gsap } from '../internal/gsap';
+import { useState, useSyncExternalStore, type PointerEvent as ReactPointerEvent, type RefObject } from 'react';
+import { createCardDrag, type CardDragEngine, type CardDragOptions } from '../core/drag';
 
-/** A point in stage coordinates (px from the stage's top-left). */
-export interface DragPoint {
-  x: number;
-  y: number;
-}
+export type { DragPoint } from '../core/drag';
 
-export interface UseCardDragOptions<P extends string = string> {
+export interface UseCardDragOptions<P extends string = string> extends Omit<CardDragOptions<P>, 'stageRef'> {
   /** The stage element cards live in — its rect converts pointer → stage coords. */
   stageRef: RefObject<HTMLElement | null>;
-  /**
-   * Given the dragged card's `id`, the drop point (stage coords) and the stage
-   * size, return the target pile — or `null` to reject the drop and snap the
-   * card back. Receiving the `id` lets you enforce per-card rules (e.g. a card
-   * only some zones accept).
-   */
-  resolveDrop: (id: number, point: DragPoint, stage: { width: number; height: number }) => P | null;
-  /**
-   * Handle the drop yourself — do the `move` and any side-effects here. `point`
-   * is the release location in stage coords (use it to pick a drop index, e.g.
-   * to reorder within a pile). If omitted, the hook calls
-   * `move(id, target ?? pileOf(id))` for you.
-   */
-  onDrop?: (id: number, target: P | null, point: DragPoint) => void;
-  /** Engine `move`, used by the default drop when `onDrop` is omitted. */
-  move?: (id: number, toPile: P) => Promise<void> | void;
-  /** Engine `pileOf`, used to snap back when a drop resolves to null. */
-  pileOf?: (id: number) => P | null;
-  /** Whether a card may be dragged (e.g. only the hand). Default: always. */
-  canDrag?: (id: number) => boolean;
-  /** Fires once, when a drag actually begins (after the threshold) — e.g. to mark the card selected. */
-  onDragStart?: (id: number) => void;
-  /** Fires when the pointer is released without dragging — a tap (use it to select). */
-  onTap?: (id: number) => void;
-  /** Px the pointer must travel before it counts as a drag (vs a tap). Default `6`. */
-  threshold?: number;
 }
 
 export interface CardDragApi {
@@ -58,82 +28,17 @@ export interface CardDragApi {
  * back to the engine (`move`, or your `onDrop`) which animates the card into its
  * slot. A press that doesn't move past `threshold` is reported as a tap, so
  * click-to-select keeps working on the same nodes.
+ *
+ * This is the React binding of the framework-free `createCardDrag` engine
+ * (available from `card-motion/vanilla`).
  */
 export function useCardDrag<P extends string = string>(opts: UseCardDragOptions<P>): CardDragApi {
-  const { stageRef, resolveDrop, onDrop, move, pileOf, canDrag, onDragStart, onTap, threshold = 6 } = opts;
-  const drag = useRef<{ id: number; offX: number; offY: number; sx: number; sy: number; moved: boolean } | null>(null);
-  const [dragId, setDragId] = useState<number | null>(null);
+  const [engine] = useState<CardDragEngine<P>>(() => createCardDrag<P>(opts));
+  // Refresh the rules / callbacks the engine reads on its next pointer event.
+  // Cheap ref-style assignment, safe to do during render.
+  engine.updateOptions(opts);
 
-  const dragProps = useCallback(
-    (id: number) => ({
-      onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
-        if (canDrag && !canDrag(id)) return;
-        const r = e.currentTarget.getBoundingClientRect();
-        drag.current = {
-          id,
-          offX: e.clientX - (r.left + r.width / 2),
-          offY: e.clientY - (r.top + r.height / 2),
-          sx: e.clientX,
-          sy: e.clientY,
-          moved: false,
-        };
-        e.currentTarget.setPointerCapture(e.pointerId);
-      },
-      onPointerMove: (e: ReactPointerEvent<HTMLElement>) => {
-        const d = drag.current;
-        if (!d || d.id !== id) return;
-        if (!d.moved && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < threshold) return;
-        if (!d.moved) {
-          d.moved = true;
-          setDragId(id);
-          onDragStart?.(id);
-          gsap.set(e.currentTarget, { zIndex: 99999 });
-        }
-        const stage = stageRef.current?.getBoundingClientRect();
-        if (!stage) return;
-        gsap.set(e.currentTarget, { x: e.clientX - d.offX - stage.left, y: e.clientY - d.offY - stage.top });
-      },
-      onPointerUp: (e: ReactPointerEvent<HTMLElement>) => {
-        const d = drag.current;
-        if (!d || d.id !== id) return;
-        drag.current = null;
-        if (!d.moved) {
-          onTap?.(id);
-          return;
-        }
-        setDragId(null);
-        const stage = stageRef.current?.getBoundingClientRect();
-        if (!stage) return;
-        const point = { x: e.clientX - stage.left, y: e.clientY - stage.top };
-        const target = resolveDrop(id, point, { width: stage.width, height: stage.height });
-        if (onDrop) {
-          onDrop(id, target, point);
-        } else if (move) {
-          const dest = target ?? pileOf?.(id) ?? null;
-          if (dest) void move(id, dest);
-        }
-      },
-      // The pointer stream can be canceled (OS gesture, context menu, touch
-      // interruption) with no pointerup. Treat it as a rejected drop so the card
-      // snaps home instead of being left lifted and stuck.
-      onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => {
-        const d = drag.current;
-        if (!d || d.id !== id) return;
-        drag.current = null;
-        if (!d.moved) return;
-        setDragId(null);
-        const stage = stageRef.current?.getBoundingClientRect();
-        const point = stage ? { x: e.clientX - stage.left, y: e.clientY - stage.top } : { x: 0, y: 0 };
-        if (onDrop) {
-          onDrop(id, null, point);
-        } else if (move) {
-          const dest = pileOf?.(id) ?? null;
-          if (dest) void move(id, dest);
-        }
-      },
-    }),
-    [stageRef, resolveDrop, onDrop, move, pileOf, canDrag, onDragStart, onTap, threshold],
-  );
+  const state = useSyncExternalStore(engine.subscribe, engine.getState, engine.getState);
 
-  return { dragId, dragProps };
+  return { dragId: state.dragId, dragProps: engine.handlers };
 }

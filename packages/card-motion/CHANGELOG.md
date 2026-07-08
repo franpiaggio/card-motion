@@ -3,6 +3,21 @@
 All notable changes to `card-motion` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0] — 2026-07-07
+
+### Added
+
+- **Framework-free vanilla entry** — `card-motion/vanilla` ships the entire library as plain TypeScript + GSAP, no React required:
+  - Engines: `createCardTable`, `createCardPiles` — same state, timelines and options as the hooks, exposed via `getState()` / `subscribe()` and `mount(stage)` / `destroy()`.
+  - Gestures: `createCardDrag`, `createCardInspect`, `createCardTilt` / `attachCardTilt`, `createDragDropController`, `createDraggableBehavior` / `attachDraggable`, plus the manual-FLIP helpers (`captureFlipRects`, `playFlip`).
+  - UI: `createCard`, `mountCardTable`, `mountBackgroundShader` / `attachBackgroundShader`, `mountDeckReveal`, `createInspectLayer`, `mountDropZone` / `attachDropZone` — same DOM, `cm-*` classes, ARIA and keyboard behavior as the React components; `card-motion/styles.css` styles both.
+- `react` is now an **optional** peer dependency (`peerDependenciesMeta`): installing for the vanilla entry no longer warns.
+
+### Changed
+
+- The React hooks and components are now thin bindings over the vanilla core (`useSyncExternalStore` + the engines above). **The public React API is unchanged** — same exports, same types, same behavior; the whole 0.2 test-suite passes untouched — but both entries now share a single implementation.
+- The `'use client'` directive is applied only to the React bundle; `dist/vanilla.*` is directive-free and never imports React.
+
 ## [0.2.0] — 2026-07-03
 
 ### Added

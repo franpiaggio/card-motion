@@ -12,6 +12,7 @@ import Spider from './examples/Spider';
 import Pyramid from './examples/Pyramid';
 import TriPeaks from './examples/TriPeaks';
 import Lastwall from '@lastwall/App';
+import VanillaDemo from './VanillaDemo';
 
 // Tiny hash router: `#/demo` (optionally `#/demo/<name>`) opens the demos on
 // their own full-screen page; everything else is the landing.
@@ -29,6 +30,7 @@ function useHash() {
 export default function App() {
   const hash = useHash();
   if (hash === '#/lastwall') return <Lastwall />;
+  if (hash === '#/vanilla') return <VanillaDemo />;
   if (hash === '#/examples') return <Examples />;
   if (hash === '#/freecell') return <FreeCell />;
   if (hash === '#/klondike') return <Klondike />;

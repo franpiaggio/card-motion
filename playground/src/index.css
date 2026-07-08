@@ -910,3 +910,18 @@ body {
     padding: 8px 10px;
   }
 }
+
+/* ── Vanilla demo page (#/vanilla) ─────────────────────────────────────────
+   React renders only the shell; everything inside .vanilla-host is mounted by
+   card-motion/vanilla. The host fills the screen and each mounted demo fills
+   the host (mirrors the `.lp-stage > *` rules on the landing). */
+.vanilla-host {
+  position: absolute;
+  inset: 0;
+}
+.vanilla-host > .dnd {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}

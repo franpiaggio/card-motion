@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { BackgroundShader, Card, CardTable, useCardTable, type CardTableHandle } from 'card-motion';
+import { BackgroundShader, Card, useCardTable } from 'card-motion';
 import DragDropDemo from './DragDropDemo';
 import { Highlight } from './highlight';
 import { GAMES } from './examples/games';
@@ -11,7 +11,7 @@ const INSTALL = 'pnpm add card-motion gsap';
 const SPEC = [
   'GSAP timelines',
   'React 18 & 19',
-  'TypeScript-first',
+  'Vanilla TS core',
   'Keyboard + ARIA',
   'prefers-reduced-motion',
   'ESM + CJS',
@@ -55,7 +55,7 @@ export default () => (
     tag: 'headless',
     accent: 'blue',
     name: 'useCardTable()',
-    blurb: 'Render your own cards and rules — it owns the state and timelines. Or useCardPiles for arbitrary piles (Poker & Sandbox).',
+    blurb: 'Render your own cards and rules: it owns the state and timelines. Or useCardPiles for arbitrary piles (Poker & Sandbox).',
     code: `const {
   cards, deal, playSelected,
   toggleCard, registerCard,
@@ -75,6 +75,31 @@ export default () => (
     </DraggableCard>
   </DropZone>
 </DragDropProvider>`,
+  },
+] as const;
+
+// The two builds of the same library: one engine, two entries.
+const FLAVORS = [
+  {
+    name: 'React',
+    blurb:
+      'Components & hooks: they own the state and the GSAP timelines, you render the cards. Drop-in <CardTable>, headless useCardTable / useCardPiles, and the drag & drop primitives.',
+    code: `import { CardTable } from 'card-motion'
+import 'card-motion/styles.css'
+
+export default function App() {
+  return <CardTable handSize={8} />
+}`,
+  },
+  {
+    name: 'VanillaJS',
+    blurb:
+      'The exact same engines and UI in plain TypeScript, with getState() / subscribe() instead of hooks. Mount it from Vue, Svelte, a <script> tag, or no framework at all.',
+    code: `import { mountCardTable } from 'card-motion/vanilla'
+import 'card-motion/styles.css'
+
+const table = mountCardTable(app, { handSize: 8 })
+table.deal()`,
   },
 ] as const;
 
@@ -179,21 +204,75 @@ function HeroTable() {
 
 /**
  * The embedded Card table demo. The library's built-in controls float over the
- * felt, which crowds the fanned hand on a narrow phone stage, so here we hide
- * them (`controls={false}`) and drive the table from a bar pinned below it.
+ * felt, which crowds the fanned hand on a narrow phone stage, so this drives
+ * the table headlessly and pins its own bar below it instead. The bar mirrors
+ * `<CardTable>`'s own logic: each button only shows while its action is
+ * actually available, and "Play" (the selection) replaces "Play all" as soon
+ * as a card is selected.
  */
 function TableDemo() {
-  const ref = useRef<CardTableHandle>(null);
+  const handSize = 8;
+  const { cards, stageRef, registerCard, shuffle, deal, play, playSelected, clearTable, reset, toggleCard, selected, hand, table, counts } =
+    useCardTable({ handSize });
+
+  // Shrink the cards on narrow screens so a full hand never overflows.
+  const [stageWidth, setStageWidth] = useState(0);
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const update = () => setStageWidth(el.clientWidth);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    update();
+    return () => ro.disconnect();
+  }, [stageRef]);
+  const width = stageWidth > 0 ? Math.min(96, Math.max(46, stageWidth / 7)) : 96;
+
+  const status =
+    `${counts.hand} ${counts.hand === 1 ? 'card' : 'cards'} in hand` +
+    (selected.size ? `, ${selected.size} selected` : '') +
+    `, ${counts.table} on the table`;
+
   return (
     <div className="lp-tabledemo">
-      <CardTable ref={ref} controls={false} handSize={8} cardWidth={96} />
+      <div className="cm-table" role="group" aria-label="Card table">
+        <div className="cm-sr-only" aria-live="polite">{status}</div>
+        <div className="cm-stage" ref={stageRef}>
+          {cards.map((c) => {
+            const inHand = hand.includes(c.id);
+            const inTable = table.includes(c.id);
+            return (
+              <Card
+                key={c.id}
+                ref={(node) => registerCard(c.id, node)}
+                rank={c.rank}
+                suit={c.suit}
+                color={c.color}
+                width={width}
+                selected={selected.has(c.id)}
+                interactive={inHand}
+                hiddenFromAt={!inHand && !inTable}
+                onClick={inHand ? () => toggleCard(c.id) : undefined}
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              />
+            );
+          })}
+        </div>
+      </div>
       <div className="lp-tablebar">
-        <div className="cm-controls">
-          <button type="button" onClick={() => ref.current?.shuffle()}>Shuffle</button>
-          <button type="button" onClick={() => ref.current?.deal()}>Deal</button>
-          <button type="button" onClick={() => ref.current?.play()}>Play all</button>
-          <button type="button" className="cm-warn" onClick={() => ref.current?.clearTable()}>Clear</button>
-          <button type="button" className="cm-ghost" onClick={() => ref.current?.reset()}>Reset</button>
+        <div className="cm-controls" role="toolbar" aria-label="Table controls">
+          {cards.length > 0 && <button type="button" onClick={shuffle}>Shuffle</button>}
+          {counts.deck > 0 && counts.hand < handSize && (
+            <button type="button" onClick={() => deal()}>Deal</button>
+          )}
+          {selected.size > 0 && <button type="button" onClick={playSelected}>Play</button>}
+          {selected.size === 0 && counts.hand > 0 && <button type="button" onClick={play}>Play all</button>}
+          {counts.table > 0 && (
+            <button type="button" className="cm-warn" onClick={clearTable}>Clear</button>
+          )}
+          {(counts.hand > 0 || counts.table > 0) && (
+            <button type="button" className="cm-ghost" onClick={reset}>Reset</button>
+          )}
         </div>
       </div>
     </div>
@@ -207,7 +286,7 @@ export default function Landing() {
     <div className="lp">
       {/* ── Hero ─────────────────────────────────────────────── */}
       <header className="lp-hero">
-        <p className="lp-kicker">React · GSAP · TypeScript</p>
+        <p className="lp-kicker">TypeScript · GSAP · React or vanilla</p>
         <h1 className="lp-title">
           Playing&#8209;card motion,
           <br />
@@ -222,8 +301,8 @@ export default function Landing() {
         </div>
 
         <p className="lp-lede">
-          A ready-made card table and the headless engine behind it. Shuffle, deal, select and play with
-          GSAP timelines, a pointer-driven tilt, and a WebGL swirl. Two imports, no motion code of your own.
+          Shuffle, deal, select, play. GSAP timelines, pointer tilt, and a WebGL swirl. Zero motion code,
+          two imports away.
         </p>
 
         <div className="lp-hero-actions">
@@ -268,6 +347,29 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* ── Two versions (React / vanilla) ───────────────────── */}
+      <section className="lp-flavors" aria-labelledby="flavors-h">
+        <h2 id="flavors-h" className="lp-section-h">
+          React and VanillaJS
+        </h2>
+        <p className="lp-flavors-sub">
+          One package, two entry points: <code>card-motion</code> for React, <code>card-motion/vanilla</code> for
+          plain TypeScript. Only the one you import ends up in your bundle, and the vanilla build carries
+          zero React. <a href="#/vanilla">Try the vanilla demo&nbsp;↗</a>
+        </p>
+        <div className="lp-flavors-grid">
+          {FLAVORS.map((f) => (
+            <article key={f.name} className="lp-way">
+              <h3 className="lp-way-name">{f.name}</h3>
+              <p className="lp-way-blurb">{f.blurb}</p>
+              <pre className="lp-code">
+                <Highlight src={f.code} />
+              </pre>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* ── Live playground ──────────────────────────────────── */}
       <section className="lp-live" id="live" aria-labelledby="live-h">
         <div className="lp-live-head">
@@ -306,7 +408,7 @@ export default function Landing() {
           Working examples
         </h2>
         <p className="lp-examples-sub">
-          Complete games built with the library — drag to move, double-tap to send a card home.
+          Complete games built with the library: drag to move, double-tap to send a card home.
         </p>
         <div className="lp-examples-grid">
           {GAMES.map((g) => (

@@ -2,10 +2,11 @@
 
 # 🃏 card-motion
 
-**Juicy playing-card animations for React.**
+**Juicy playing-card animations.**
 
 Shuffle, deal, select and play with GSAP timelines — a ready-made card table,
-plus the headless engine to build your own game.
+plus the headless engine to build your own game. Framework-free TypeScript core
+(`card-motion/vanilla`) with first-class React bindings (`card-motion`).
 
 [![npm version](https://img.shields.io/npm/v/card-motion.svg?color=d11f3a)](https://www.npmjs.com/package/card-motion)
 [![npm downloads](https://img.shields.io/npm/dm/card-motion.svg?color=2563d8)](https://www.npmjs.com/package/card-motion)
@@ -23,6 +24,7 @@ plus the headless engine to build your own game.
 - **Drag & drop** — primitives for board games: the library owns the pointer mechanics and snap-back, you own the rules.
 - **Composable layouts** — swap in `fan` / `row` / `stack`, or write your own.
 - **Accessible** — keyboard-operable, ARIA roles, a live region, and `prefers-reduced-motion` support.
+- **Framework-free core** — everything above also ships React-less from `card-motion/vanilla`: the same engines (`createCardTable`, `createCardPiles`), gestures (`createCardDrag`, `createCardInspect`, `createDragDropController`) and UI (`createCard`, `mountCardTable`, …) in plain TypeScript.
 - TypeScript-first, tree-shakeable ESM + CJS, runs in Next.js (App Router) as a client component.
 
 ## Install
@@ -31,7 +33,9 @@ plus the headless engine to build your own game.
 pnpm add card-motion gsap
 ```
 
-`react` and `gsap` are peer dependencies. Import the stylesheet once, in your app entry:
+`gsap` is a peer dependency; `react` is an **optional** peer — only the
+`card-motion` entry needs it, `card-motion/vanilla` runs without it. Import the
+stylesheet once, in your app entry:
 
 ```ts
 import 'card-motion/styles.css';
@@ -106,6 +110,40 @@ const { piles, move, draw, gather } = useCardPiles({
 });
 ```
 
+## Vanilla (no React)
+
+Everything is available framework-free from `card-motion/vanilla` — same
+engines, same animations, same CSS. The React hooks are thin bindings over
+these, so both entries behave identically.
+
+```ts
+import { mountCardTable, createCardPiles, stackLayout, fanLayout } from 'card-motion/vanilla';
+import 'card-motion/styles.css';
+
+// The whole ready-made table, one call:
+const table = mountCardTable(document.querySelector('#app')!, { handSize: 8 });
+table.deal();
+
+// Or go headless: you render the cards, the engine animates them.
+const piles = createCardPiles({
+  piles: {
+    deck: { anchor: (s) => ({ x: s.width / 2, y: 80 }), layout: stackLayout },
+    hand: { anchor: (s) => ({ x: s.width / 2, y: s.height - 120 }), layout: fanLayout },
+  },
+});
+piles.subscribe(() => render(piles.getState())); // reactive state, no framework
+```
+
+The mapping is 1:1: `useCardTable` ↔ `createCardTable`, `useCardPiles` ↔
+`createCardPiles`, `useCardDrag` ↔ `createCardDrag`, `useCardInspect` ↔
+`createCardInspect` (+ `createInspectLayer`), `useCardTilt` ↔ `attachCardTilt`,
+`<DragDropProvider>`/`<DropZone>`/`<DraggableCard>` ↔
+`createDragDropController`/`mountDropZone`/`attachDraggable`, `<Card>` ↔
+`createCard`, `<CardTable>` ↔ `mountCardTable`, `<BackgroundShader>` ↔
+`mountBackgroundShader`, `<DeckReveal>` ↔ `mountDeckReveal`. Engines expose
+`getState()` / `subscribe()` instead of hook state, and `mount(stage)` /
+`destroy()` instead of refs and effects.
+
 ## Building blocks
 
 - **Drag & drop** — `<DragDropProvider onDrop>` + `<DropZone id accepts>` + `<DraggableCard id zone>` to build solitaire and friends. `onDrop` fires on a valid drop; return `false` to reject (the card springs back).
@@ -127,8 +165,8 @@ end state instead of playing.
 
 ## Requirements
 
-- React **18** or **19**
 - GSAP **3.12+** (peer dependency)
+- React **18** or **19** — only for the `card-motion` entry; `card-motion/vanilla` has no framework requirement
 - A browser with WebGL for `<BackgroundShader>` (it degrades gracefully otherwise)
 
 ## License

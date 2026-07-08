@@ -2,11 +2,19 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["vite/client"],
+    "types": [
+      "vite/client",
+      "node"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@lastwall/*": ["../examples/lastwall/src/*"]
+      "@lastwall/*": [
+        "../examples/lastwall/src/*"
+      ]
     }
   },
-  "include": ["src", "../examples/lastwall/src"]
+  "include": [
+    "src",
+    "../examples/lastwall/src"
+  ]
 }
