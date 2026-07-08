@@ -1,6 +1,7 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Card, DragDropProvider, DropZone, DraggableCard, shuffleInPlace } from 'card-motion';
 import { buildSpiderDeck, byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from './spiderRules';
+import { planNext, solveGame, type AutoAction } from './spiderAuto';
 import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
 
 interface Game {
@@ -26,7 +27,13 @@ export default function Spider() {
   const [tutStep, setTutStep] = useState(0);
   const [boardRef, boardW] = useMeasure<HTMLDivElement>();
 
+  // Auto play: 'solving' computes a full winning line (backtracking solver),
+  // 'playing' replays it one animated move at a time.
+  const [auto, setAuto] = useState<'off' | 'solving' | 'playing'>('off');
+  const queueRef = useRef<AutoAction[]>([]);
+
   const { state, byId } = game;
+  const won = isWon(state);
   const cols = 10;
   const gap = boardW < 620 ? 3 : 7;
   const cardW = Math.min(92, Math.max(20, Math.floor((boardW - gap * (cols - 1)) / cols)));
@@ -34,13 +41,20 @@ export default function Spider() {
   const peekUp = Math.round(cardH * 0.26) - cardH;
   const peekDown = Math.round(cardH * 0.13) - cardH;
 
-  useFlip(boardRef, tutStep, tut);
+  // FLIP-animate programmatic moves: tutorial steps and the auto player.
+  useFlip(boardRef, tut ? tutStep : state, tut || auto === 'playing');
 
+  const stopAuto = () => {
+    queueRef.current = [];
+    setAuto('off');
+  };
   const reset = () => {
+    stopAuto();
     setChooseOpen(true);
     setTut(false);
   };
   const pick = (key: string) => {
+    stopAuto();
     setGame(newGame(key === '2' ? 2 : 1));
     setMoves(0);
     setChooseOpen(false);
@@ -64,6 +78,47 @@ export default function Spider() {
     setGame((g) => ({ ...g, state: next }));
     setMoves((m) => m + 1);
   };
+
+  const startAuto = () => {
+    setAuto('solving');
+    // Yield one frame so the button shows "Solving…" before the search blocks.
+    window.setTimeout(() => {
+      queueRef.current = solveGame(state, byId, 9000) ?? [];
+      setAuto('playing');
+    }, 50);
+  };
+
+  // Replay loop: one action per tick; each state change re-arms the timer.
+  // With no precomputed line left (unsolved deal), fall back to the greedy
+  // planner and play as far as it goes.
+  useEffect(() => {
+    if (auto !== 'playing') return;
+    if (won) {
+      stopAuto();
+      return;
+    }
+    const t = window.setTimeout(() => {
+      let act = queueRef.current.shift();
+      if (!act) {
+        const plan = planNext(state, byId);
+        if (!plan) {
+          stopAuto(); // genuinely stuck — leave the board as is
+          return;
+        }
+        queueRef.current = plan;
+        act = queueRef.current.shift()!;
+      }
+      const next = act.type === 'deal' ? dealRow(state, byId) : move(state, byId, act.id, { type: 'tableau', index: act.dest });
+      if (!next) {
+        stopAuto(); // the board diverged from the plan — bail out safely
+        return;
+      }
+      setGame((g) => ({ ...g, state: next }));
+      setMoves((m) => m + 1);
+    }, 420);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auto, state, won]);
 
   const tutorial = useMemo<{ initial: SpiderState; steps: TutorialStep[] }>(() => {
     const kToTwo = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]; // K…2 in one column
@@ -105,17 +160,24 @@ export default function Spider() {
   const boardStyle = { '--sol-gap': `${gap}px`, '--sol-cw': `${cardW}px`, '--sol-ch': `${cardH}px` } as CSSProperties;
   const gridCols = { gridTemplateColumns: `repeat(${cols}, ${cardW}px)` } as CSSProperties;
   const dealsLeft = Math.floor(state.stock.length / 10);
-  const won = isWon(state);
 
   return (
     <div className="sol">
       <ExampleHeader title="Spider" moves={moves} status={`${state.completed}/8 done`} onNew={reset} onRules={() => setRulesOpen(true)} onTutorial={startTutorial} />
 
-      <DragDropProvider onDrop={handleDrop}>
+      <DragDropProvider onDrop={handleDrop} disabled={auto !== 'off'}>
         <div className="sol-board" ref={boardRef} style={boardStyle}>
           <div className="sol-spider-top">
             <span className="sol-spider-count">{state.completed}/8 runs</span>
-            <button type="button" className="sol-stock" onClick={onDealRow} disabled={dealsLeft === 0} aria-label="Deal a row">
+            <button
+              type="button"
+              className={`sol-autoplay${auto !== 'off' ? ' on' : ''}`}
+              onClick={auto === 'off' ? startAuto : stopAuto}
+              disabled={auto === 'solving' || won || chooseOpen || tut}
+            >
+              {auto === 'off' ? '▶ Auto play' : auto === 'solving' ? 'Solving…' : '■ Stop'}
+            </button>
+            <button type="button" className="sol-stock" onClick={onDealRow} disabled={dealsLeft === 0 || auto !== 'off'} aria-label="Deal a row">
               {dealsLeft > 0 ? (
                 <span className="sol-stock-pile" style={{ width: cardW, height: cardH }}>
                   <CardBack width={cardW} />
