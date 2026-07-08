@@ -270,9 +270,9 @@ export default function Spider() {
           <p>Remove all eight King-to-Ace runs (single suit, so every deal is winnable).</p>
           <h4>Tableau</h4>
           <ul>
-            <li>Build columns down by one rank. A descending run moves together.</li>
-            <li>Any card can go on a card one rank higher; empty columns take anything.</li>
-            <li>Complete a full King→Ace run in a column and it clears automatically.</li>
+            <li>Build columns down by one rank — any suit or colour goes on any card one rank higher (a ♥7 sits on a ♠8). Empty columns take anything.</li>
+            <li>A run only moves as a group if it descends in the <em>same suit</em>. Mixed-suit sequences must be moved a card at a time — that is real Spider, not a bug.</li>
+            <li>Complete a full King→Ace run of one suit in a column and it clears automatically.</li>
           </ul>
           <h4>Stock</h4>
           <ul>
