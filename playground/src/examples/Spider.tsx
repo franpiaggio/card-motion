@@ -4,6 +4,7 @@ import { byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from
 import { planNext, solveGame, type AutoAction } from './spiderAuto';
 import { pickDeal } from './spiderDeals';
 import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
+import { runRunComplete } from './winCelebration';
 
 interface Game {
   state: SpiderState;
@@ -70,12 +71,29 @@ export default function Spider() {
   };
   const applyState = (fn: (s: SpiderState, b: Game['byId']) => SpiderState | null) => setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
 
+  // Apply a computed next state, playing the "run completed" flourish when a
+  // King→Ace run has just been harvested off the board.
+  const commitState = (next: SpiderState) => {
+    if (next.completed > state.completed) {
+      const survivors = new Set(next.tableau.flat());
+      const gone = state.tableau.flat().filter((id) => !survivors.has(id));
+      const board = boardRef.current;
+      if (board) {
+        const els = gone
+          .map((id) => board.querySelector<HTMLElement>(`[data-flip-id="${id}"]`))
+          .filter((el): el is HTMLElement => el !== null);
+        runRunComplete(els);
+      }
+    }
+    setGame((g) => ({ ...g, state: next }));
+  };
+
   const handleDrop = (cardId: number, toZone: string) => {
     if (!toZone.startsWith('col-')) return false;
     const dest: Dest = { type: 'tableau', index: +toZone.slice(4) };
     const next = move(state, byId, cardId, dest);
     if (!next) return false;
-    setGame((g) => ({ ...g, state: next }));
+    commitState(next);
     setMoves((m) => m + 1);
     return true;
   };
@@ -83,7 +101,7 @@ export default function Spider() {
   const onDealRow = () => {
     const next = dealRow(state, byId);
     if (!next) return;
-    setGame((g) => ({ ...g, state: next }));
+    commitState(next);
     setMoves((m) => m + 1);
   };
 
@@ -141,7 +159,7 @@ export default function Spider() {
         stopAuto(); // the board diverged from the plan — bail out safely
         return;
       }
-      setGame((g) => ({ ...g, state: next }));
+      commitState(next);
       setMoves((m) => m + 1);
     }, 420);
     return () => clearTimeout(t);

@@ -109,6 +109,55 @@ export function runWinCascade(maxCards = 24): WinCascadeHandle {
   };
 }
 
+/**
+ * "Barrido + brillo": when a King→Ace run is completed and leaves a column,
+ * its cards flash gold, then swoosh up and fade away in sequence. Runs on
+ * fixed-position clones so React can drop the originals underneath without a
+ * fight. Fire-and-forget — never blocks game state — and self-cleans.
+ */
+export function runRunComplete(cardEls: HTMLElement[]): void {
+  if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+  const els = cardEls.filter((el) => el.getBoundingClientRect().width > 0);
+  if (!els.length) return;
+
+  const layer = document.createElement('div');
+  layer.style.cssText = 'position:fixed;inset:0;z-index:150;pointer-events:none;overflow:hidden';
+  document.body.append(layer);
+
+  const clones = els.map((el) => {
+    const r = el.getBoundingClientRect();
+    const clone = el.cloneNode(true) as HTMLElement;
+    clone.style.cssText += `;position:fixed;left:${r.left}px;top:${r.top}px;margin:0;width:${r.width}px;height:${r.height}px;transform:none;will-change:transform,opacity,filter`;
+    layer.append(clone);
+    return clone;
+  });
+
+  // Match the filter structure at both ends so GSAP interpolates it smoothly.
+  gsap.set(clones, { filter: 'drop-shadow(0 0 0px rgba(255,200,80,0)) brightness(1)' });
+  const tl = gsap.timeline({ onComplete: () => layer.remove() });
+  tl.to(clones, {
+    filter: 'drop-shadow(0 0 16px rgba(255,200,80,0.95)) brightness(1.3)',
+    scale: 1.08,
+    duration: 0.15,
+    ease: 'power2.out',
+    stagger: 0.022,
+  });
+  tl.to(
+    clones,
+    {
+      y: -90,
+      scale: 0.5,
+      autoAlpha: 0,
+      filter: 'drop-shadow(0 0 4px rgba(255,200,80,0)) brightness(1)',
+      duration: 0.45,
+      ease: 'power2.in',
+      stagger: 0.025,
+    },
+    '-=0.03',
+  );
+}
+
 /** A short confetti burst over the whole screen (skipped under reduced motion). */
 export function burstConfetti(n = 60): void {
   if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
