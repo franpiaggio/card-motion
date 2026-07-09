@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Card, DragDropProvider, DropZone, DraggableCard } from 'card-motion';
-import { byIdMap, deal, dealRow, isWon, move, type Dest, type SpiderState } from './spiderRules';
+import { byIdMap, deal, dealRow, harvestAll, isWon, move, type Dest, type SpiderState } from './spiderRules';
 import { planNext, solveGame, type AutoAction } from './spiderAuto';
 import { pickDeal } from './spiderDeals';
 import { CardBack, CARD_RATIO, Coach, DifficultyPicker, ExampleHeader, RulesModal, useFlip, useMeasure, WinOverlay, type DiffOption, type TutorialStep } from './shared';
@@ -37,6 +37,10 @@ export default function Spider() {
   // 'playing' replays it one animated move at a time.
   const [auto, setAuto] = useState<'off' | 'solving' | 'playing'>('off');
   const [autoNote, setAutoNote] = useState<string | null>(null);
+  // True while a completed run is being swept away: the auto-player pauses so
+  // the completing card lands and the run animates out before the next move.
+  const [harvesting, setHarvesting] = useState(false);
+  const harvestTimerRef = useRef<number | null>(null);
   const queueRef = useRef<AutoAction[]>([]);
   // A solved line plays to the win; without one we play best-effort and say so.
   const solvedRef = useRef(false);
@@ -55,6 +59,11 @@ export default function Spider() {
 
   const stopAuto = () => {
     queueRef.current = [];
+    if (harvestTimerRef.current != null) {
+      clearTimeout(harvestTimerRef.current);
+      harvestTimerRef.current = null;
+    }
+    setHarvesting(false);
     setAuto('off');
   };
   const reset = () => {
@@ -71,27 +80,39 @@ export default function Spider() {
   };
   const applyState = (fn: (s: SpiderState, b: Game['byId']) => SpiderState | null) => setGame((g) => ({ ...g, state: fn(g.state, g.byId) ?? g.state }));
 
-  // Apply a computed next state, playing the "run completed" flourish when a
-  // King→Ace run has just been harvested off the board.
-  const commitState = (next: SpiderState) => {
-    if (next.completed > state.completed) {
-      const survivors = new Set(next.tableau.flat());
-      const gone = state.tableau.flat().filter((id) => !survivors.has(id));
+  // Commit a *pre-harvest* state (the move applied, but any completed K→A run
+  // still sitting in its column). When that lands a completion, we let the
+  // card settle, sweep the run out bottom-to-top, and only then remove it —
+  // so the flourish fires after the move, never before it.
+  const HARVEST_DELAY = 430; // ms — just past the FLIP glide of the last card
+  const commitState = (pre: SpiderState) => {
+    const harvested = harvestAll(pre, byId);
+    if (harvested.completed === state.completed) {
+      setGame((g) => ({ ...g, state: pre })); // no completion — nothing deferred
+      return;
+    }
+    setGame((g) => ({ ...g, state: pre })); // phase 1: the completing card lands
+    setHarvesting(true);
+    harvestTimerRef.current = window.setTimeout(() => {
+      harvestTimerRef.current = null;
       const board = boardRef.current;
       if (board) {
+        const survivors = new Set(harvested.tableau.flat());
+        const gone = pre.tableau.flat().filter((id) => !survivors.has(id));
         const els = gone
           .map((id) => board.querySelector<HTMLElement>(`[data-flip-id="${id}"]`))
           .filter((el): el is HTMLElement => el !== null);
-        runRunComplete(els);
+        runRunComplete(els); // phase 2: sweep it away, then drop it
       }
-    }
-    setGame((g) => ({ ...g, state: next }));
+      setGame((g) => ({ ...g, state: harvested }));
+      setHarvesting(false);
+    }, HARVEST_DELAY);
   };
 
   const handleDrop = (cardId: number, toZone: string) => {
     if (!toZone.startsWith('col-')) return false;
     const dest: Dest = { type: 'tableau', index: +toZone.slice(4) };
-    const next = move(state, byId, cardId, dest);
+    const next = move(state, byId, cardId, dest, false);
     if (!next) return false;
     commitState(next);
     setMoves((m) => m + 1);
@@ -99,7 +120,7 @@ export default function Spider() {
   };
   const accepts = (index: number) => (cardId: number) => move(state, byId, cardId, { type: 'tableau', index }) !== null;
   const onDealRow = () => {
-    const next = dealRow(state, byId);
+    const next = dealRow(state, byId, false);
     if (!next) return;
     commitState(next);
     setMoves((m) => m + 1);
@@ -137,7 +158,7 @@ export default function Spider() {
   // With no precomputed line left (unsolved deal), fall back to the greedy
   // planner and play as far as it goes.
   useEffect(() => {
-    if (auto !== 'playing') return;
+    if (auto !== 'playing' || harvesting) return; // paused while a run sweeps out
     if (won) {
       stopAuto();
       return;
@@ -154,7 +175,7 @@ export default function Spider() {
         queueRef.current = plan;
         act = queueRef.current.shift()!;
       }
-      const next = act.type === 'deal' ? dealRow(state, byId) : move(state, byId, act.id, { type: 'tableau', index: act.dest });
+      const next = act.type === 'deal' ? dealRow(state, byId, false) : move(state, byId, act.id, { type: 'tableau', index: act.dest }, false);
       if (!next) {
         stopAuto(); // the board diverged from the plan — bail out safely
         return;
@@ -164,7 +185,7 @@ export default function Spider() {
     }, 420);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auto, state, won]);
+  }, [auto, state, won, harvesting]);
 
   const tutorial = useMemo<{ initial: SpiderState; steps: TutorialStep[] }>(() => {
     const kToTwo = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]; // K…2 in one column

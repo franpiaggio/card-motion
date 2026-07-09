@@ -83,7 +83,10 @@ function harvest(s: SpiderState, byId: Map<number, CardData>, col: number) {
   if (exposed !== undefined && !s.faceUp.includes(exposed)) s.faceUp.push(exposed);
 }
 
-export function move(s: SpiderState, byId: Map<number, CardData>, id: number, dest: Dest): SpiderState | null {
+// `doHarvest = false` applies the move but leaves a just-completed K→A run
+// sitting in its column, so the UI can play the "landed, now sweep it away"
+// animation before removing it (see harvestAll).
+export function move(s: SpiderState, byId: Map<number, CardData>, id: number, dest: Dest, doHarvest = true): SpiderState | null {
   const src = source(s, byId, id);
   if (!src) return null;
   if (src.col === dest.index) return null;
@@ -94,12 +97,12 @@ export function move(s: SpiderState, byId: Map<number, CardData>, id: number, de
   const exposed = topOf(next.tableau[src.col]);
   if (exposed !== undefined && !next.faceUp.includes(exposed)) next.faceUp.push(exposed);
   next.tableau[dest.index].push(...src.run);
-  harvest(next, byId, dest.index);
+  if (doHarvest) harvest(next, byId, dest.index);
   return next;
 }
 
 /** Deal one card face-up to every column (only when no column is empty). */
-export function dealRow(s: SpiderState, byId: Map<number, CardData>): SpiderState | null {
+export function dealRow(s: SpiderState, byId: Map<number, CardData>, doHarvest = true): SpiderState | null {
   if (s.stock.length < 10) return null;
   if (s.tableau.some((c) => c.length === 0)) return null; // Spider rule
   const next = clone(s);
@@ -108,7 +111,15 @@ export function dealRow(s: SpiderState, byId: Map<number, CardData>): SpiderStat
     next.tableau[col].push(card);
     next.faceUp.push(card);
   }
-  for (let col = 0; col < 10; col++) harvest(next, byId, col);
+  if (doHarvest) for (let col = 0; col < 10; col++) harvest(next, byId, col);
+  return next;
+}
+
+/** Apply any pending K→A completions across every column. Used to finish a
+ * deferred harvest once the completing move's animation has played out. */
+export function harvestAll(s: SpiderState, byId: Map<number, CardData>): SpiderState {
+  const next = clone(s);
+  for (let col = 0; col < next.tableau.length; col++) harvest(next, byId, col);
   return next;
 }
 

@@ -134,6 +134,8 @@ export function runRunComplete(cardEls: HTMLElement[]): void {
   });
 
   // Match the filter structure at both ends so GSAP interpolates it smoothly.
+  // `clones` are top-to-bottom (King…Ace); stagger from the end sweeps the run
+  // away bottom-to-top, so the Ace leaves first and the King last.
   gsap.set(clones, { filter: 'drop-shadow(0 0 0px rgba(255,200,80,0)) brightness(1)' });
   const tl = gsap.timeline({ onComplete: () => layer.remove() });
   tl.to(clones, {
@@ -141,7 +143,7 @@ export function runRunComplete(cardEls: HTMLElement[]): void {
     scale: 1.08,
     duration: 0.15,
     ease: 'power2.out',
-    stagger: 0.022,
+    stagger: { each: 0.022, from: 'end' },
   });
   tl.to(
     clones,
@@ -152,7 +154,7 @@ export function runRunComplete(cardEls: HTMLElement[]): void {
       filter: 'drop-shadow(0 0 4px rgba(255,200,80,0)) brightness(1)',
       duration: 0.45,
       ease: 'power2.in',
-      stagger: 0.025,
+      stagger: { each: 0.025, from: 'end' },
     },
     '-=0.03',
   );
