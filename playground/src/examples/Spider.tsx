@@ -321,7 +321,7 @@ export default function Spider() {
         </RulesModal>
       )}
 
-      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} />}
+      {won && !tut && !chooseOpen && <WinOverlay moves={moves} onNew={reset} cascadeDeck />}
     </div>
   );
 }

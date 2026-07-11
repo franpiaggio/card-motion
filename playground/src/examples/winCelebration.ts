@@ -10,24 +10,65 @@ export interface WinCascadeHandle {
   cleanup: () => void;
 }
 
+const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SUITS: ReadonlyArray<[string, string]> = [
+  ['♠', 'black'],
+  ['♥', 'red'],
+  ['♦', 'red'],
+  ['♣', 'black'],
+];
+
 /**
- * Launch every card on the board into a bouncing cascade. The animation runs
- * on fixed-position *clones* (the real, framework-managed nodes are just
- * hidden), so the game's DOM is never touched. Call `cleanup` when the
- * overlay goes away — it restores the originals for the next deal.
+ * Build a full 52-card deck as plain DOM (mirroring the `Card` component's
+ * markup so the shared card CSS styles it), spread in a row across the top and
+ * kept invisible-but-measured until the cascade clones them. No React, no refs
+ * — so it works even when the game board is empty at the win (e.g. Spider).
  */
-export function runWinCascade(maxCards = 24): WinCascadeHandle {
+function buildDeck(w: number): { els: HTMLElement[]; container: HTMLElement } {
+  const h = w * (134 / 96);
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;inset:0;pointer-events:none;visibility:hidden';
+  const cards = SUITS.flatMap(([suit, color]) => RANKS.map((rank) => ({ rank, suit, color })));
+  const els = cards.map((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'cm-card';
+    el.style.cssText = `position:fixed;top:7%;left:${4 + (i / (cards.length - 1)) * 92}%;transform:translateX(-50%);width:${w}px;height:${h}px;--cm-w:${w}px`;
+    el.innerHTML = `<div class="cm-card-inner"><div class="cm-card-face cm-${c.color}"><span class="cm-corner cm-tl"><b>${c.rank}</b><i>${c.suit}</i></span><span class="cm-pip">${c.suit}</span><span class="cm-corner cm-br"><b>${c.rank}</b><i>${c.suit}</i></span></div></div>`;
+    container.append(el);
+    return el;
+  });
+  document.body.append(container);
+  return { els, container };
+}
+
+/**
+ * Launch a bouncing cascade of cards. By default it flies whatever cards are
+ * still on the board; pass `{ deck: true }` to fly a freshly-built 52-card deck
+ * instead — needed by games (like Spider) whose board is *empty* at the win.
+ * The animation runs on fixed-position *clones* (the real, framework-managed
+ * nodes are just hidden), so the game's DOM is never touched. Call `cleanup`
+ * when the overlay goes away.
+ */
+export function runWinCascade(opts: { deck?: boolean; maxCards?: number } = {}): WinCascadeHandle {
   if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
     return { finished: Promise.resolve(), cleanup: () => {} };
   }
 
-  const all = [...document.querySelectorAll<HTMLElement>('.cm-card')].filter((el) => {
-    const r = el.getBoundingClientRect();
-    return r.width > 0 && r.top < innerHeight && r.bottom > 0;
-  });
-  // Cap the flying cards (Spider can have 100+): sample evenly across the board.
-  const step = Math.max(1, Math.ceil(all.length / maxCards));
-  const picked = all.filter((_, i) => i % step === 0);
+  let picked: HTMLElement[];
+  let deckContainer: HTMLElement | null = null;
+  if (opts.deck) {
+    const built = buildDeck(62);
+    picked = built.els;
+    deckContainer = built.container;
+  } else {
+    const all = [...document.querySelectorAll<HTMLElement>('.cm-card')].filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.top < innerHeight && r.bottom > 0;
+    });
+    // Cap the flying cards (Spider can have 100+): sample evenly across the board.
+    const step = Math.max(1, Math.ceil(all.length / (opts.maxCards ?? 24)));
+    picked = all.filter((_, i) => i % step === 0);
+  }
 
   const layer = document.createElement('div');
   layer.style.cssText = 'position:fixed;inset:0;z-index:200;pointer-events:none;overflow:hidden';
@@ -105,6 +146,7 @@ export function runWinCascade(maxCards = 24): WinCascadeHandle {
       alive = false;
       layer.remove();
       for (const el of hidden) el.style.visibility = '';
+      deckContainer?.remove();
     },
   };
 }

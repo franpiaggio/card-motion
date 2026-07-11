@@ -190,14 +190,15 @@ export function DifficultyPicker({ title, options, onPick }: { title: string; op
  * floor — then the panel pops in under a confetti burst. Reduced motion (or a
  * loss) goes straight to the panel.
  */
-export function WinOverlay({ moves, onNew, lost = false }: { moves: number; onNew: () => void; lost?: boolean }) {
+export function WinOverlay({ moves, onNew, lost = false, cascadeDeck = false }: { moves: number; onNew: () => void; lost?: boolean; cascadeDeck?: boolean }) {
   const [showPanel, setShowPanel] = useState(lost);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (lost) return;
     let alive = true;
-    const cascade = runWinCascade();
+    // Spider empties its board at the win, so fly a freshly-built deck instead.
+    const cascade = runWinCascade({ deck: cascadeDeck });
     void cascade.finished.then(() => {
       if (!alive) return;
       setShowPanel(true);
@@ -207,6 +208,7 @@ export function WinOverlay({ moves, onNew, lost = false }: { moves: number; onNe
       alive = false;
       cascade.cleanup();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lost]);
 
   useLayoutEffect(() => {
