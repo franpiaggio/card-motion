@@ -11,6 +11,7 @@ import Golf from './examples/Golf';
 import Spider from './examples/Spider';
 import Pyramid from './examples/Pyramid';
 import TriPeaks from './examples/TriPeaks';
+import AnimationDebugger from './examples/AnimationDebugger';
 import Lastwall from '@lastwall/App';
 import VanillaDemo from './VanillaDemo';
 
@@ -38,6 +39,7 @@ export default function App() {
   if (hash === '#/spider') return <Spider />;
   if (hash === '#/pyramid') return <Pyramid />;
   if (hash === '#/tripeaks') return <TriPeaks />;
+  if (hash === '#/debug') return <AnimationDebugger />;
   if (hash === '#/docs' || hash.startsWith('#/docs/')) {
     return <Docs />;
   }
