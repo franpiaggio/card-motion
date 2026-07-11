@@ -179,7 +179,7 @@ export function runRunComplete(cardEls: HTMLElement[]): void {
   // `clones` are top-to-bottom (King…Ace); stagger from the end sweeps the run
   // away bottom-to-top, so the Ace leaves first and the King last.
   gsap.set(clones, { filter: 'drop-shadow(0 0 0px rgba(255,200,80,0)) brightness(1)' });
-  const tl = gsap.timeline({ onComplete: () => layer.remove() });
+  const tl = gsap.timeline();
   tl.to(clones, {
     filter: 'drop-shadow(0 0 16px rgba(255,200,80,0.95)) brightness(1.3)',
     scale: 1.08,
@@ -200,25 +200,37 @@ export function runRunComplete(cardEls: HTMLElement[]): void {
     },
     '-=0.03',
   );
+  // Remove the clone layer once the timeline has played out. (A delayedCall on
+  // the measured duration is more reliable here than the timeline's onComplete.)
+  gsap.delayedCall(tl.duration() + 0.1, () => layer.remove());
 }
 
 /** A short confetti burst over the whole screen (skipped under reduced motion). */
 export function burstConfetti(n = 60): void {
   if (typeof window === 'undefined' || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
   const colors = ['#ffd76a', '#f0a92d', '#d1304a', '#246bd9', '#eef0fb'];
+  // Contain the particles in a clipped, viewport-sized layer so their sideways
+  // drift can never extend the document and trigger a horizontal scrollbar.
+  const layer = document.createElement('div');
+  layer.style.cssText = 'position:fixed;inset:0;z-index:210;pointer-events:none;overflow:hidden';
+  document.body.append(layer);
+  let maxEnd = 0;
   for (let i = 0; i < n; i++) {
     const p = document.createElement('div');
     const s = 6 + Math.random() * 8;
-    p.style.cssText = `position:fixed;z-index:210;top:-20px;left:${Math.random() * 100}vw;width:${s}px;height:${s * 0.55}px;background:${colors[i % colors.length]};border-radius:2px;pointer-events:none`;
-    document.body.append(p);
+    p.style.cssText = `position:absolute;top:-20px;left:${Math.random() * 100}%;width:${s}px;height:${s * 0.55}px;background:${colors[i % colors.length]};border-radius:2px`;
+    layer.append(p);
+    const duration = 2.2 + Math.random() * 1.6;
+    const delay = Math.random() * 0.5;
+    maxEnd = Math.max(maxEnd, duration + delay);
     gsap.to(p, {
       y: innerHeight + 60,
       x: `+=${(Math.random() - 0.5) * 240}`,
       rotation: Math.random() * 720 - 360,
-      duration: 2.2 + Math.random() * 1.6,
-      delay: Math.random() * 0.5,
+      duration,
+      delay,
       ease: 'power1.in',
-      onComplete: () => p.remove(),
     });
   }
+  gsap.delayedCall(maxEnd + 0.3, () => layer.remove());
 }

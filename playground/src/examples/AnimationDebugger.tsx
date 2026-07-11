@@ -27,19 +27,24 @@ export default function AnimationDebugger() {
   const [winOpen, setWinOpen] = useState<null | 'deck' | 'board'>(null);
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-  // Sweep the run's cards away; fade the originals as the clones lift off, then
-  // restore them so the trigger can be replayed.
+  // Sweep the run's cards away. Hide the originals instantly (as a real harvest
+  // removes them) so only the flying clones show, then restore for a replay.
   const sweepRun = () => {
     const host = runRef.current;
     if (!host) return;
     const cards = [...host.querySelectorAll<HTMLElement>('.cm-card')];
-    host.style.transition = 'opacity .12s ease';
-    host.style.opacity = '0';
+    host.style.visibility = 'hidden';
     runRunComplete(cards);
     window.setTimeout(() => {
-      host.style.transition = 'opacity .3s ease';
-      host.style.opacity = '1';
-    }, 850);
+      host.style.visibility = '';
+    }, 1200);
+  };
+
+  // Play a standalone cascade and tidy up its layer once it has finished, so
+  // repeated presses don't leak fixed elements.
+  const playCascade = (deck: boolean) => {
+    const h = runWinCascade(deck ? { deck: true } : {});
+    void h.finished.then(h.cleanup);
   };
 
   const card = (rank: string, suit: string, color: string) => <Card rank={rank} suit={suit as '♠' | '♥' | '♦' | '♣'} color={color as 'red' | 'black'} width={CW} tilt={false} />;
@@ -73,7 +78,7 @@ export default function AnimationDebugger() {
         <section style={styles.card}>
           <h3 style={styles.h3}>Win cascade — full deck</h3>
           <p style={styles.desc}>The Windows-style bounce. Builds a fresh 52-card deck and rains it across the screen (used by Spider, whose board is empty at the win).</p>
-          <button type="button" style={styles.btn} onClick={() => runWinCascade({ deck: true })}>
+          <button type="button" style={styles.btn} onClick={() => playCascade(true)}>
             ▶ Play deck cascade
           </button>
           <button type="button" style={{ ...styles.btn, ...styles.btnGhost }} onClick={() => setWinOpen('deck')}>
@@ -85,7 +90,7 @@ export default function AnimationDebugger() {
           <h3 style={styles.h3}>Win cascade — board cards</h3>
           <p style={styles.desc}>The same physics flying whatever cards are on the board (used by games that still hold cards at the win).</p>
           <div style={styles.boardRow}>{BOARD.map((c) => <div key={`${c.rank}${c.suit}`}>{card(c.rank, c.suit, c.color)}</div>)}</div>
-          <button type="button" style={styles.btn} onClick={() => runWinCascade()}>
+          <button type="button" style={styles.btn} onClick={() => playCascade(false)}>
             ▶ Play board cascade
           </button>
         </section>
