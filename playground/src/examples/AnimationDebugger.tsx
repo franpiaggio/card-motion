@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Card } from 'card-motion';
 import { CARD_RATIO, WinOverlay } from './shared';
 import { burstConfetti, runRunComplete, runWinCascade } from './winCelebration';
@@ -26,6 +26,15 @@ export default function AnimationDebugger() {
   const runRef = useRef<HTMLDivElement>(null);
   const [winOpen, setWinOpen] = useState<null | 'deck' | 'board'>(null);
   const reduced = typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+  // The WinOverlay preview covers the whole screen (it's the real component), so
+  // give it an unmissable escape hatch — Esc or a floating close button.
+  useEffect(() => {
+    if (!winOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setWinOpen(null);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [winOpen]);
 
   // Sweep the run's cards away. Hide the originals instantly (as a real harvest
   // removes them) so only the flying clones show, then restore for a replay.
@@ -104,7 +113,14 @@ export default function AnimationDebugger() {
         </section>
       </div>
 
-      {winOpen && <WinOverlay moves={42} onNew={() => setWinOpen(null)} cascadeDeck={winOpen === 'deck'} />}
+      {winOpen && (
+        <>
+          <button type="button" style={styles.closePreview} onClick={() => setWinOpen(null)}>
+            ✕ Close preview (Esc)
+          </button>
+          <WinOverlay moves={42} onNew={() => setWinOpen(null)} cascadeDeck={winOpen === 'deck'} />
+        </>
+      )}
     </div>
   );
 }
@@ -124,4 +140,19 @@ const styles: Record<string, CSSProperties> = {
   boardRow: { display: 'flex', gap: 8, flexWrap: 'wrap', margin: '8px 0' },
   btn: { appearance: 'none', border: '1px solid oklch(0.4 0.02 265)', background: 'oklch(0.28 0.01 265)', color: 'inherit', padding: '10px 14px', borderRadius: 10, fontSize: 14, cursor: 'pointer', fontWeight: 600 },
   btnGhost: { background: 'transparent' },
+  closePreview: {
+    position: 'fixed',
+    top: 16,
+    right: 16,
+    zIndex: 300, // above the overlay (190), cascade layer (200) and confetti (210)
+    border: '1px solid oklch(0.5 0.02 265)',
+    background: 'oklch(0.22 0.01 265 / 0.9)',
+    color: 'oklch(0.92 0.01 265)',
+    padding: '8px 14px',
+    borderRadius: 10,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    backdropFilter: 'blur(4px)',
+  },
 };
