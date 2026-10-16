@@ -288,9 +288,9 @@ export default function Landing() {
       <header className="lp-hero">
         <p className="lp-kicker">TypeScript · GSAP · React or vanilla</p>
         <h1 className="lp-title">
-          Playing&#8209;card motion,
+          Card games in the browser,
           <br />
-          <span className="lp-title-mark">already built.</span>
+          <span className="lp-title-mark">table already built.</span>
         </h1>
 
         <div className="lp-hero-stage">
@@ -301,8 +301,8 @@ export default function Landing() {
         </div>
 
         <p className="lp-lede">
-          Shuffle, deal, select, play. GSAP timelines, pointer tilt, and a WebGL swirl. Zero motion code,
-          two imports away.
+          Prototype, design and ship card games. You write the rules as plain state; card&#8209;motion runs
+          the table: piles, deal, shuffle, drag &amp; drop, inspect and the motion that makes cards feel real.
         </p>
 
         <div className="lp-hero-actions">
@@ -436,7 +436,7 @@ export default function Landing() {
           <a href="#/docs">Docs</a>
         </div>
         <p className="lp-foot-fine">
-          Juicy card animations for React, powered by GSAP. MIT &copy; Francisco Piaggio.
+          A toolkit for browser card games, powered by GSAP. MIT &copy; Francisco Piaggio.
         </p>
       </footer>
     </div>

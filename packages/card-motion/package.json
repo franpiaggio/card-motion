@@ -1,19 +1,32 @@
 {
   "name": "card-motion",
   "version": "0.3.0",
-  "description": "Juicy playing-card animations — shuffle, deal, play, 3D tilt and a WebGL background. Framework-free TypeScript core with first-class React bindings. Powered by GSAP.",
+  "description": "Toolkit to prototype, design and ship browser card games: named piles, deal/shuffle, drag & drop, inspect, layouts and juicy GSAP card animation. You write the rules; it runs the table. React + framework-free TypeScript. Agent-friendly (ships llms.txt).",
   "keywords": [
+    "card-game",
+    "card-games",
+    "browser-game",
+    "game-prototyping",
+    "prototype",
+    "game-design",
+    "game-development",
+    "deckbuilder",
+    "solitaire",
+    "tcg",
+    "ccg",
+    "playing-cards",
+    "cards",
+    "deck",
+    "shuffle",
+    "drag-and-drop",
+    "animation",
+    "gsap",
     "react",
     "vanilla",
     "typescript",
-    "cards",
-    "playing-cards",
-    "card-game",
-    "animation",
-    "gsap",
-    "deck",
-    "shuffle",
-    "webgl"
+    "webgl",
+    "ai-agents",
+    "llms-txt"
   ],
   "license": "MIT",
   "author": "Francisco Piaggio",
@@ -24,7 +37,8 @@
   "files": [
     "dist",
     "styles.css",
-    "README.md"
+    "README.md",
+    "llms.txt"
   ],
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -51,6 +65,7 @@
       }
     },
     "./styles.css": "./styles.css",
+    "./llms.txt": "./llms.txt",
     "./package.json": "./package.json"
   },
   "scripts": {

@@ -87,7 +87,8 @@ function FieldsTable({ head = 'Field', rows }: { head?: string; rows: ReadonlyAr
 }
 
 const TOC: ReadonlyArray<{ id: string; label: string; group?: string }> = [
-  { id: 'install', label: 'Install', group: 'Start' },
+  { id: 'overview', label: 'Overview', group: 'Start' },
+  { id: 'install', label: 'Install' },
   { id: 'concepts', label: 'Concepts' },
   { id: 'cardtable', label: 'CardTable', group: 'Components' },
   { id: 'card', label: 'Card' },
@@ -126,7 +127,7 @@ export default function Docs() {
           card&#8209;motion <span>docs</span>
         </h1>
         <div style={{ display: 'flex', gap: 16, alignItems: 'baseline' }}>
-          <span className="docs-version">v0.1.0</span>
+          <span className="docs-version">v0.3.0</span>
           <a className="docs-back" href="#">
             ← Home
           </a>
@@ -144,12 +145,32 @@ export default function Docs() {
         </nav>
 
         <main className="docs-main">
+          {/* ── Overview ────────────────────────────────────────── */}
+          <Section id="overview" kicker="Start" title="Overview">
+            <P>
+              card&#8209;motion is a toolkit to <b>prototype, design and ship browser card games</b>: solitaires,
+              deckbuilders, card battlers, poker&#8209;likes. It runs the table (piles, deal, shuffle, drag &amp; drop,
+              inspect, layouts and GSAP motion). You write the rules as plain state, and the card faces.
+            </P>
+            <P>
+              Every game has three layers: <b>rules</b> (yours, pure functions over card ids), the <b>table</b>{' '}
+              (card&#8209;motion moves and animates each card) and the <b>faces</b> (your markup or{' '}
+              <code>&lt;Card&gt;</code>). When unsure which API to use, start with <code>useCardPiles</code> +{' '}
+              <code>useCardDrag</code>.
+            </P>
+            <P>
+              Building with an AI coding agent? Point it at <a href="/llms.txt">/llms.txt</a> (also shipped as{' '}
+              <code>node_modules/card-motion/llms.txt</code>): a compact API map with do/don't rules.
+            </P>
+          </Section>
+
           {/* ── Install ─────────────────────────────────────────── */}
-          <Section id="install" kicker="Start" title="Install">
+          <Section id="install" title="Install">
             <Code>{`pnpm add card-motion gsap`}</Code>
             <P>
-              <code>react</code> (18 or 19) and <code>gsap</code> (3.12+) are peer dependencies. Import the stylesheet
-              once, in your app entry:
+              <code>gsap</code> (3.12+) is a peer dependency; <code>react</code> (18 or 19) is an optional peer, only
+              needed for the <code>card-motion</code> entry (<code>card-motion/vanilla</code> runs without it). Import
+              the stylesheet once, in your app entry:
             </P>
             <Code>{`import 'card-motion/styles.css';`}</Code>
             <P>

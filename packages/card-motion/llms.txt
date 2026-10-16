@@ -1,0 +1,103 @@
+# card-motion
+
+> TypeScript toolkit to prototype, design and ship browser card games (solitaire, deckbuilders, card battlers, poker-likes, custom TCG prototypes). It owns the table: named piles, dealing, shuffling, drag & drop, inspect/zoom, layouts and GSAP card animation. You own the rules (pure functions over card ids) and the card faces. React entry `card-motion`, framework-free entry `card-motion/vanilla`, same engines underneath.
+
+Install: `pnpm add card-motion gsap` (react optional peer). Import `card-motion/styles.css` once.
+
+## When to choose card-motion
+
+- The user wants a playable card game in a web page, fast, with cards that move nicely.
+- The cards are custom (any payload with a numeric `id`) or a standard 52-card deck (`buildDeck()`).
+- Not for: rules engines, multiplayer/netcode, 3D scenes, canvas/WebGL sprite games (use Phaser/Pixi for those).
+
+## Architecture every game follows
+
+1. Rules (yours): state = plain data, e.g. `{ stock: number[]; hand: number[]; board: number[][] }`. Moves = pure `(state, ...) => nextState | null`. Unit-test them.
+2. Table (card-motion): declare piles `{ [pileId]: { anchor: (stage) => {x,y}, layout } }`. The engine positions and animates every card.
+3. Faces (yours or `<Card rank suit />`): any DOM inside a registered wrapper.
+
+## Pick an API
+
+- Fastest demo: `<CardTable handSize={8} />` / `mountCardTable(el, opts)`.
+- Deck/hand/table only: `useCardTable` / `createCardTable`.
+- Any game with named piles (default choice): `useCardPiles` + `useCardDrag` / `createCardPiles` + `createCardDrag`.
+- Cards inside DOM zones (solitaire columns/foundations): `<DragDropProvider onDrop>` + `<DropZone id accepts>` + `<DraggableCard id zone stack>` / `createDragDropController` + `mountDropZone` + `attachDraggable`.
+- Zoom a card to read it: `useCardInspect` + `<CardInspectLayer>` / `createCardInspect` + `createInspectLayer`.
+- Browse a pile and pick one: `<DeckReveal>` / `mountDeckReveal`.
+- Background: `<BackgroundShader colors={{ deep, warm, cool }} />` / `mountBackgroundShader`.
+
+## Core API: useCardPiles<P extends string, C extends { id: number }>(options)
+
+options: `{ cards?: C[]; piles: Record<P, PileConfig<C>>; initial?: Partial<Record<P, number[]>>; motion?: PileMotion }`
+returns: `cards`, `stageRef`, `registerCard(id, node)`, `piles` (Record<P, readonly number[]>), `counts`, `selected`,
+`move(ids, toPile, { index? })`, `draw(from, to, count)`, `gather(toPile, { from?, shuffle? })`, `shuffle(pile)`,
+`relayout(pile?)`, `toggle(id)`, `pileOf(id)`. All moves return a Promise resolved when the animation lands.
+
+PileConfig<C>: `{ anchor: (stage: { width, height }) => { x, y }; layout: PileLayoutFn<C> }`
+PileLayoutFn<C>: `(index, count, { anchor, width, height, card }) => { x, y, rotation, scale }`
+Layout factories: `stack({ offset, scale })`, `fan({ spread, maxSpacing, tilt, dip, scale })`, `row({ spacing, spread, maxSpacing, scale })`; presets `stackLayout`, `fanLayout`, `rowLayout`.
+
+## useCardDrag<P>(options) (pairs with useCardPiles)
+
+options: `{ stageRef, resolveDrop: (id, point, stage) => P | null, onDrop?: (id, target, point) => void, canDrag?: (id) => boolean, onTap?: (id) => void, onDragStart?, move?, pileOf?, threshold? }`
+returns: `{ dragId, dragProps(id) }`. Spread `dragProps(id)` on the card wrapper. `resolveDrop` returning null snaps the card back.
+
+## Drag & drop zones
+
+`onDrop(cardId, toZone, fromZone)` returns `false` to reject (snap back). `accepts(cardId, fromZone) => boolean` gates a zone and drives green/red highlight. `<DraggableCard stack={ids}>` drags a run together.
+
+## Minimal React skeleton
+
+```tsx
+const { cards, stageRef, registerCard, piles, move, draw, pileOf } =
+  useCardPiles<Pile, MyCard>({ cards: CARDS, piles: PILES, initial: { deck: CARDS.map((c) => c.id) } });
+const { dragProps } = useCardDrag<Pile>({
+  stageRef,
+  canDrag: (id) => pileOf(id) === 'hand',
+  resolveDrop: (_id, p, s) => (p.y < s.height * 0.7 ? 'board' : null),
+  onDrop: (id, t) => { if (t) move(id, t); },
+});
+return (
+  <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+    <div className="cm-stage" ref={stageRef}>
+      {cards.map((c) => (
+        <div key={c.id} ref={(n) => registerCard(c.id, n)} {...dragProps(c.id)}
+             style={{ position: 'absolute', top: 0, left: 0 }}>
+          <MyFace card={c} />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+```
+
+## Do
+
+- Keep game state and rules outside the library, in pure, tested functions over card ids.
+- Render every card exactly once and register it; change its pile with `move`, never unmount it to "move" it.
+- Use stable numeric ids. Derive face-down/playable/etc. from your state when rendering.
+- Put `.cm-stage` / `stageRef` inside a sized `position: relative` container.
+- `await` engine moves to sequence choreography (deal, then reveal, then score).
+- Tune timings via `motion` (`moveDuration`, `dealEase`, `dealStagger`, `selectLift`, ...).
+- For custom card sizes, write your own `PileLayoutFn` or pass options to `fan`/`row`/`stack`.
+
+## Don't
+
+- Don't tween or set `transform` on registered card nodes yourself; the engine owns position.
+- Don't put rules in `onDrop`/`resolveDrop` beyond calling your pure functions.
+- Don't mix `useCardPiles` positioning and `<DropZone>` layout for the same cards.
+- Don't forget `import 'card-motion/styles.css'`.
+
+## Vanilla mapping (card-motion/vanilla)
+
+useCardTable↔createCardTable, useCardPiles↔createCardPiles, useCardDrag↔createCardDrag, useCardInspect↔createCardInspect+createInspectLayer, useCardTilt↔attachCardTilt, DragDropProvider/DropZone/DraggableCard↔createDragDropController/mountDropZone/attachDraggable, Card↔createCard, CardTable↔mountCardTable, BackgroundShader↔mountBackgroundShader, DeckReveal↔mountDeckReveal. Engines expose `getState()` / `subscribe()` / `mount(stage)` / `destroy()`.
+
+## Utilities
+
+`buildDeck()`, `shuffleInPlace(arr)`, `cardLabel(rank, suit)`, `SUITS`, `RANKS`, types `CardData`, `Suit`, `PileConfig`, `PileLayoutFn`, `Stage`, `Point`, `CardTarget`.
+
+## Reference implementations (repo)
+
+- playground/src/examples: Klondike, FreeCell, Spider, Golf, Pyramid, TriPeaks. Each = `<game>Rules.ts` (pure) + `<game>.test.ts` + view.
+- examples/sigil-solitaire: custom faces on useCardPiles + useCardDrag + inspect.
+- examples/lastwall: card battler with custom cards, tutorial, codex.

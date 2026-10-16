@@ -2,7 +2,7 @@
   "name": "card-motion-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "Monorepo for card-motion — Balatro-style card animations for React.",
+  "description": "Monorepo for card-motion — a toolkit to prototype, design and ship browser card games.",
   "type": "module",
   "scripts": {
     "build": "pnpm --filter card-motion build",

@@ -3,6 +3,16 @@
 All notable changes to `card-motion` are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Repositioned as a toolkit to prototype, design and ship browser card games: new README (mental model, API picker, `useCardPiles` recipe, agent guidance), npm description and keywords.
+
+### Added
+
+- `llms.txt` shipped in the package (and exported as `card-motion/llms.txt`): a compact API map and do/don't list for AI coding agents.
+
 ## [0.3.0] — 2026-07-07
 
 ### Added
