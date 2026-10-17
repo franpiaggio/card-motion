@@ -1,6 +1,6 @@
 {
   "name": "card-motion",
-  "version": "0.3.2",
+  "version": "0.3.1",
   "description": "Toolkit to prototype, design and ship browser card games: named piles, deal/shuffle, drag & drop, inspect, layouts and juicy GSAP card animation. You write the rules; it runs the table. React + framework-free TypeScript. Agent-friendly (ships llms.txt).",
   "keywords": [
     "card-game",
